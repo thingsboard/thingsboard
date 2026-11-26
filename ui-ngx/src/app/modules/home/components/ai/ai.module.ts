@@ -42,9 +42,11 @@ import { AiFileBodyComponent } from '@home/components/ai/ai-file-body.component'
 import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
 import { AiMarkComponent } from '@home/components/ai/ai-mark.component';
 import { AiCliGuideComponent } from '@home/components/ai/ai-cli-guide.component';
+import { AiFadeInImageDirective } from '@home/components/ai/ai-fade-in-image.directive';
 
 @NgModule({
   declarations: [
+    AiFadeInImageDirective,
     AiPromptInputComponent,
     AiAssistantPanelComponent,
     AiChatComponent,

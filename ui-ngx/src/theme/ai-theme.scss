@@ -1132,11 +1132,16 @@
     width: 36px;
     min-width: 36px;
     padding: 0;
+    gap: 0;
     justify-content: center;
     overflow: visible;
 
     > .mat-icon.mat-icon {
       margin: 0;
+    }
+
+    > .mdc-button__label:empty {
+      display: none;
     }
   }
 
@@ -6266,7 +6271,7 @@ tb-ai-action-detail.k-detail .k-detail-recs:is(.k-detail-hub, .k-detail-list) {
   }
 }
 
-@container k-col (max-width: 480px) {
+@container k-col (max-width: 420px) {
   .tb-rec.card {
     padding: 8px 10px 10px;
 
@@ -6892,5 +6897,14 @@ tb-ai-action-detail.k-detail .tb-codeblock pre.tb-code {
         grid-column: 2;
       }
     }
+  }
+}
+
+img.tb-ai-fade-in {
+  opacity: 0;
+  transition: opacity .25s ease;
+
+  &.loaded {
+    opacity: 1;
   }
 }

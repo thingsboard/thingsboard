@@ -48,9 +48,11 @@ export function aiWidgetThumb(): string {
         @if (picture()) {
           <span class="tb-rec-pic" [class.sq]="rec.square" [class.wide]="rec.wide" aria-hidden="true">
             @if (rec.image) {
-              <img [src]="rec.image | image: {ignoreLoadingImage: true} | async" alt="">
+              @if (rec.image | image: {ignoreLoadingImage: true} | async; as src) {
+                <img tbAiFadeIn [src]="src" alt="">
+              }
             } @else if (rec.imageUrl) {
-              <img [src]="rec.imageUrl" alt="">
+              <img tbAiFadeIn [src]="rec.imageUrl" alt="">
             } @else {
               <span class="tb-rec-img" [innerHTML]="thumb()"></span>
             }

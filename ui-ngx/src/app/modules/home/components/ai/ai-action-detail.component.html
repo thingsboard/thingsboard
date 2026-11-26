@@ -85,11 +85,11 @@
             @if (fact.images; as pair) {
               <span class="k-detail-images">
                 @if (pair.current) {
-                  <img class="k-detail-img was" [src]="pair.current | image: {preview: true} | async" alt="">
+                  <img tbAiFadeIn class="k-detail-img was" [src]="pair.current | image: {preview: true, ignoreLoadingImage: true} | async" alt="">
                   <mat-icon class="tb-mat-16" aria-hidden="true">arrow_forward</mat-icon>
                 }
                 @if (pair.value) {
-                  <img class="k-detail-img" [src]="pair.value | image: {preview: true} | async" alt="">
+                  <img tbAiFadeIn class="k-detail-img" [src]="pair.value | image: {preview: true, ignoreLoadingImage: true} | async" alt="">
                 } @else {
                   {{ 'ai-assistant.review.not-set' | translate }}
                 }
@@ -146,7 +146,7 @@
       <div class="k-detail-images">
         @for (image of block.rows; track image.url) {
           <figure>
-            <img [src]="image.url | image: {preview: true} | async" [alt]="image.label ? say(image.label) : ''">
+            <img tbAiFadeIn [src]="image.url | image: {preview: true, ignoreLoadingImage: true} | async" [alt]="image.label ? say(image.label) : ''">
             @if (image.label) {
               <figcaption>{{ say(image.label) }}</figcaption>
             }

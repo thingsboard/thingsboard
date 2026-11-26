@@ -50,7 +50,7 @@ const SAVED_MS = 1600;
         } @else {
           <button type="button" class="file-img-open" (click)="expandImage()"
                   [matTooltip]="'ai-assistant.file.expand' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.expand' | translate">
-            <img class="file-svg-img" [src]="imageSrc()" [alt]="file().name" (error)="imageBroken.set(true)">
+            <img tbAiFadeIn class="file-svg-img" [src]="imageSrc()" [alt]="file().name" (error)="imageBroken.set(true)">
           </button>
         }
       </div>

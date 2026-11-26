@@ -10,7 +10,7 @@
       @if (item.image) {
         <span class="k-file-pic" aria-hidden="true">
           @if (item.url$ | async; as url) {
-            <img [src]="url" alt="">
+            <img tbAiFadeIn [src]="url" alt="">
           }
         </span>
       } @else {
