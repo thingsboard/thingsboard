@@ -71,6 +71,7 @@ public class AgentAppTemplateSyncService {
     private static final int APP_TYPE_GROUP_NUM = 1;
     private static final int CONFIG_TYPE_GROUP_NUM = 2;
     private static final String REPO_KEY = "agent-app-templates";
+    private static final boolean NOTIFY_ON_EVERY_FETCH = true;
     // <basePath>/since/<version>/ holds templates that replace the same-named base ones from that platform version on
     private static final String SINCE_DIR = "since";
     private static final Duration UPDATE_SERVER_CONNECT_TIMEOUT = Duration.ofSeconds(10);
@@ -108,7 +109,7 @@ public class AgentAppTemplateSyncService {
         if (StringUtils.isBlank(branch)) {
             branch = "main";
         }
-        gitSyncService.registerSync(REPO_KEY, repoUri, branch, fetchFrequencyMs, this::update, true);
+        gitSyncService.registerSync(REPO_KEY, repoUri, branch, fetchFrequencyMs, this::update, NOTIFY_ON_EVERY_FETCH);
     }
 
     private void update() {
