@@ -65,6 +65,8 @@ export function fileLanguage(name: string): CodeLanguage {
 }
 
 export function decorateCodeBlocks(root: HTMLElement, translate: TranslateService, copy: (text: string) => boolean): void {
+  readFenceMeta(root);
+  mergeTabs(root, translate, copy);
   root.querySelectorAll('pre').forEach(pre => {
     if (!pre.closest('.tb-codeblock')) {
       decorate(pre, translate, copy);
@@ -72,10 +74,12 @@ export function decorateCodeBlocks(root: HTMLElement, translate: TranslateServic
   });
 }
 
-export function aiFileFences(markdown: string): {text: string; files: string[]} {
-  const files: string[] = [];
+const FENCE_META = '\u2063tb:';
+const OS_TABS: Record<string, string> = {macos: 'macos', mac: 'macos', windows: 'windows', linux: 'linux'};
+
+export function aiFenceMeta(markdown: string): string {
   let open: string | null = null;
-  const text = (markdown ?? '').split('\n').map(line => {
+  return (markdown ?? '').split('\n').map(line => {
     const fence = /^(\s*)(`{3,}|~{3,})(.*)$/.exec(line);
     if (!fence) {
       return line;
@@ -88,26 +92,84 @@ export function aiFileFences(markdown: string): {text: string; files: string[]} 
     }
     open = fence[2];
     const info = fence[3].trim();
-    const words = info.split(/\s+/);
+    const tab = /(?:^|\s)tab=(.+)$/.exec(info)?.[1]?.trim();
+    const words = info.replace(/(?:^|\s)tab=.+$/, '').trim().split(/\s+/).filter(Boolean);
     const fileOf = (word: string) => /^[\w.-]+\.\w+$/.test(word ?? '') ? word : null;
-    const name = words.length > 1 ? fileOf(words[1]) : fileOf(words[0]);
-    files.push(name ?? '');
-    if (!name) {
+    const file = words.length > 1 ? fileOf(words[1]) : fileOf(words[0]);
+    if (!file && !tab) {
       return line;
     }
-    const lang = words.length > 1 ? words[0] : fileLanguage(name).lang;
-    return fence[1] + fence[2] + lang;
+    const lang = words.length > 1 || !file ? (words[0] ?? '') : fileLanguage(file).lang;
+    const meta = JSON.stringify({...(file ? {file} : {}), ...(tab ? {tab} : {})});
+    return fence[1] + fence[2] + lang + '\n' + FENCE_META + encodeURIComponent(meta);
   }).join('\n');
-  return {text, files};
 }
 
-export function labelFileBlocks(root: HTMLElement, files: string[]): void {
-  root.querySelectorAll('pre > code').forEach((code, index) => {
-    const name = files[index];
-    if (name && !code.hasAttribute('data-file')) {
-      code.setAttribute('data-file', name);
-      code.setAttribute('data-label', name);
+function readFenceMeta(root: HTMLElement): void {
+  root.querySelectorAll('pre > code').forEach(code => {
+    const text = code.textContent ?? '';
+    if (!text.startsWith(FENCE_META)) {
+      return;
     }
+    const end = text.indexOf('\n');
+    let meta: {file?: string; tab?: string} = {};
+    try {
+      meta = JSON.parse(decodeURIComponent(text.slice(FENCE_META.length, end < 0 ? text.length : end)));
+    } catch {
+      meta = {};
+    }
+    code.textContent = end < 0 ? '' : text.slice(end + 1);
+    if (meta.file) {
+      code.setAttribute('data-file', meta.file);
+      code.setAttribute('data-label', meta.file);
+    }
+    if (meta.tab) {
+      code.setAttribute('data-tab', meta.tab);
+    }
+  });
+}
+
+function mergeTabs(root: HTMLElement, translate: TranslateService, copy: (text: string) => boolean): void {
+  const unitOf = (pre: Element): Element => {
+    const parent = pre.parentElement;
+    return parent && parent !== root && parent.tagName === 'DIV' && !/tb-markdown-view/.test(parent.className)
+      && parent.querySelectorAll(':scope > pre').length === 1 ? parent : pre;
+  };
+  const pres = Array.from(root.querySelectorAll('pre')).filter(pre => pre.querySelector('code[data-tab]') && !pre.closest('.tb-codeblock'));
+  const used = new Set<Element>();
+  pres.forEach(first => {
+    if (used.has(first)) {
+      return;
+    }
+    const group = [first];
+    let next = unitOf(first).nextElementSibling;
+    while (next) {
+      const pre = next.matches('pre') ? next : next.querySelector(':scope > pre');
+      if (!pre || !pre.querySelector('code[data-tab]')) {
+        break;
+      }
+      group.push(pre as HTMLPreElement);
+      next = unitOf(pre).nextElementSibling;
+    }
+    group.forEach(pre => used.add(pre));
+    if (group.length < 2) {
+      return;
+    }
+    const tabs: CodeTab[] = group.map(pre => {
+      const code = pre.querySelector('code');
+      const label = code.getAttribute('data-tab');
+      const lang = /(?:^|\s)language-([\w+#-]+)/.exec(code.className)?.[1]?.toLowerCase();
+      return {id: OS_TABS[label.toLowerCase()] ?? label, label, text: (code.textContent ?? '').replace(/\n$/, ''), lang};
+    });
+    const os = tabs.every(tab => Object.values(OS_TABS).includes(tab.id));
+    const key = os ? 'os' : 'tabs:' + tabs.map(tab => tab.id).join('|');
+    const local = /Windows/i.test(navigator.userAgent) ? 'windows' : /Mac/i.test(navigator.userAgent) ? 'macos' : 'linux';
+    const preferred = codeTabGroup(key) ?? (os ? local : null);
+    const initial = Math.max(0, tabs.findIndex(tab => tab.id === preferred));
+    const block = codeTabsBlock(tabs, tabs[0].lang ?? 'shell', translate, copy, initial, undefined, {group: key});
+    const anchor = unitOf(group[0]);
+    anchor.parentNode.insertBefore(block, anchor);
+    group.forEach(pre => unitOf(pre).remove());
   });
 }
 

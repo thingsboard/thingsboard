@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, computed, DestroyRef, effect, ElementRef, EventEmitter, inject, input, Output, signal } from '@angular/core';
+import { AfterViewChecked, Component, computed, DestroyRef, effect, ElementRef, EventEmitter, inject, input, Output, signal } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { TranslateService } from '@ngx-translate/core';
 import { AiConnectionCheck, AiHandOver } from '@home/components/ai/ai-action.models';
-import { aiFileFences, announceCopied, decorateCodeBlocks, labelFileBlocks } from '@home/components/ai/ai-code-block';
+import { aiFenceMeta, announceCopied, codeTabGroup, codeTabsBlock, decorateCodeBlocks } from '@home/components/ai/ai-code-block';
 
 export interface AiHandOverWait {
   running: boolean;
@@ -15,6 +15,13 @@ export interface AiHandOverWait {
 }
 
 const MIN_SILENCE_MS = 120000;
+const TEST_MARKER = 'aiTestValue';
+const OS_LABELS: Record<string, string> = {macos: 'macOS', windows: 'Windows', linux: 'Linux'};
+
+function localOs(): string {
+  const platform = navigator.userAgent;
+  return /Windows/i.test(platform) ? 'windows' : /Mac/i.test(platform) ? 'macos' : 'linux';
+}
 const COPIED_MS = 1500;
 
 @Component({
@@ -22,7 +29,7 @@ const COPIED_MS = 1500;
   templateUrl: './ai-hand-over.component.html',
   standalone: false
 })
-export class AiHandOverComponent {
+export class AiHandOverComponent implements AfterViewChecked {
 
   handOver = input.required<AiHandOver>();
   wait = input<AiHandOverWait | null>(null);
@@ -42,8 +49,15 @@ export class AiHandOverComponent {
   readonly copied = signal<string | null>(null);
   readonly now = signal(Date.now());
   readonly open = signal(false);
+  readonly testState = signal<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  readonly testAt = signal(0);
+  readonly testError = signal('');
 
   readonly choiceValue = computed(() => this.picked() ?? this.handOver().choice?.value ?? null);
+  readonly steps = computed(() => {
+    const picked = this.handOver().choice?.options.find(option => option.id === this.choiceValue());
+    return picked?.steps?.length ? picked.steps : this.handOver().steps;
+  });
   readonly choiceText = computed(() => this.handOver().choice?.options.find(option => option.id === this.choiceValue())?.text ?? '');
 
   readonly arrived = computed(() => this.wait()?.check?.dataArriving === true);
@@ -55,6 +69,18 @@ export class AiHandOverComponent {
   });
 
   readonly waiting = computed(() => !!this.wait()?.running);
+  readonly canSendTest = computed(() => !!this.handOver().test?.sample && this.handOver().waitFor === 'message');
+  readonly testNote = computed(() => {
+    const time = new Date(this.testAt()).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hourCycle: 'h23'});
+    switch (this.testState()) {
+      case 'sent':
+        return this.translate.instant('ai-assistant.hand-over.test-sent', {time});
+      case 'failed':
+        return this.translate.instant('ai-assistant.hand-over.test-failed', {error: this.testError()});
+      default:
+        return '';
+    }
+  });
   readonly elapsed = computed(() => Math.max(0, this.now() - (this.wait()?.startedAt ?? this.now())));
   readonly clock = computed(() => {
     const seconds = Math.floor(this.elapsed() / 1000);
@@ -77,6 +103,7 @@ export class AiHandOverComponent {
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
     effect(() => {
       this.choiceText();
+      this.steps();
       this.handOver();
       this.folded();
       setTimeout(() => this.decorate());
@@ -84,17 +111,29 @@ export class AiHandOverComponent {
   }
 
   md(text: string): string {
-    return aiFileFences(text).text;
+    return aiFenceMeta(text);
   }
 
-  files(text: string): string {
-    return aiFileFences(text).files.join('|');
+  ngAfterViewChecked(): void {
+    if ((this.host.nativeElement as HTMLElement).querySelector('.k-test-slot:empty')) {
+      this.decorate();
+    }
   }
 
   decorate(): void {
     const root = this.host.nativeElement as HTMLElement;
-    root.querySelectorAll<HTMLElement>('tb-markdown[data-files]').forEach(markdown =>
-      labelFileBlocks(markdown, (markdown.dataset.files ?? '').split('|')));
+    const test = this.handOver().test;
+    root.querySelectorAll<HTMLElement>('.k-test-slot:empty').forEach(slot => {
+      if (!test) {
+        return;
+      }
+      const order = ['macos', 'windows', 'linux'];
+      const tabs = [...test.commands].sort((a, b) => order.indexOf(a.os) - order.indexOf(b.os)).map(command => ({id: command.os, label: OS_LABELS[command.os], text: command.command,
+        lang: command.os === 'windows' ? 'powershell' : 'shell'}));
+      const preferred = codeTabGroup('os') ?? localOs();
+      const initial = Math.max(0, tabs.findIndex(tab => tab.id === preferred));
+      slot.append(codeTabsBlock(tabs, 'shell', this.translate, text => this.clipboard.copy(text), initial, undefined, {group: 'os'}));
+    });
     decorateCodeBlocks(root, this.translate, text => this.clipboard.copy(text));
   }
 
@@ -104,6 +143,7 @@ export class AiHandOverComponent {
 
   pick(id: string): void {
     this.picked.set(id);
+    this.ticked.set(new Set());
   }
 
   tick(index: number): void {
@@ -117,7 +157,7 @@ export class AiHandOverComponent {
   }
 
   done(index: number): boolean {
-    return this.ticked().has(index) !== (this.handOver().steps[index]?.done === true);
+    return this.ticked().has(index) !== (this.steps()[index]?.done === true);
   }
 
   reveal(key: string): void {
@@ -139,6 +179,30 @@ export class AiHandOverComponent {
       this.copied.set(key);
       announceCopied(this.translate.instant('ai-assistant.copied'));
       setTimeout(() => this.copied.set(null), COPIED_MS);
+    }
+  }
+
+  async sendTest(): Promise<void> {
+    const test = this.handOver().test;
+    if (!test?.sample || !test.accessToken || this.testState() === 'sending') {
+      return;
+    }
+    this.testState.set('sending');
+    const ts = Date.now();
+    try {
+      const response = await fetch(`/api/v1/${encodeURIComponent(test.accessToken)}/telemetry`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ts, values: {...test.sample, [TEST_MARKER]: true}})
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      this.testAt.set(ts);
+      this.testState.set('sent');
+    } catch (error) {
+      this.testError.set(error instanceof Error ? error.message : String(error));
+      this.testState.set('failed');
     }
   }
 

@@ -2181,6 +2181,13 @@
         },
         "hand-over": {
             "stop-listening": "Stop listening",
+            "test-first": "Test from this computer first",
+            "what-you-see": "What you should see",
+            "send-test": "Send a test value",
+            "send-test-here": "Send a test value from here",
+            "send-test-tip": "Sends one value as the device, marked as a test; the wait keeps listening for the device itself",
+            "test-sent": "A test value went in at {{time}} and is on the device's latest telemetry. The wait keeps listening for the device itself.",
+            "test-failed": "The test value did not go through: {{error}}.",
             "needs-you": "Needs you",
             "fold": "Fold",
             "unfold": "Show the steps",

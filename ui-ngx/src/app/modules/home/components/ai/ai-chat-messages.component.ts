@@ -62,7 +62,7 @@ export interface AnswerReportEvent {
   problem: AnswerProblem;
   comment?: string;
 }
-import { announceCopied, decorateCodeBlocks, decorateTables, fileLanguage } from '@home/components/ai/ai-code-block';
+import { aiFenceMeta, announceCopied, decorateCodeBlocks, decorateTables, fileLanguage } from '@home/components/ai/ai-code-block';
 import { AiHandOverWait } from '@home/components/ai/ai-hand-over.component';
 import { aiDetailNames, AiDetailNames } from '@home/components/ai/ai-action-detail.models';
 import { decorateFileChips, decorateHints, decorateLinks, decorateReferences, decorateSeverities, decorateValues } from '@home/components/ai/ai-references';
@@ -1032,7 +1032,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
           '```';
       }
     } else {
-      return msg;
+      return aiFenceMeta(msg);
     }
   }
 

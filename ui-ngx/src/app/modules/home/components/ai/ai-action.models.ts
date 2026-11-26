@@ -322,6 +322,7 @@ export interface AiHandOverOption {
   label: string;
   icon?: string;
   text: string;
+  steps?: AiHandOverStep[];
 }
 
 export interface AiHandOver {
@@ -332,6 +333,38 @@ export interface AiHandOver {
   waitFor?: 'message' | 'uplink' | 'gateway';
   intervalSeconds?: number;
   quiet?: string;
+  test?: AiHandOverTest;
+}
+
+export interface AiHandOverTest {
+  hint?: string;
+  commands: {os: 'macos' | 'windows' | 'linux'; command: string}[];
+  outcomes: {output: string; meaning: string; ok: boolean}[];
+  sample?: Record<string, unknown>;
+  accessToken?: string;
+}
+
+function handOverTestOf(value: any): AiHandOverTest | undefined {
+  const commands = (Array.isArray(value?.commands) ? value.commands : [])
+    .filter(item => ['macos', 'windows', 'linux'].includes(item?.os) && text(item?.command))
+    .slice(0, 3)
+    .map(item => ({os: item.os, command: item.command.trim()}));
+  if (!commands.length) {
+    return undefined;
+  }
+  const outcomes = (Array.isArray(value.outcomes) ? value.outcomes : [])
+    .filter(item => text(item?.output) && text(item?.meaning))
+    .slice(0, 4)
+    .map(item => ({output: text(item.output), meaning: text(item.meaning), ok: item.ok === true}));
+  let sample: Record<string, unknown> | undefined;
+  try {
+    const parsed = typeof value.sample === 'string' ? JSON.parse(value.sample) : value.sample;
+    sample = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    sample = undefined;
+  }
+  const accessToken = text(value.accessToken);
+  return {hint: text(value.hint), commands, outcomes, ...(sample && accessToken ? {sample, accessToken} : {})};
 }
 
 const text = (value: unknown): string | undefined => typeof value === 'string' && value.trim() ? value.trim() : undefined;
@@ -346,7 +379,27 @@ export function aiHandOverOf(args: unknown): AiHandOver | null {
   if (!title) {
     return null;
   }
-  const steps: AiHandOverStep[] = (Array.isArray(values.steps) ? values.steps : [])
+  const steps = handOverStepsOf(values.steps);
+  const options: AiHandOverOption[] = (Array.isArray(values.choice?.options) ? values.choice.options : [])
+    .filter(option => text(option?.id) && text(option?.label))
+    .slice(0, 4)
+    .map(option => ({id: text(option.id), label: text(option.label), icon: typeof option.icon === 'string' && ICON_NAME.test(option.icon) ? option.icon : undefined,
+      text: text(option.text) ?? '', steps: handOverStepsOf(option.steps)}));
+  const choice = options.length >= 2 ? {
+    question: text(values.choice.question) ?? '',
+    icon: iconOf(values.choice.icon, 'tune'),
+    value: options.some(option => option.id === values.choice.value) ? values.choice.value : options[0].id,
+    options
+  } : undefined;
+  const waitFor = ['message', 'uplink', 'gateway'].includes(values.waitFor) ? values.waitFor : undefined;
+  const interval = Number(values.intervalSeconds);
+  return {title, text: text(values.text), choice, steps, waitFor,
+    intervalSeconds: Number.isFinite(interval) && interval > 0 ? interval : undefined, quiet: text(values.quiet),
+    test: handOverTestOf(values.test)};
+}
+
+function handOverStepsOf(list: unknown): AiHandOverStep[] {
+  return (Array.isArray(list) ? list : [])
     .filter(step => text(step?.title))
     .slice(0, 6)
     .map(step => ({
@@ -360,21 +413,6 @@ export function aiHandOverOf(args: unknown): AiHandOver | null {
         .map(value => ({label: text(value.label), value: value.value, secret: value.secret === true,
           icon: iconOf(value.icon, value.secret === true ? 'key' : /^https?:\/\//.test(value.value) ? 'link' : 'label')}))
     }));
-  const options: AiHandOverOption[] = (Array.isArray(values.choice?.options) ? values.choice.options : [])
-    .filter(option => text(option?.id) && text(option?.label))
-    .slice(0, 4)
-    .map(option => ({id: text(option.id), label: text(option.label), icon: typeof option.icon === 'string' && ICON_NAME.test(option.icon) ? option.icon : undefined,
-      text: text(option.text) ?? ''}));
-  const choice = options.length >= 2 ? {
-    question: text(values.choice.question) ?? '',
-    icon: iconOf(values.choice.icon, 'tune'),
-    value: options.some(option => option.id === values.choice.value) ? values.choice.value : options[0].id,
-    options
-  } : undefined;
-  const waitFor = ['message', 'uplink', 'gateway'].includes(values.waitFor) ? values.waitFor : undefined;
-  const interval = Number(values.intervalSeconds);
-  return {title, text: text(values.text), choice, steps, waitFor,
-    intervalSeconds: Number.isFinite(interval) && interval > 0 ? interval : undefined, quiet: text(values.quiet)};
 }
 
 export interface AiConnectionCheck {

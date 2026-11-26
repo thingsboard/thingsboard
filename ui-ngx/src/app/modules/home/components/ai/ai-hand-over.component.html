@@ -26,7 +26,7 @@
     }
     <div class="k-body">
       @if (handOver().text) {
-        <tb-markdown usePlainMarkdown [data]="md(handOver().text)" [attr.data-files]="files(handOver().text)" (ready)="decorate()"></tb-markdown>
+        <tb-markdown usePlainMarkdown [data]="md(handOver().text)" (ready)="decorate()"></tb-markdown>
       }
       @if (handOver().choice; as choice) {
         <div class="k-choice-panel">
@@ -45,13 +45,13 @@
             </span>
           </div>
           @if (choiceText()) {
-            <div class="k-choice-body"><tb-markdown usePlainMarkdown [data]="md(choiceText())" [attr.data-files]="files(choiceText())" (ready)="decorate()"></tb-markdown></div>
+            <div class="k-choice-body"><tb-markdown usePlainMarkdown [data]="md(choiceText())" (ready)="decorate()"></tb-markdown></div>
           }
         </div>
       }
-      @if (handOver().steps.length) {
+      @if (steps().length) {
         <ol class="k-steps">
-          @for (step of handOver().steps; track $index; let i = $index) {
+          @for (step of steps(); track step; let i = $index) {
             <li [class.done]="done(i)">
               <label>
                 <input type="checkbox" [checked]="done(i)" (change)="tick(i)">
@@ -83,13 +83,33 @@
                     </div>
                   }
                   @if (step.markdown) {
-                    <tb-markdown usePlainMarkdown [data]="md(step.markdown)" [attr.data-files]="files(step.markdown)" (ready)="decorate()"></tb-markdown>
+                    <tb-markdown usePlainMarkdown [data]="md(step.markdown)" (ready)="decorate()"></tb-markdown>
                   }
                 </div>
               }
             </li>
           }
         </ol>
+      }
+      @if (handOver().test; as test) {
+        <tb-ai-disclosure class="k-test" variant="section" [summary]="'ai-assistant.hand-over.test-first' | translate">
+          @if (test.hint) {
+            <p class="ob-hint">{{ test.hint }}</p>
+          }
+          <div class="k-test-slot"></div>
+          @if (test.outcomes.length) {
+            <tb-ai-disclosure variant="section" [summary]="'ai-assistant.hand-over.what-you-see' | translate">
+              <table class="k-outcomes">
+                @for (outcome of test.outcomes; track $index) {
+                  <tr [class.ok]="outcome.ok" [class.warn]="!outcome.ok">
+                    <td><code>{{ outcome.output }}</code></td>
+                    <td>{{ outcome.meaning }}</td>
+                  </tr>
+                }
+              </table>
+            </tb-ai-disclosure>
+          }
+        </tb-ai-disclosure>
       }
       @if (quiet() || stoppedQuiet()) {
         <div class="k-quiet">
@@ -104,6 +124,11 @@
             <p class="ob-hint">{{ handOver().quiet }}</p>
           }
           <div class="k-chips">
+            @if (canSendTest() && waiting()) {
+              <button type="button" class="ob-chip" [disabled]="testState() === 'sending'" (click)="sendTest()">
+                <mat-icon aria-hidden="true">science</mat-icon>{{ 'ai-assistant.hand-over.send-test-here' | translate }}
+              </button>
+            }
             <button type="button" class="ob-chip" (click)="say('ai-assistant.hand-over.keep-waiting-prompt')">
               <mat-icon aria-hidden="true">check</mat-icon>{{ 'ai-assistant.hand-over.keep-waiting' | translate }}
             </button>
@@ -113,6 +138,7 @@
           </div>
         </div>
       } @else if (waiting()) {
+        <div class="k-waitrow">
         <div class="k-wait" role="status">
           <tb-ai-spin kind="listen" aria-hidden="true"></tb-ai-spin>
           <span class="k-wait-t">{{ waitLabel() }}</span>
@@ -124,6 +150,18 @@
               <mat-icon class="tb-mat-16" aria-hidden="true">stop</mat-icon>
             </button>
           </span>
+        </div>
+        @if (canSendTest()) {
+          <div class="k-chips">
+            <button type="button" class="ob-chip" [disabled]="testState() === 'sending'" (click)="sendTest()"
+                    [matTooltip]="'ai-assistant.hand-over.send-test-tip' | translate" matTooltipPosition="above">
+              <mat-icon aria-hidden="true">science</mat-icon>{{ 'ai-assistant.hand-over.send-test' | translate }}
+            </button>
+          </div>
+        }
+        @if (testNote(); as note) {
+          <p class="k-test-note" [class.warn]="testState() === 'failed'" role="status">{{ note }}</p>
+        }
         </div>
       }
     </div>
