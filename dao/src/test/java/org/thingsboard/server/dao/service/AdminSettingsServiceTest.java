@@ -156,6 +156,9 @@ public class AdminSettingsServiceTest extends AbstractServiceTest {
             restore.setJsonValue(originalSystemJson);
             adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, restore);
         }
+    }
+    
+    @Test
     public void whenUpdatingSettingsOfAnotherTenantById_thenSaveIsRejectedAndStoredSettingsUnchanged() {
         AdminSettings systemSettings = saveSettings(SYSTEM_TENANT_ID, 1);
         AdminSettings systemSettingsCopy = new AdminSettings(systemSettings);
