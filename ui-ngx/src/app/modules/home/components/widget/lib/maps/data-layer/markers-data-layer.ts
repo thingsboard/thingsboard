@@ -447,6 +447,21 @@ class ImageMarkerIconProcessor extends MarkerIconProcessor<MarkerImageSettings> 
 export const createPlaceholderMarkerIcon = (): L.DivIcon =>
   L.divIcon({ html: '', className: 'tb-marker-div-icon', iconSize: [0, 0] });
 
+export const isSameMarkerIcon = (applied: MarkerIconInfo, next: MarkerIconInfo): boolean =>
+  !!applied && (applied === next || (
+    applied.icon.constructor === next.icon.constructor &&
+    isEqual(applied.size, next.size) &&
+    isEqual(applied.icon.options, next.icon.options)
+  ));
+
+const rotationFreeIconOptions = (options: L.DivIconOptions): L.DivIconOptions =>
+  typeof options.html === 'string' ? {...options, html: options.html.replace(/rotate\([^)]*\)/, 'rotate()')} : options;
+
+export const isRotationOnlyIconChange = (applied: MarkerIconInfo, next: MarkerIconInfo): boolean =>
+  !!applied && applied.icon instanceof L.DivIcon && next.icon instanceof L.DivIcon &&
+  isEqual(applied.size, next.size) &&
+  isEqual(rotationFreeIconOptions(applied.icon.options), rotationFreeIconOptions(next.icon.options));
+
 class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettings, TbMarkersDataLayer, L.Marker> {
 
   private marker: L.Marker;
@@ -611,7 +626,7 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
     this.markerIconSubscription?.unsubscribe();
     this.markerIconSubscription = this.dataLayer.dataProcessor.createMarkerIcon(data, dsData).subscribe(
       (iconInfo) => {
-        if (!this.isSameIcon(iconInfo)) {
+        if (!isSameMarkerIcon(this.appliedIconInfo, iconInfo)) {
           let icon: L.Icon | L.DivIcon;
           const options = deepClone(iconInfo.icon.options);
           options.className = this.updateIconClasses(options.className);
@@ -633,19 +648,6 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
         this.updateLabel(data, dsData);
       }
     );
-  }
-
-  private isSameIcon(iconInfo: MarkerIconInfo): boolean {
-    const applied = this.appliedIconInfo;
-    if (!applied) {
-      return false;
-    }
-    if (applied === iconInfo) {
-      return true;
-    }
-    return applied.icon.constructor === iconInfo.icon.constructor &&
-      isEqual(applied.size, iconInfo.size) &&
-      isEqual(applied.icon.options, iconInfo.icon.options);
   }
 
   private updateIconClasses(className: string, toRemove?: string): string {
@@ -676,6 +678,8 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
   public tooltipOffset: L.LatLngTuple;
 
   private markersClusterContainer: L.MarkerClusterGroup;
+  private pendingClusterLayers = new Set<L.Layer>();
+  private removedPendingClusterLayers = new Set<L.Layer>();
   private clusterMarkerColorFunction: CompiledTbFunction<ClusterMarkerColorFunction>;
   private readonly markersPane: string;
 
@@ -793,6 +797,54 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
     super.layerItemsUpdated(updatedItems);
   }
 
+  public removeItem(key: string): void {
+    const layer = this.layerItems.get(key)?.getLayer();
+    if (layer && this.pendingClusterLayers.has(layer)) {
+      this.removedPendingClusterLayers.add(layer);
+    }
+    super.removeItem(key);
+  }
+
+  public getBounds(): L.LatLngBounds {
+    let bounds = super.getBounds();
+    if (this.pendingClusterLayers.size) {
+      const result = new L.LatLngBounds(null, null);
+      if (bounds.isValid()) {
+        result.extend(bounds);
+      }
+      this.pendingClusterLayers.forEach(layer => {
+        if (!this.removedPendingClusterLayers.has(layer)) {
+          result.extend((layer as L.Marker).getLatLng());
+        }
+      });
+      bounds = result;
+    }
+    return bounds;
+  }
+
+  protected addItemsToContainer(items: TbLatestDataLayerItem<MarkersDataLayerSettings, TbMarkersDataLayer, L.Marker>[]): void {
+    if (this.settings.markerClustering?.enable) {
+      const layers = items.map(item => item.getLayer());
+      if (this.settings.markerClustering.chunkedLoad && this.map.getMap().hasLayer(this.markersClusterContainer)) {
+        layers.forEach(layer => this.pendingClusterLayers.add(layer));
+      }
+      try {
+        this.markersClusterContainer.addLayers(layers);
+      } catch (e) {
+        console.warn(e);
+      }
+      items.forEach(item => item.onAddedToContainer());
+    } else {
+      super.addItemsToContainer(items);
+    }
+  }
+
+  private onClusterLayerAdded(layer: L.Layer) {
+    if (this.pendingClusterLayers.delete(layer) && this.removedPendingClusterLayers.delete(layer)) {
+      Promise.resolve().then(() => this.markersClusterContainer.removeLayer(layer));
+    }
+  }
+
   private createMarkersClusterContainer(): L.FeatureGroup {
     const markerClusterOptions: L.MarkerClusterGroupOptions = {
       spiderfyOnMaxZoom: this.settings.markerClustering?.spiderfyOnMaxZoom,
@@ -843,6 +895,7 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
       markerClusterOptions.disableClusteringAtZoom = Math.floor(this.settings.markerClustering.maxZoom);
     }
     this.markersClusterContainer = new L.MarkerClusterGroup(markerClusterOptions);
+    this.markersClusterContainer.on('layeradd', (e: L.LayerEvent) => this.onClusterLayerAdded(e.layer));
     return this.markersClusterContainer;
   }
 

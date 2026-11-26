@@ -14,7 +14,7 @@ import {
   TbMapDatasource
 } from '@shared/models/widget/maps/map.models';
 import {
-  createLabelFromPattern,
+  fillDataPattern,
   guid,
   isDefined,
   isDefinedAndNotNull,
@@ -28,7 +28,7 @@ import L from 'leaflet';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { DataKey, DatasourceType, FormattedData } from '@shared/models/widget.models';
+import { DataKey, DatasourceType, FormattedData, ReplaceInfo } from '@shared/models/widget.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -36,11 +36,15 @@ import { ColorRange } from '@shared/models/widget-settings.models';
 
 const additionalDataArgsRegex = /\b(dsData|ctx|arguments|Date|moment|performance)\b/;
 
+export const tbFunctionUsesAdditionalData = (value: any): boolean => {
+  const body = typeof value === 'string' ? value : value?.body;
+  const hasModules = !!value?.modules && Object.keys(value.modules).length > 0;
+  return typeof body === 'string' && (hasModules || additionalDataArgsRegex.test(body));
+};
+
 const settingsUseAdditionalData = (value: any, key?: string): boolean => {
   if (key?.endsWith('Function')) {
-    const body = typeof value === 'string' ? value : value?.body;
-    const hasModules = !!value?.modules && Object.keys(value.modules).length > 0;
-    return typeof body === 'string' && (hasModules || additionalDataArgsRegex.test(body));
+    return tbFunctionUsesAdditionalData(value);
   }
   if (value && typeof value === 'object') {
     return Object.keys(value).some(k => settingsUseAdditionalData(value[k], k));
@@ -48,15 +52,55 @@ const settingsUseAdditionalData = (value: any, key?: string): boolean => {
   return false;
 };
 
+interface ParsedPatternVariable {
+  variable: string;
+  label: string;
+  valDec: number;
+  keyIndex?: number;
+}
+
+const patternVariableRegex = /\${([^}]*)}/g;
+
+const parsePatternVariables = (pattern: string): ParsedPatternVariable[] => {
+  const variables: ParsedPatternVariable[] = [];
+  if (typeof pattern === 'string') {
+    for (const match of pattern.matchAll(patternVariableRegex)) {
+      let label = match[1];
+      let valDec = 2;
+      const splitValues = label.split(':');
+      if (splitValues.length > 1) {
+        label = splitValues[0];
+        valDec = parseFloat(splitValues[1]);
+      }
+      const variable: ParsedPatternVariable = {variable: match[0], label, valDec};
+      if (label.startsWith('#')) {
+        const keyIndexStr = label.substring(1);
+        const n = Math.floor(Number(keyIndexStr));
+        variable.label = '';
+        if (String(n) === keyIndexStr && n >= 0) {
+          variable.keyIndex = n;
+        }
+      }
+      variables.push(variable);
+    }
+  }
+  return variables;
+};
+
 export class DataLayerPatternProcessor {
+
+  private static readonly PARSED_PATTERN_CACHE_SIZE = 100;
 
   private patternFunction: CompiledTbFunction<MapStringFunction>;
   private pattern: string;
+  private customTranslate: CustomTranslatePipe;
+  private parsedPatterns = new Map<string, ParsedPatternVariable[]>();
 
   constructor(private dataLayer: TbMapDataLayer,
               private settings: DataLayerPatternSettings) {}
 
   public setup(): Observable<void> {
+    this.customTranslate = this.dataLayer.getCtx().$injector.get(CustomTranslatePipe);
     if (this.settings.type === DataLayerPatternType.function) {
       return parseTbFunction<MapStringFunction>(this.dataLayer.getCtx().http, this.settings.patternFunction, ['data', 'dsData', 'ctx']).pipe(
         map((parsed) => {
@@ -77,9 +121,31 @@ export class DataLayerPatternProcessor {
     } else {
       pattern = this.pattern;
     }
-    const text = createLabelFromPattern(pattern, data);
-    const customTranslate = this.dataLayer.getCtx().$injector.get(CustomTranslatePipe);
-    return customTranslate.transform(text);
+    const replaceInfo: ReplaceInfo[] = [];
+    for (const v of this.getParsedPattern(pattern)) {
+      let dataKeyName = v.label;
+      if (v.keyIndex !== undefined) {
+        const dataKey = data.$datasource?.dataKeys?.[v.keyIndex];
+        if (!dataKey) {
+          break;
+        }
+        dataKeyName = dataKey.label;
+      }
+      replaceInfo.push({variable: v.variable, valDec: v.valDec, dataKeyName});
+    }
+    return this.customTranslate.transform(fillDataPattern(pattern, replaceInfo, data));
+  }
+
+  private getParsedPattern(pattern: string): ParsedPatternVariable[] {
+    let parsed = this.parsedPatterns.get(pattern);
+    if (!parsed) {
+      parsed = parsePatternVariables(pattern);
+      if (this.parsedPatterns.size >= DataLayerPatternProcessor.PARSED_PATTERN_CACHE_SIZE) {
+        this.parsedPatterns.delete(this.parsedPatterns.keys().next().value);
+      }
+      this.parsedPatterns.set(pattern, parsed);
+    }
+    return parsed;
   }
 
 }

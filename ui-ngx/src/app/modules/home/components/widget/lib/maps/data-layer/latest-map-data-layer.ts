@@ -48,8 +48,10 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
         this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, data, dsData);
     }
     this.bindEvents();
+  }
+
+  public onAddedToContainer(): void {
     try {
-      this.dataLayer.getDataLayerContainer().addLayer(this.layer);
       this.editModeUpdated();
     } catch (e) {
       console.warn(e);
@@ -341,6 +343,7 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
     const layerData = dsData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
     const toDelete = new Set(Array.from(this.layerItems.keys()));
     const updatedItems: TbLatestDataLayerItem<S,D,L>[] = [];
+    const createdItems: TbLatestDataLayerItem<S,D,L>[] = [];
     layerData.forEach((data) => {
       if (this.isValidLayerData(data)) {
         let layerItem = this.layerItems.get(data.entityId);
@@ -351,6 +354,7 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
         } else {
           layerItem = this.createLayerItem(data, dsData);
           this.layerItems.set(data.entityId, layerItem);
+          createdItems.push(layerItem);
         }
         toDelete.delete(data.entityId);
       } else {
@@ -363,6 +367,9 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
     toDelete.forEach((key) => {
       this.removeItem(key);
     });
+    if (createdItems.length) {
+      this.addItemsToContainer(createdItems);
+    }
     if (updatedItems.length) {
       this.layerItemsUpdated(updatedItems);
     }
@@ -419,11 +426,24 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
       this.unplacedItems.splice(index, 1);
       const layerItem = this.createLayerItem(unplacedItem.entity, this.map.getData());
       this.layerItems.set(unplacedItem.entity.entityId, layerItem);
+      this.addItemsToContainer([layerItem]);
       this.map.enabledDataLayersUpdated();
     }
   }
 
   protected layerItemsUpdated(_updatedItems: TbLatestDataLayerItem<S,D,L>[]): void {
+  }
+
+  protected addItemsToContainer(items: TbLatestDataLayerItem<S,D,L>[]): void {
+    const container = this.getDataLayerContainer();
+    for (const item of items) {
+      try {
+        container.addLayer(item.getLayer());
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    items.forEach(item => item.onAddedToContainer());
   }
 
   private prepareUnplacedItems(): UnplacedMapDataItem[] {
