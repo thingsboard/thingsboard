@@ -38,13 +38,17 @@ public class AppTemplateRegistry {
     public void replace(AgentApplicationType appType, AgentAppConfigType configType,
                         Map<String, AgentAppTemplate> versions, AgentAppTemplate latest) {
         Key key = new Key(appType, configType);
-        byVersion.put(key, Collections.unmodifiableMap(new HashMap<>(versions)));
+        Map<String, AgentAppTemplate> previous = byVersion.put(key, Collections.unmodifiableMap(new HashMap<>(versions)));
         if (latest != null) {
             latestByKey.put(key, latest);
         } else {
             latestByKey.remove(key);
         }
-        log.info("Registered {} template version(s) for app type {} / config type {}", versions.size(), appType, configType);
+        if (previous == null || !previous.keySet().equals(versions.keySet())) {
+            log.info("Registered {} template version(s) for app type {} / config type {}", versions.size(), appType, configType);
+        } else {
+            log.debug("Refreshed {} template version(s) for app type {} / config type {}", versions.size(), appType, configType);
+        }
     }
 
     /**

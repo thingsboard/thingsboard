@@ -5,6 +5,7 @@ package org.thingsboard.server.service.agent.template;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.RegexUtils;
 import org.thingsboard.common.util.TbVersionUtils;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.EdgeUpgradeInfo;
 import org.thingsboard.server.common.data.EdgeUpgradeMessageV2;
 import org.thingsboard.server.common.data.agent.AgentApplicationType;
@@ -47,6 +49,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -71,7 +75,6 @@ public class AgentAppTemplateSyncService {
     private static final int APP_TYPE_GROUP_NUM = 1;
     private static final int CONFIG_TYPE_GROUP_NUM = 2;
     private static final String REPO_KEY = "agent-app-templates";
-    private static final boolean NOTIFY_ON_EVERY_FETCH = true;
     // <basePath>/since/<version>/ holds templates that replace the same-named base ones from that platform version on
     private static final String SINCE_DIR = "since";
     private static final Duration UPDATE_SERVER_CONNECT_TIMEOUT = Duration.ofSeconds(10);
@@ -84,6 +87,9 @@ public class AgentAppTemplateSyncService {
 
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
     private final RestTemplate restClient = newUpdateServerRestTemplate();
+    private final ScheduledExecutorService executor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("agent-app-template-sync");
+
+    private volatile boolean repositorySynced;
 
     @Value("${agents.appTemplates.sync.repoUri:}")
     private String repoUri;
@@ -109,7 +115,32 @@ public class AgentAppTemplateSyncService {
         if (StringUtils.isBlank(branch)) {
             branch = "main";
         }
-        gitSyncService.registerSync(REPO_KEY, repoUri, branch, fetchFrequencyMs, this::update, NOTIFY_ON_EVERY_FETCH);
+        gitSyncService.registerSync(REPO_KEY, repoUri, branch, fetchFrequencyMs, this::onRepositoryUpdate);
+        executor.scheduleWithFixedDelay(this::refresh, fetchFrequencyMs, fetchFrequencyMs, TimeUnit.MILLISECONDS);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        executor.shutdownNow();
+    }
+
+    void onRepositoryUpdate() {
+        repositorySynced = true;
+        executor.execute(this::rebuild);
+    }
+
+    void refresh() {
+        if (repositorySynced) {
+            rebuild();
+        }
+    }
+
+    private void rebuild() {
+        try {
+            update();
+        } catch (Exception e) {
+            log.error("Failed to sync agent app templates", e);
+        }
     }
 
     private void update() {
@@ -142,7 +173,7 @@ public class AgentAppTemplateSyncService {
             }
         }
         templateRegistry.retainOnly(presentKeys);
-        log.info("Agent app template sync completed");
+        log.debug("Agent app template sync completed");
     }
 
     private static RestTemplate newUpdateServerRestTemplate() {

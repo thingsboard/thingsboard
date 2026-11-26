@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.sync;
 
 import jakarta.annotation.PreDestroy;
@@ -39,7 +38,7 @@ public class DefaultGitSyncService implements GitSyncService {
     private final Map<String, RevCommit> lastCommits = new ConcurrentHashMap<>();
 
     @Override
-    public void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate, boolean notifyOnEveryFetch) {
+    public void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate) {
         RepositorySettings settings = new RepositorySettings();
         settings.setRepositoryUri(repoUri);
         settings.setDefaultBranch(branch);
@@ -61,7 +60,7 @@ public class DefaultGitSyncService implements GitSyncService {
             try {
                 log.debug("[{}] Fetching repository", key);
                 boolean updated = repository.fetch();
-                if (updated || notifyOnEveryFetch) {
+                if (updated) {
                     onUpdate(key);
                 } else {
                     log.debug("[{}] No changes in the repository", key);

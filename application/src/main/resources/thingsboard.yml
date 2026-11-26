@@ -1951,7 +1951,7 @@ agents:
       branch: "${AGENT_APP_TEMPLATE_SYNC_BRANCH:main}"
       # Base path within the Git repository where template files are located
       basePath: "${AGENT_APP_TEMPLATE_SYNC_BASE_PATH:templates}"
-      # How often to fetch the Git repository and rebuild the templates from the latest edge/gateway version graphs, in milliseconds
+      # How often to fetch the Git repository and rebuild the templates, in milliseconds; each rebuild also queries the update server for the edge/gateway version graphs
       fetchFrequencyMs: "${AGENT_APP_TEMPLATE_SYNC_FETCH_FREQUENCY_MS:3600000}"
   event:
     # Delay in milliseconds before retrying a push that failed due to backpressure
