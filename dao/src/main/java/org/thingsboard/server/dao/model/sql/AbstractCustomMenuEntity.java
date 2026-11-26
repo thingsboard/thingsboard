@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
-import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.id.CustomMenuId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -49,7 +47,6 @@ public abstract class AbstractCustomMenuEntity<T extends CustomMenuInfo> extends
     @Enumerated(EnumType.STRING)
     private CMAssigneeType assigneeType;
 
-    @Type(StringArrayType.class)
     @Column(name = ModelConstants.CUSTOM_MENU_USER_GROUP_NAMES, columnDefinition = "text[]")
     private String[] userGroupNames;
 

@@ -31,6 +31,15 @@ installDir=${pkg.installFolder}/data
 
 source "${CONF_FOLDER}/${configfile}"
 
+javaenv=${pkg.installFolder}/bin/java-env
+if [ ! -r "$javaenv" ]; then
+    echo "Cannot read $javaenv; reinstall ${pkg.name}." >&2
+    exit 1
+fi
+source "$javaenv"
+
+require_java "$javaexe"
+
 run_user=${pkg.user}
 
 # 4.4 folded the twilio rule nodes into the boot jar; the leftover extension jar is an unrelocated
@@ -38,7 +47,7 @@ run_user=${pkg.user}
 # are upgraded without the deb/rpm control scripts.
 rm -f ${pkg.installFolder}/extensions/rule-node-twilio-sms*.jar
 
-su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
+su -s /bin/sh -c "'$javaexe' -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.data_dir=${installDir} \
                     -Dspring.jpa.hibernate.ddl-auto=none \
                     -Dinstall.upgrade=true \

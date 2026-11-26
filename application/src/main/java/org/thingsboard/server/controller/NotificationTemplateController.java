@@ -106,6 +106,7 @@ public class NotificationTemplateController extends BaseController {
     public NotificationTemplate saveNotificationTemplate(@RequestBody @Valid NotificationTemplate notificationTemplate) throws Exception {
         notificationTemplate.setTenantId(getTenantId());
         checkEntity(notificationTemplate.getId(), notificationTemplate, NOTIFICATION);
+        checkTemplateReportUser(notificationTemplate);
         return doSaveAndLog(EntityType.NOTIFICATION_TEMPLATE, notificationTemplate, notificationTemplateService::saveNotificationTemplate);
     }
 

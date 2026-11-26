@@ -50,7 +50,11 @@ import { RouterModule } from '@angular/router';
 import { ShareButtonDirective } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from '@iplab/ngx-color-picker';
-import { NgxHmCarouselComponent, NgxHmCarouselDynamicDirective, NgxHmCarouselItemDirective } from 'ngx-hm-carousel';
+import {
+  NgxHmCarouselComponent,
+  NgxHmCarouselDynamicDirective,
+  NgxHmCarouselItemDirective
+} from '@shared/components/carousel/carousel.component';
 import { EditorModule, HUGERTE_SCRIPT_SRC } from '@hugerte/hugerte-angular';
 import { HUGERTE_ASSETS_PATH } from '@shared/models/hugerte/hugerte.models';
 import { UserMenuComponent } from '@shared/components/user-menu.component';

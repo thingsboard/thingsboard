@@ -220,7 +220,7 @@ import { ConverterTestDialogComponent } from '@home/components/converter/convert
 import { UpdatedPayloadPanelComponent } from '@home/components/converter/updated-payload-panel.component';
 import { IntegrationComponentModule } from '@home/components/integration/integration-component.module';
 import { MODULES_MAP } from '@shared/models/constants';
-import { modulesMap } from '@modules/common/modules-map';
+import { lazyModulesMap } from '@modules/common/lazy-modules-map';
 import { AlarmAssigneePanelComponent } from '@home/components/alarm/alarm-assignee-panel.component';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { AllEntitiesTableConfigService } from '@home/components/entity/all-entities-table-config.service';
@@ -665,7 +665,7 @@ import { LicenseHandOffDialogComponent } from '@home/components/license/license-
     {provide: COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN, useValue: ComplexFilterPredicateDialogComponent},
     {provide: DASHBOARD_PAGE_COMPONENT_TOKEN, useValue: DashboardPageComponent},
     {provide: HOME_COMPONENTS_MODULE_TOKEN, useValue: HomeComponentsModule },
-    {provide: MODULES_MAP, useValue: modulesMap}
+    {provide: MODULES_MAP, useValue: lazyModulesMap}
   ]
 })
 export class HomeComponentsModule {

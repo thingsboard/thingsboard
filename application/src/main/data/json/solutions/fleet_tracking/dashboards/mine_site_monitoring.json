@@ -21,20 +21,9 @@
             "mapType": "geoMap",
             "layers": [
               {
-                "label": "{i18n:widgets.maps.layer.hybrid}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery",
-                "referenceLayer": "openstreetmap_hybrid"
-              },
-              {
                 "label": "{i18n:widgets.maps.layer.roadmap}",
                 "provider": "openstreet",
                 "layerType": "OpenStreetMap.Mapnik"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.satellite}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery"
               }
             ],
             "imageSource": null,
@@ -1285,20 +1274,9 @@
             "mapType": "geoMap",
             "layers": [
               {
-                "label": "{i18n:widgets.maps.layer.satellite}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery"
-              },
-              {
                 "label": "{i18n:widgets.maps.layer.roadmap}",
                 "provider": "openstreet",
                 "layerType": "OpenStreetMap.Mapnik"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.hybrid}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery",
-                "referenceLayer": "openstreetmap_hybrid"
               }
             ],
             "trips": [
@@ -2765,20 +2743,9 @@
             "mapType": "geoMap",
             "layers": [
               {
-                "label": "{i18n:widgets.maps.layer.satellite}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery"
-              },
-              {
                 "label": "{i18n:widgets.maps.layer.roadmap}",
                 "provider": "openstreet",
                 "layerType": "OpenStreetMap.Mapnik"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.hybrid}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery",
-                "referenceLayer": "openstreetmap_hybrid"
               }
             ],
             "trips": [
@@ -4372,20 +4339,9 @@
             "mapType": "geoMap",
             "layers": [
               {
-                "label": "{i18n:widgets.maps.layer.satellite}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery"
-              },
-              {
                 "label": "{i18n:widgets.maps.layer.roadmap}",
                 "provider": "openstreet",
                 "layerType": "OpenStreetMap.Mapnik"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.hybrid}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery",
-                "referenceLayer": "openstreetmap_hybrid"
               }
             ],
             "imageSource": null,

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.group;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.group.EntityGroupInfo;
@@ -15,6 +16,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface EntityGroupInfoDao extends Dao<EntityGroupInfo> {
+
+    EntityGroupInfo findByTenantIdAndId(TenantId tenantId, UUID entityGroupId);
+
+    ListenableFuture<EntityGroupInfo> findByTenantIdAndIdAsync(TenantId tenantId, UUID entityGroupId);
 
     EntityInfo findEntityGroupEntityInfoById(TenantId tenantId, UUID entityGroupId);
 

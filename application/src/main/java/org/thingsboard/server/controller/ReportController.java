@@ -248,9 +248,10 @@ public class ReportController extends BaseController {
     public ResponseEntity<ByteArrayResource> testReportAndDownload(@RequestBody ReportRequest reportRequest) throws Exception {
         checkFeatureAllowed(PlatformFeature.REPORTING);
         SecurityUser currentUser = getCurrentUser();
-        UserId userId = StringUtils.isNotEmpty(reportRequest.getUserId()) ? new UserId(UUID.fromString(reportRequest.getUserId())) : getCurrentUser().getId();
-        EntityId userOwnerId = ownersCacheService.getOwner(currentUser.getTenantId(), userId);
+        UserId userId = StringUtils.isNotEmpty(reportRequest.getUserId()) ? new UserId(toUUID(reportRequest.getUserId())) : currentUser.getId();
+        checkReportUser(userId);
         checkUserOwnerPermission(currentUser, userId);
+        EntityId userOwnerId = ownersCacheService.getOwner(currentUser.getTenantId(), userId);
         AccessJwtToken accessToken = systemSecurityService.createUserAccessToken(currentUser.getTenantId(), userId);
         ReportTemplateConfig configuration = reportRequest.getReportTemplateConfig();
         if (configuration == null) {
@@ -301,7 +302,8 @@ public class ReportController extends BaseController {
         SecurityUser currentUser = getCurrentUser();
         UserId userId;
         if (StringUtils.isNotEmpty(reportRequest.getUserId())) {
-            userId = new UserId(UUID.fromString(reportRequest.getUserId()));
+            userId = new UserId(toUUID(reportRequest.getUserId()));
+            checkReportUser(userId);
             checkUserOwnerPermission(currentUser, userId);
         } else {
             userId = currentUser.getId();

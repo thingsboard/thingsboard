@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,7 +13,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcType;
-import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonbType;
+import org.hibernate.dialect.type.PostgreSQLJsonPGObjectJsonbType;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;

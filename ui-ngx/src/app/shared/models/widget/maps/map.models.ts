@@ -929,6 +929,7 @@ export enum MapProvider {
   openfreemap = 'openfreemap',
   openstreet = 'openstreet',
   carto = 'carto',
+  esri = 'esri',
   google = 'google',
   here = 'here',
   tencent = 'tencent',
@@ -942,6 +943,7 @@ export const mapProviderTranslationMap = new Map<MapProvider, string>(
     [MapProvider.openfreemap, 'widgets.maps.layer.provider.openfreemap.title'],
     [MapProvider.openstreet, 'widgets.maps.layer.provider.openstreet.title'],
     [MapProvider.carto, 'widgets.maps.layer.provider.carto.title'],
+    [MapProvider.esri, 'widgets.maps.layer.provider.esri.title'],
     [MapProvider.google, 'widgets.maps.layer.provider.google.title'],
     [MapProvider.here, 'widgets.maps.layer.provider.here.title'],
     [MapProvider.tencent, 'widgets.maps.layer.provider.tencent.title'],
@@ -969,6 +971,7 @@ export interface MapLayerSettings {
   label?: string;
   provider: MapProvider;
   referenceLayer?: ReferenceLayerType;
+  referenceLayerApiKey?: string;
 }
 
 export const mapLayerValid = (layer: MapLayerSettings): boolean => {
@@ -985,6 +988,9 @@ export const mapLayerValid = (layer: MapLayerSettings): boolean => {
     case MapProvider.carto:
       const cartoLayer = layer as CartoMapLayerSettings;
       return !!cartoLayer.layerType;
+    case MapProvider.esri:
+      const esriLayer = layer as EsriMapLayerSettings;
+      return !!esriLayer.layerType;
     case MapProvider.google:
       const googleLayer = layer as GoogleMapLayerSettings;
       return !!googleLayer.layerType;
@@ -1024,6 +1030,9 @@ export const defaultLayerTitle = (layer: MapLayerSettings): string => {
     case MapProvider.carto:
       const cartoLayer = layer as CartoMapLayerSettings;
       return cartoLayerTranslationMap.get(cartoLayer.layerType);
+    case MapProvider.esri:
+      const esriLayer = layer as EsriMapLayerSettings;
+      return esriLayerTranslationMap.get(esriLayer.layerType);
     case MapProvider.google:
       const googleLayer = layer as GoogleMapLayerSettings;
       return googleMapLayerTranslationMap.get(googleLayer.layerType);
@@ -1040,10 +1049,7 @@ export const defaultLayerTitle = (layer: MapLayerSettings): string => {
 
 export enum OpenStreetLayerType {
   openStreetMapnik = 'OpenStreetMap.Mapnik',
-  openStreetHot = 'OpenStreetMap.HOT',
-  esriWorldStreetMap = 'Esri.WorldStreetMap',
-  esriWorldTopoMap = 'Esri.WorldTopoMap',
-  esriWorldImagery = 'Esri.WorldImagery'
+  openStreetHot = 'OpenStreetMap.HOT'
 }
 
 export const openStreetLayerTypes = Object.values(OpenStreetLayerType) as OpenStreetLayerType[];
@@ -1051,10 +1057,7 @@ export const openStreetLayerTypes = Object.values(OpenStreetLayerType) as OpenSt
 export const openStreetMapLayerTranslationMap = new Map<OpenStreetLayerType, string>(
   [
     [OpenStreetLayerType.openStreetMapnik, 'widgets.maps.layer.provider.openstreet.mapnik'],
-    [OpenStreetLayerType.openStreetHot, 'widgets.maps.layer.provider.openstreet.hot'],
-    [OpenStreetLayerType.esriWorldStreetMap, 'widgets.maps.layer.provider.openstreet.esri-street'],
-    [OpenStreetLayerType.esriWorldTopoMap, 'widgets.maps.layer.provider.openstreet.esri-topo'],
-    [OpenStreetLayerType.esriWorldImagery, 'widgets.maps.layer.provider.openstreet.esri-imagery']
+    [OpenStreetLayerType.openStreetHot, 'widgets.maps.layer.provider.openstreet.hot']
   ]
 );
 
@@ -1120,6 +1123,34 @@ export const defaultCartoMapLayerSettings: CartoMapLayerSettings = {
   apiKey: null
 }
 
+export enum EsriLayerType {
+  esriWorldImagery = 'Esri.WorldImagery',
+  esriWorldStreetMap = 'Esri.WorldStreetMap',
+  esriWorldTopoMap = 'Esri.WorldTopoMap'
+}
+
+export const esriLayerTypes = Object.values(EsriLayerType) as EsriLayerType[];
+
+export const esriLayerTranslationMap = new Map<EsriLayerType, string>(
+  [
+    [EsriLayerType.esriWorldImagery, 'widgets.maps.layer.provider.openstreet.esri-imagery'],
+    [EsriLayerType.esriWorldStreetMap, 'widgets.maps.layer.provider.openstreet.esri-street'],
+    [EsriLayerType.esriWorldTopoMap, 'widgets.maps.layer.provider.openstreet.esri-topo']
+  ]
+);
+
+export interface EsriMapLayerSettings extends MapLayerSettings {
+  provider: MapProvider.esri;
+  layerType: EsriLayerType;
+  apiKey?: string;
+}
+
+export const defaultEsriMapLayerSettings: EsriMapLayerSettings = {
+  provider: MapProvider.esri,
+  layerType: EsriLayerType.esriWorldImagery,
+  apiKey: null
+};
+
 export enum GoogleLayerType {
   roadmap = 'roadmap',
   satellite = 'satellite',
@@ -1147,7 +1178,7 @@ export interface GoogleMapLayerSettings extends MapLayerSettings {
 export const defaultGoogleMapLayerSettings: GoogleMapLayerSettings = {
   provider: MapProvider.google,
   layerType: GoogleLayerType.roadmap,
-  apiKey: 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q'
+  apiKey: null
 };
 
 export enum HereLayerType {
@@ -1177,7 +1208,7 @@ export interface HereMapLayerSettings extends MapLayerSettings {
 export const defaultHereMapLayerSettings: HereMapLayerSettings = {
   provider: MapProvider.here,
   layerType: HereLayerType.hereNormalDay,
-  apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
+  apiKey: null
 }
 
 const hereV3Variants: {[v2Variant: string]: string} = {
@@ -1229,18 +1260,34 @@ export const defaultCustomMapLayerSettings: CustomMapLayerSettings = {
 }
 
 export const mapProviderHasApiKey = (provider: MapProvider): boolean =>
-  [MapProvider.carto, MapProvider.google, MapProvider.here].includes(provider);
+  [MapProvider.carto, MapProvider.esri, MapProvider.google, MapProvider.here].includes(provider);
 
-export const mapProviderRequiresApiKey = (provider: MapProvider): boolean =>
-  [MapProvider.google, MapProvider.here].includes(provider);
+// An Esri layer uses its own ArcGIS API key for the reference layer too
+export const mapLayerHasReferenceLayerApiKey = (provider: MapProvider, referenceLayer: ReferenceLayerType): boolean =>
+  !!referenceLayer && provider !== MapProvider.esri;
+
+// The API key is optional; without it these providers may limit the layer or its use
+export const mapProviderApiKeyMissingWarningMap = new Map<MapProvider, string>(
+  [
+    [MapProvider.esri, 'widgets.maps.layer.credentials.arcgis-api-key-missing'],
+    [MapProvider.google, 'widgets.maps.layer.credentials.api-key-missing'],
+    [MapProvider.here, 'widgets.maps.layer.credentials.api-key-missing']
+  ]
+);
 
 const legacyOpenStreetCartoLayerTypes = new Set<string>(cartoLayerTypes);
+const legacyOpenStreetEsriLayerTypes = new Set<string>(esriLayerTypes);
 
-// CARTO layers used to be stored under the OpenStreetMap provider, keep reading them as CARTO layers
+// CARTO and Esri layers used to be stored under the OpenStreetMap provider, keep reading them as CARTO and Esri layers
 export const normalizeMapLayerSettings = (layer: MapLayerSettings): MapLayerSettings => {
-  if (layer?.provider === MapProvider.openstreet &&
-    legacyOpenStreetCartoLayerTypes.has((layer as OpenStreetMapLayerSettings).layerType)) {
-    return {...layer, provider: MapProvider.carto};
+  if (layer?.provider === MapProvider.openstreet) {
+    const layerType = (layer as OpenStreetMapLayerSettings).layerType;
+    if (legacyOpenStreetCartoLayerTypes.has(layerType)) {
+      return {...layer, provider: MapProvider.carto};
+    }
+    if (legacyOpenStreetEsriLayerTypes.has(layerType)) {
+      return {...layer, provider: MapProvider.esri};
+    }
   }
   return layer;
 };
@@ -1253,6 +1300,8 @@ export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings
       return defaultOpenStreetMapLayerSettings;
     case MapProvider.carto:
       return defaultCartoMapLayerSettings;
+    case MapProvider.esri:
+      return defaultEsriMapLayerSettings;
     case MapProvider.google:
       return defaultGoogleMapLayerSettings;
     case MapProvider.here:
@@ -1269,18 +1318,7 @@ export const defaultMapLayers: MapLayerSettings[] = [
     label: '{i18n:widgets.maps.layer.roadmap}',
     provider: MapProvider.openfreemap,
     layerType: OpenFreeMapStyleType.bright,
-  } as OpenFreeMapLayerSettings,
-  {
-    label: '{i18n:widgets.maps.layer.satellite}',
-    provider: MapProvider.openstreet,
-    layerType: OpenStreetLayerType.esriWorldImagery,
-  } as OpenStreetMapLayerSettings,
-  {
-    label: '{i18n:widgets.maps.layer.hybrid}',
-    provider: MapProvider.openstreet,
-    layerType: OpenStreetLayerType.esriWorldImagery,
-    referenceLayer: ReferenceLayerType.openstreetmap_hybrid
-  } as OpenStreetMapLayerSettings
+  } as OpenFreeMapLayerSettings
 ];
 
 export interface GeoMapSettings extends BaseMapSettings {

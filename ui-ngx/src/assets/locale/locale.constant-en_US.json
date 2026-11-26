@@ -16960,6 +16960,7 @@
                 "webgl-not-available": "The selected map layer requires graphics acceleration to display. Please enable 'Hardware acceleration' in your browser settings, or switch to a different layer.",
                 "reference": {
                     "reference-layer": "Reference layer",
+                    "api-key": "ArcGIS API Key",
                     "no-layer": "No layer",
                     "openstreetmap-hybrid": "OpenStreetMap Hybrid",
                     "world-edition-hybrid": "World Edition Hybrid",
@@ -16979,6 +16980,9 @@
                         "title": "CARTO",
                         "positron": "Positron",
                         "dark-matter": "DarkMatter"
+                    },
+                    "esri": {
+                        "title": "Esri"
                     },
                     "google": {
                         "title": "Google",
@@ -17018,7 +17022,9 @@
                 },
                 "credentials": {
                     "credentials": "Credentials",
-                    "api-key": "API Key"
+                    "api-key": "API Key",
+                    "api-key-missing": "Without an API key, the provider may not show this layer or may show it with a watermark. Specify your API key.",
+                    "arcgis-api-key-missing": "Without an ArcGIS API key, the layer is loaded from the public ArcGIS Online services. The Esri terms of use may require an ArcGIS account for your use of this content. Specify your ArcGIS API key."
                 }
             },
             "overlays": {

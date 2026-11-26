@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.subscription.PlatformFeature;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -61,6 +62,7 @@ public class DashboardReportController extends BaseController {
     private final SystemSecurityService systemSecurityService;
 
     public static final String DASHBOARD_ID = "dashboardId";
+    public static final String USER_ID = "userId";
 
     @ApiOperation(value = "Download dashboard report (downloadDashboardReport)",
             notes = "Generate and download a report from the specified dashboard. " +
@@ -125,6 +127,14 @@ public class DashboardReportController extends BaseController {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             checkDashboardInfoId(dashboardId, Operation.READ);
 
+            String strUserId = reportConfig.getUserId();
+            checkParameter(USER_ID, strUserId);
+            UserId reportUserId = resolveReportUser(new UserId(toUUID(strUserId)), reportConfig.isUseCurrentUserCredentials());
+            reportConfig.setUserId(reportUserId.toString());
+
+            if (Authority.CUSTOMER_USER.equals(getCurrentUser().getAuthority())) {
+                reportsServerEndpointUrl = null;
+            }
             dashboardReportService.generateReport(getTenantId(), reportConfig, reportsServerEndpointUrl, onSuccess(result), result::setErrorResult);
         } catch (Exception e) {
             result.setErrorResult(e);

@@ -283,6 +283,9 @@ public class NotificationController extends BaseController {
         }
         notificationRequest.setTenantId(user.getTenantId());
         checkEntity(notificationRequest.getId(), notificationRequest, NOTIFICATION);
+        checkTemplateReportUser(notificationRequest.getTemplateId() != null ?
+                notificationTemplateService.findNotificationTemplateById(user.getTenantId(), notificationRequest.getTemplateId()) :
+                notificationRequest.getTemplate());
         List<NotificationTargetId> targets = notificationRequest.getTargets().stream()
                 .map(NotificationTargetId::new)
                 .toList();

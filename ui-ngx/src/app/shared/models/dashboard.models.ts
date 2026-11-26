@@ -254,3 +254,6 @@ export const isCurrentPublicDashboardCustomer = (dashboard: DashboardInfo, custo
     return false;
   }
 };
+
+export const maxGridsterCol = 3000;
+export const maxGridsterRow = 3000;
