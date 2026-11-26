@@ -14,14 +14,20 @@ export enum TooltipPasswordErrorMessageKey {
   hasWhitespaces = 'security.password-requirement.password-should-not-contain-spaces'
 }
 
-export const passwordErrorRules = [
-  { key: 'minLength', policyProp: 'minimumLength', translation: TooltipPasswordErrorMessageKey.minLength },
-  { key: 'notUpperCase', policyProp: 'minimumUppercaseLetters', translation: TooltipPasswordErrorMessageKey.notUpperCase },
-  { key: 'notLowerCase', policyProp: 'minimumLowercaseLetters', translation: TooltipPasswordErrorMessageKey.notLowerCase },
-  { key: 'notNumeric', policyProp: 'minimumDigits', translation: TooltipPasswordErrorMessageKey.notNumeric },
-  { key: 'notSpecial', policyProp: 'minimumSpecialCharacters', translation: TooltipPasswordErrorMessageKey.notSpecial },
-  { key: 'maxLength', policyProp: 'maximumLength', translation: TooltipPasswordErrorMessageKey.maxLength },
-  { key: 'hasWhitespaces', policyProp: 'hasWhitespaces', translation: TooltipPasswordErrorMessageKey.hasWhitespaces },
+export interface PasswordErrorRule {
+  key: string;
+  translation: TooltipPasswordErrorMessageKey;
+  applies: (policy: UserPasswordPolicy) => boolean;
+}
+
+export const passwordErrorRules: PasswordErrorRule[] = [
+  { key: 'minLength', translation: TooltipPasswordErrorMessageKey.minLength, applies: policy => policy?.minimumLength > 0 },
+  { key: 'notUpperCase', translation: TooltipPasswordErrorMessageKey.notUpperCase, applies: policy => policy?.minimumUppercaseLetters > 0 },
+  { key: 'notLowerCase', translation: TooltipPasswordErrorMessageKey.notLowerCase, applies: policy => policy?.minimumLowercaseLetters > 0 },
+  { key: 'notNumeric', translation: TooltipPasswordErrorMessageKey.notNumeric, applies: policy => policy?.minimumDigits > 0 },
+  { key: 'notSpecial', translation: TooltipPasswordErrorMessageKey.notSpecial, applies: policy => policy?.minimumSpecialCharacters > 0 },
+  { key: 'maxLength', translation: TooltipPasswordErrorMessageKey.maxLength, applies: policy => policy?.maximumLength > 0 },
+  { key: 'hasWhitespaces', translation: TooltipPasswordErrorMessageKey.hasWhitespaces, applies: policy => policy?.allowWhitespaces === false },
 ];
 
 export const passwordsMatchValidator = (firstControlName: string, secondControlName: string): ValidatorFn =>{
