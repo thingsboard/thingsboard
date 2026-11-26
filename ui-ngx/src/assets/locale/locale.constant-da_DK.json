@@ -5635,8 +5635,6 @@
     "access-id-required": "Adgangs-ID er påkrævet.",
     "access-key": "Adgangsnøgle",
     "access-key-required": "Adgangsnøgle er påkrævet.",
-    "access-key-min-length": "Adgangsnøglen er for kort.",
-    "access-key-max-length": "Adgangsnøglen er for lang.",
     "connection-parameters": "Forbindelsesparametre",
     "service-bus-namespace-name": "Service Bus Namespace-navn",
     "service-bus-namespace-name-required": "Service Bus Namespace-navn er påkrævet.",

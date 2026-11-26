@@ -5633,8 +5633,6 @@
     "access-id-required": "Se requiere el ID de acceso.",
     "access-key": "Clave de acceso",
     "access-key-required": "Se requiere la clave de acceso.",
-    "access-key-min-length": "La clave de acceso es demasiado corta.",
-    "access-key-max-length": "La clave de acceso es demasiado larga.",
     "connection-parameters": "Parámetros de conexión",
     "service-bus-namespace-name": "Nombre del espacio de nombres del Service Bus",
     "service-bus-namespace-name-required": "Se requiere el nombre del espacio de nombres del Service Bus.",

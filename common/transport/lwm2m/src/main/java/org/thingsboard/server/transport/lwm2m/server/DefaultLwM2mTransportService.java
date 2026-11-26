@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.server;
 
 import jakarta.annotation.PreDestroy;
@@ -108,6 +109,10 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
 
     @PreDestroy
     public void shutdown() {
+        LeshanServer server = this.server;
+        if (server == null) {
+            return;
+        }
         try {
             log.info("Stopping LwM2M transport server!");
             server.destroy();

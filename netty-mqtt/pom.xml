@@ -84,17 +84,12 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>software.xdev</groupId>
-            <artifactId>testcontainers-junit4-mock</artifactId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>hivemq</artifactId>
+            <artifactId>testcontainers-hivemq</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

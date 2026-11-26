@@ -5670,8 +5670,6 @@
     "access-id-required": "ऐक्सेस ID आवश्यक है।",
     "access-key": "ऐक्सेस कुंजी",
     "access-key-required": "ऐक्सेस कुंजी आवश्यक है।",
-    "access-key-min-length": "ऐक्सेस कुंजी बहुत छोटी है।",
-    "access-key-max-length": "ऐक्सेस कुंजी बहुत लंबी है।",
     "connection-parameters": "कनेक्शन पैरामीटर",
     "service-bus-namespace-name": "Service Bus नेमस्पेस नाम",
     "service-bus-namespace-name-required": "Service Bus नेमस्पेस नाम आवश्यक है।",

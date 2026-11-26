@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.device;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -15,6 +16,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -110,6 +112,21 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
         device.setName(device.getName() + "x");
         device = saveDevice(tenantId1, device);
         assertThat(device.getVersion()).isEqualTo(3);
+    }
+
+    @Test
+    public void testSaveDevice_presetId_staleVersionRejected() {
+        Device device = getDevice(tenantId1, customerId1, "preset-id-stale");
+        device = saveDevice(tenantId1, device);
+        deviceIds.add(device.getUuidId());
+
+        Device stale = new Device(device);
+        stale.setVersion(device.getVersion());
+        device.setName(device.getName() + "x");
+        saveDevice(tenantId1, device);
+
+        stale.setName(stale.getName() + "y");
+        assertThatThrownBy(() -> saveDevice(tenantId1, stale)).isInstanceOf(EntityVersionMismatchException.class);
     }
 
     @Test

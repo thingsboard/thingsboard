@@ -5633,8 +5633,6 @@
     "access-id-required": "Toegangs-ID is verplicht.",
     "access-key": "Toegangssleutel",
     "access-key-required": "Toegangssleutel is verplicht.",
-    "access-key-min-length": "Toegangssleutel is te kort.",
-    "access-key-max-length": "Toegangssleutel is te lang.",
     "connection-parameters": "Verbindingsparameters",
     "service-bus-namespace-name": "Service Bus Namespace Naam",
     "service-bus-namespace-name-required": "Naam van Service Bus-namespace is verplicht.",

@@ -96,8 +96,7 @@ interface DashboardWidgetUpdateRecord {
   operation: DashboardWidgetUpdateOperation;
 }
 
-export const maxGridsterCol = 3000;
-export const maxGridsterRow = 3000;
+export { maxGridsterCol, maxGridsterRow } from '@shared/models/dashboard.models';
 
 export class DashboardWidgets implements Iterable<DashboardWidget> {
 

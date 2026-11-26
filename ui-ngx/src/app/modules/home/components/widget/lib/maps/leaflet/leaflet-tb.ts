@@ -1093,6 +1093,9 @@ const chinaProvider = (type: string, options?: L.TileLayerOptions): L.TB.TileLay
 // The worker is copied to assets by angular.json, bundlers cannot resolve it from import.meta.url
 setWorkerUrl(new URL('assets/maplibre-gl/maplibre-gl-worker.mjs', document.baseURI).href);
 
+// Same as MapLibre's own default maxZoom
+const MAP_LIBRE_GL_DEFAULT_MAX_ZOOM = 22;
+
 class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
 
   options: TB.MapLibreGL.LeafletMapLibreGLMapOptions;
@@ -1107,16 +1110,23 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
 
   constructor(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions) {
     super();
-    options = {...options, ...{
-        updateInterval: 32,
-        padding: 0.1,
-        interactive: false,
-        pane: 'tilePane'
-    }};
+    options = {
+      maxZoom: MAP_LIBRE_GL_DEFAULT_MAX_ZOOM,
+      ...options,
+      updateInterval: 32,
+      padding: 0.1,
+      interactive: false,
+      pane: 'tilePane'
+    };
     options.attribution = this._loadAttribution(options);
     this._prepareTransformRequest(options);
     L.setOptions(this, options);
     this._throttledUpdate = L.Util.throttle(this._update, this.options.updateInterval, this);
+  }
+
+  beforeAdd(map: L.Map): this {
+    map._addZoomLimit(this);
+    return this;
   }
 
   onAdd(map: L.Map): this {

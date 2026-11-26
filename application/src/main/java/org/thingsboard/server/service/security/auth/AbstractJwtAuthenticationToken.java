@@ -1,10 +1,14 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
+
+import java.util.Collection;
 
 public abstract class AbstractJwtAuthenticationToken extends AbstractAuthenticationToken {
 
@@ -14,7 +18,7 @@ public abstract class AbstractJwtAuthenticationToken extends AbstractAuthenticat
     private SecurityUser securityUser;
 
     public AbstractJwtAuthenticationToken(RawAccessJwtToken unsafeToken) {
-        super(null);
+        super((Collection<? extends GrantedAuthority>) null);
         this.rawAccessToken = unsafeToken;
         this.setAuthenticated(false);
     }

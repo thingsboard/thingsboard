@@ -5660,8 +5660,6 @@
         "access-id-required": "ID za dostop je obvezen.",
         "access-key": "Ključ za dostop",
         "access-key-required": "Ključ za dostop je obvezen.",
-        "access-key-min-length": "Ključ za dostop je prekratek.",
-        "access-key-max-length": "Ključ za dostop je predolg.",
         "connection-parameters": "Parametri povezave",
         "service-bus-namespace-name": "Ime imenskega prostora Service Bus",
         "service-bus-namespace-name-required": "Ime imenskega prostora Service Bus je obvezno.",

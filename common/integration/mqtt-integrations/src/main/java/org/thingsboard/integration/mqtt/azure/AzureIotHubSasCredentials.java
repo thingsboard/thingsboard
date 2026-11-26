@@ -7,7 +7,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.codec.binary.Base64;
+import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.thingsboard.common.util.AzureIotHubUtil;
 import org.thingsboard.integration.mqtt.credentials.MqttClientCredentials;
@@ -39,6 +39,7 @@ public class AzureIotHubSasCredentials implements MqttClientCredentials {
                 caCert = AzureIotHubUtil.getDefaultCaCert();
             }
             return Optional.of(SslContextBuilder.forClient()
+                    .endpointIdentificationAlgorithm(null)
                     .trustManager(createAndInitTrustManagerFactory())
                     .clientAuth(ClientAuth.REQUIRE)
                     .build());

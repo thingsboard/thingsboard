@@ -433,7 +433,8 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             });
         }
         List<EntityId> stepEntityIds = new ArrayList<>();
-        Map<UUID, EntityId> usedExistingIds = usedExistingIds(previous);
+        Map<UUID, EntityId> usedExistingIds = new LinkedHashMap<>();
+        previous.getUsedExistingEntityIdsIncludingLegacy().forEach(id -> usedExistingIds.put(id.getId(), id));
         List<SavedEntity> saved = new ArrayList<>();
         List<SavedEntity> grouped = new ArrayList<>();
         List<DevicePackageRequest.Step> connectorSteps = new ArrayList<>();
@@ -1091,29 +1092,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
      */
     private static Set<UUID> ownedIds(DeviceInstalledItemDescriptor descriptor) {
         Set<UUID> ids = new HashSet<>(createdIds(descriptor).keySet());
-        ids.removeAll(usedExistingIds(descriptor).keySet());
-        return ids;
-    }
-
-    /**
-     * The entities the user chose to use as they were. An install made before the descriptor kept them has them only in
-     * its install state, which the first update carries over into the descriptor.
-     */
-    private static Map<UUID, EntityId> usedExistingIds(DeviceInstalledItemDescriptor descriptor) {
-        Map<UUID, EntityId> ids = new LinkedHashMap<>();
-        if (descriptor.getUsedExistingEntityIds() != null) {
-            descriptor.getUsedExistingEntityIds().forEach(id -> ids.put(id.getId(), id));
-            return ids;
-        }
-        Map<UUID, EntityId> createdIds = createdIds(descriptor);
-        if (descriptor.getInstallState() != null) {
-            descriptor.getInstallState().values().forEach(state -> {
-                UUID id = toUuid(state.path("entityOutput").path("id").asText());
-                if (id != null && "use-existing".equals(state.path("resolution").asText()) && createdIds.containsKey(id)) {
-                    ids.put(id, createdIds.get(id));
-                }
-            });
-        }
+        descriptor.getUsedExistingEntityIdsIncludingLegacy().forEach(id -> ids.remove(id.getId()));
         return ids;
     }
 

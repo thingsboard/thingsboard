@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.config;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,8 +18,8 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.UrlUtils;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.UriComponents;
@@ -50,7 +51,7 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
     private static final String REGISTRATION_ID_URI_VARIABLE_NAME = "registrationId";
     private static final char PATH_DELIMITER = '/';
 
-    private final AntPathRequestMatcher authorizationRequestMatcher = new AntPathRequestMatcher(
+    private final PathPatternRequestMatcher authorizationRequestMatcher = PathPatternRequestMatcher.withDefaults().matcher(
             DEFAULT_AUTHORIZATION_REQUEST_BASE_URI + "/{" + REGISTRATION_ID_URI_VARIABLE_NAME + "}");
     private final StringKeyGenerator stateGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
     private final StringKeyGenerator secureKeyGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
@@ -212,7 +213,7 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         Map<String, String> uriVariables = new HashMap<>();
         uriVariables.put("registrationId", clientRegistration.getRegistrationId());
 
-        UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
+        UriComponents uriComponents = UriComponentsBuilder.fromUriString(UrlUtils.buildFullRequestUrl(request))
                 .replacePath(request.getContextPath())
                 .replaceQuery(null)
                 .fragment(null)

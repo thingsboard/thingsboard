@@ -5644,8 +5644,6 @@
     "access-id-required": "Tilgangs-ID er påkrevd.",
     "access-key": "Tilgangsnøkkel",
     "access-key-required": "Tilgangsnøkkel er påkrevd.",
-    "access-key-min-length": "Tilgangsnøkkel er for kort.",
-    "access-key-max-length": "Tilgangsnøkkel er for lang.",
     "connection-parameters": "Tilkoblingsparametere",
     "service-bus-namespace-name": "Navn på Service Bus-navneområde",
     "service-bus-namespace-name-required": "Navn på Service Bus-navneområde er påkrevd.",

@@ -62,12 +62,11 @@ export interface DevicePackageStep {
   serverAttributes?: any;
   sharedAttributes?: any;
   resolution?: string;
-  // The package step's stable id, so that a next version can rename the step. When set it is also the step's install
-  // state key: the default converter update sends the stored key here to write the state back under it
+  // The package step's stable id, so that a next version can rename the step. When set it is also the step's install state key
   id?: string;
   // INTEGRATION: the step's metadata entries, which a KEEP merges into the integration; null removes an entry
   metadata?: Record<string, string | null>;
-  // The step takes ThingsBoard's default converter: its install state says so, for the update check
+  // The step takes ThingsBoard's default converter: its install state says so
   defaultConverter?: boolean;
 }
 

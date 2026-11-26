@@ -5633,8 +5633,6 @@
     "access-id-required": "Потрібно вказати Access Id.",
     "access-key": "Access Key",
     "access-key-required": "Потрібно вказати Access Key.",
-    "access-key-min-length": "Access Key занадто короткий.",
-    "access-key-max-length": "Access Key занадто довгий.",
     "connection-parameters": "Параметри підключення",
     "service-bus-namespace-name": "Назва простору імен Service Bus",
     "service-bus-namespace-name-required": "Потрібно вказати назву простору імен Service Bus.",

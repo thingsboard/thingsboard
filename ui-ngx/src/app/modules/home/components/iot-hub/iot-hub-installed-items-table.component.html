@@ -7,7 +7,7 @@
 -->
 <div class="tb-installed-table-container flex flex-1 flex-col overflow-hidden rounded-lg">
   <div class="tb-installed-table-wrapper flex flex-1 flex-col overflow-auto">
-    <table mat-table [dataSource]="dataSource" matSort matSortActive="createdTime" matSortDirection="desc">
+    <table mat-table [dataSource]="dataSource" matSort matSortActive="createdTime" matSortDirection="desc" matSortDisableClear>
       <!-- Name -->
       <ng-container matColumnDef="itemName">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'iot-hub.item-name' | translate }}</th>
@@ -56,12 +56,6 @@
                   </button>
                 }
               </div>
-            } @else if (hasConverterUpdate(item)) {
-              <!-- Only ThingsBoard's default converter changed: the package has no new version for it -->
-              <button mat-stroked-button color="warn" class="tb-installed-update-btn" (click)="updateConverter(item)">
-                <mat-icon>arrow_upward</mat-icon>
-                {{ 'iot-hub.new-converter-available' | translate }}
-              </button>
             } @else {
               <span class="tb-installed-up-to-date">
                 <mat-icon>check</mat-icon>

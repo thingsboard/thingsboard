@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.install;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.dao.sql.citus.CitusSchemaService;
@@ -26,6 +31,7 @@ import org.thingsboard.server.service.install.TsDatabaseSchemaService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
@@ -187,6 +193,34 @@ class ThingsboardInstallServiceTest {
                 .hasCauseInstanceOf(EntityCapExceededException.class);
         verify(cacheCleanupService, never()).clearCache();
         verify(databaseEntitiesUpgradeService, never()).upgradeDatabase(anyBoolean());
+    }
+
+    @Test
+    void anErrorDuringAFreshInstallIsReportedAsAnInstallFailure() throws Exception {
+        ReflectionTestUtils.setField(installService, "isUpgrade", false);
+        ExceptionInInitializerError error = new ExceptionInInitializerError("Fontconfig head is null");
+        doThrow(error).when(systemDataLoaderService).loadSystemWidgets();
+        Logger logger = (Logger) LoggerFactory.getLogger(ThingsboardInstallService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            assertThatThrownBy(() -> installService.performInstall())
+                    .isInstanceOf(ThingsboardInstallException.class)
+                    .hasCause(error);
+
+            assertThat(appender.list)
+                    .filteredOn(e -> e.getLevel() == Level.ERROR)
+                    .singleElement()
+                    .satisfies(e -> {
+                        assertThat(e.getFormattedMessage()).isEqualTo("Unexpected error during ThingsBoard installation!");
+                        assertThat(e.getThrowableProxy().getClassName()).isEqualTo(ExceptionInInitializerError.class.getName());
+                        assertThat(e.getThrowableProxy().getMessage()).isEqualTo("Fontconfig head is null");
+                        assertThat(e.getThrowableProxy().getStackTraceElementProxyArray()).isNotEmpty();
+                    });
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     @Test

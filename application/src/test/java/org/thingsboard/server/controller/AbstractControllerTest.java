@@ -7,9 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
@@ -63,7 +63,8 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
 
     public static final String WS_URL = "ws://localhost:";
 
-    @LocalServerPort
+    // This class is also the context's configuration bean, which is created before the server port is known
+    @Value("${local.server.port:0}")
     protected int serverPort;
 
     protected volatile TbTestWebSocketClient wsClient; // lazy
