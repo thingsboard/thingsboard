@@ -1076,14 +1076,17 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     this.installedEntityOutputs().forEach((output, alias) => this.entityOutputs.set(alias, output));
   }
 
-  /** The outputs of the installed package's entity steps, by alias, as its install state records them. */
+  /**
+   * The outputs of the installed package's entity steps, by alias, as its install state records them.
+   * The server records no URL, so it is added here: review mode opens the dashboard or device with it.
+   */
   private installedEntityOutputs(): Map<string, EntityStepOutput> {
     const outputs = new Map<string, EntityStepOutput>();
     for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] || []) {
       const alias = stepTypeAliasMap[step.type];
       const output = alias ? this.storedStateOf(step)?.state.entityOutput : undefined;
       if (output) {
-        outputs.set(alias, output);
+        outputs.set(alias, this.withEntityUrl(step, output));
       }
     }
     return outputs;
