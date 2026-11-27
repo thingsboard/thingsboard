@@ -75,7 +75,6 @@ export const updateTooltip = (map: TbMap<any>,
                               dsData: FormattedData<TbMapDatasource>[]): void => {
   tooltipStates.set(tooltip, {processor, data, content: tooltipStates.get(tooltip)?.content});
   if (tooltip.isOpen()) {
-    // Rebuilding the popup DOM on every update can replace an action button between mousedown and mouseup
     if (renderTooltip(tooltip, dsData) && tooltip.getElement()) {
       bindTooltipActions(map, tooltip, settings, data);
     }
@@ -106,7 +105,6 @@ const bindTooltipActions = (map: TbMap<any>, tooltip: L.Popup, settings: DataLay
         if (action) {
           element.onclick = ($event) =>
           {
-            // Handlers survive updates that don't change the content, so take the latest data
             map.dataItemClick($event, action, tooltipStates.get(tooltip)?.data ?? data);
             return false;
           };

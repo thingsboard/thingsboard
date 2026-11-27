@@ -1330,7 +1330,6 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     if (this._ownMaxBounds && map.options.maxBounds === this._ownMaxBounds) {
       map.setMaxBounds(null);
       map.options.maxBoundsViscosity = this._prevMaxBoundsViscosity;
-      // A base layer added before this one was removed (layer switch) skipped its own limit, hand it over
       let handedOff = false;
       map.eachLayer((layer) => {
         if (!handedOff && layer !== this && layer instanceof MapLibreGLLayer && !layer.options.overlay) {
