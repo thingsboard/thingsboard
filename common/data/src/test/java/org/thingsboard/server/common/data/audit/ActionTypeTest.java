@@ -15,6 +15,9 @@ import static org.thingsboard.server.common.data.audit.ActionType.ALARM_CLEAR;
 import static org.thingsboard.server.common.data.audit.ActionType.ALARM_DELETE;
 import static org.thingsboard.server.common.data.audit.ActionType.ALARM_UNASSIGNED;
 import static org.thingsboard.server.common.data.audit.ActionType.ATTRIBUTES_READ;
+import static org.thingsboard.server.common.data.audit.ActionType.COMMUNITY_GRANT_ENROLLMENT;
+import static org.thingsboard.server.common.data.audit.ActionType.COMMUNITY_GRANT_OFFLINE_CHECKER_RUN;
+import static org.thingsboard.server.common.data.audit.ActionType.COMMUNITY_GRANT_REQUEST_ACCESS;
 import static org.thingsboard.server.common.data.audit.ActionType.CREDENTIALS_READ;
 import static org.thingsboard.server.common.data.audit.ActionType.CREDENTIALS_UPDATED;
 import static org.thingsboard.server.common.data.audit.ActionType.DELETED_COMMENT;
@@ -40,7 +43,10 @@ class ActionTypeTest {
             LOCKOUT,
             DELETED_COMMENT,
             SMS_SENT,
-            REST_API_RULE_ENGINE_CALL
+            REST_API_RULE_ENGINE_CALL,
+            COMMUNITY_GRANT_OFFLINE_CHECKER_RUN,
+            COMMUNITY_GRANT_REQUEST_ACCESS,
+            COMMUNITY_GRANT_ENROLLMENT
     );
 
     private final Set<ActionType> alarmActionTypes = EnumSet.of(

@@ -3,12 +3,16 @@
 package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -23,6 +27,8 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
     private final EntityViewDao entityViewDao;
     private final TenantService tenantService;
     private final CustomerDao customerDao;
+    @Lazy
+    private final EntityService entityService;
 
     @Override
     protected void validateCreate(TenantId tenantId, EntityView entityView) {
@@ -53,6 +59,21 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
             if (!tenantService.tenantExists(entityView.getTenantId())) {
                 throw new DataValidationException("Entity view is referencing to non-existent tenant!");
             }
+        }
+        if (entityView.getEntityId() == null) {
+            throw new DataValidationException("Entity view should be assigned to entity!");
+        }
+        HasId<?> entity;
+        try {
+            entity = entityService.fetchEntity(entityView.getTenantId(), entityView.getEntityId()).orElse(null);
+        } catch (IllegalArgumentException e) {
+            entity = null;
+        }
+        if (entity == null) {
+            throw new DataValidationException("Entity view is referencing to non-existent entity!");
+        }
+        if (!(entity instanceof HasTenantId hasTenantId) || !entityView.getTenantId().equals(hasTenantId.getTenantId())) {
+            throw new DataValidationException("Can't assign entity view to entity from different tenant!");
         }
         if (entityView.getCustomerId() == null) {
             entityView.setCustomerId(new CustomerId(NULL_UUID));

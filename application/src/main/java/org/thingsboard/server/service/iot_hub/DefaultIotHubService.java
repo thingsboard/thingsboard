@@ -12,12 +12,16 @@ import org.springframework.web.client.RestClientException;
 import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -231,6 +235,7 @@ public class DefaultIotHubService implements IotHubService {
         }
         calculatedField.setId(null);
         calculatedField.setTenantId(tenantId);
+        mapTenantReferences(calculatedField, tenantId);
         if (data != null && data.has("entityId")) {
             EntityId entityId = JacksonUtil.treeToValue(data.get("entityId"), EntityId.class);
             calculatedField.setEntityId(entityId);
@@ -255,6 +260,7 @@ public class DefaultIotHubService implements IotHubService {
         }
         alarmRule.setId(null);
         alarmRule.setTenantId(tenantId);
+        mapTenantReferences(alarmRule, tenantId);
         if (data != null && data.has("entityId")) {
             EntityId entityId = JacksonUtil.treeToValue(data.get("entityId"), EntityId.class);
             alarmRule.setEntityId(entityId);
@@ -496,6 +502,7 @@ public class DefaultIotHubService implements IotHubService {
         existing.setName(newCf.getName());
         existing.setType(newCf.getType());
         existing.setConfiguration(newCf.getConfiguration());
+        mapTenantReferences(existing, tenantId);
         tbCalculatedFieldService.save(existing, user);
     }
 
@@ -516,7 +523,24 @@ public class DefaultIotHubService implements IotHubService {
         existing.setName(newCf.getName());
         existing.setType(newCf.getType());
         existing.setConfiguration(newCf.getConfiguration());
+        mapTenantReferences(existing, tenantId);
         tbCalculatedFieldService.save(existing, user);
+    }
+
+    private void mapTenantReferences(CalculatedField calculatedField, TenantId tenantId) {
+        if (calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration geofencingCfg) {
+            geofencingCfg.getZoneGroups().values().forEach(zoneGroupConfiguration -> {
+                if (zoneGroupConfiguration.getRefEntityId() != null && zoneGroupConfiguration.getRefEntityId().getEntityType() == EntityType.TENANT) {
+                    zoneGroupConfiguration.setRefEntityId(tenantId);
+                }
+            });
+        } else if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
+            argBasedConfig.getArguments().values().forEach(argument -> {
+                if (argument.getRefEntityId() != null && argument.getRefEntityId().getEntityType() == EntityType.TENANT) {
+                    argument.setRefEntityId(tenantId);
+                }
+            });
+        }
     }
 
     private void updateRuleChain(TenantId tenantId, RuleChainInstalledItemDescriptor descriptor, byte[] fileData) throws Exception {
@@ -639,6 +663,8 @@ public class DefaultIotHubService implements IotHubService {
             String itemName = versionInfo.get("name").asText();
             UUID itemId = UUID.fromString(versionInfo.get("itemId").asText());
             String version = versionInfo.get("version").asText();
+
+            validateDevicePackageEntities(tenantId, descriptor);
 
             // An item replaced in the meantime (deleted from another tab) leaves a new one: the entities stay tracked.
             IotHubInstalledItem installedItem = replaceInstalledItemId != null
@@ -909,25 +935,47 @@ public class DefaultIotHubService implements IotHubService {
         return entity != null && tenantId.equals(entity.getTenantId());
     }
 
+    private void validateDevicePackageEntities(TenantId tenantId, DeviceInstalledItemDescriptor descriptor) {
+        if (descriptor == null) {
+            throw new IllegalArgumentException("Device package descriptor is required");
+        }
+        List<EntityId> entityIds = new ArrayList<>();
+        if (descriptor.getCreatedEntityIds() != null) {
+            entityIds.addAll(descriptor.getCreatedEntityIds());
+        }
+        if (descriptor.getDashboardId() != null) {
+            entityIds.add(descriptor.getDashboardId());
+        }
+        for (EntityId entityId : entityIds) {
+            if (entityId == null || findDevicePackageEntity(tenantId, entityId) == null) {
+                throw new IllegalArgumentException("Device package entity not found: " + entityId);
+            }
+        }
+    }
+
+    private HasTenantId findDevicePackageEntity(TenantId tenantId, EntityId entityId) {
+        HasTenantId entity = switch (entityId.getEntityType()) {
+            case DEVICE -> deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
+            case DEVICE_PROFILE -> deviceProfileService.findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId()));
+            case DASHBOARD -> dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId()));
+            case RULE_CHAIN -> ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
+            default -> null;
+        };
+        return isOwnedBy(entity, tenantId) ? entity : null;
+    }
+
     private void deleteDevicePackageEntity(TenantId tenantId, EntityId entityId, SecurityUser user) {
-        switch (entityId.getEntityType()) {
-            case DEVICE -> {
-                var device = deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
-                if (isOwnedBy(device, tenantId)) tbDeviceService.delete(device, user);
-            }
-            case DEVICE_PROFILE -> {
-                var profile = deviceProfileService.findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId()));
-                if (isOwnedBy(profile, tenantId)) tbDeviceProfileService.delete(profile, user);
-            }
-            case DASHBOARD -> {
-                var dashboard = dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId()));
-                if (isOwnedBy(dashboard, tenantId)) tbDashboardService.delete(dashboard, user);
-            }
-            case RULE_CHAIN -> {
-                var ruleChain = ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
-                if (isOwnedBy(ruleChain, tenantId)) tbRuleChainService.delete(ruleChain, user);
-            }
-            default -> log.warn("[{}] Unsupported entity type for device package delete: {}", tenantId, entityId.getEntityType());
+        HasTenantId entity = findDevicePackageEntity(tenantId, entityId);
+        if (entity instanceof Device device) {
+            tbDeviceService.delete(device, user);
+        } else if (entity instanceof DeviceProfile profile) {
+            tbDeviceProfileService.delete(profile, user);
+        } else if (entity instanceof Dashboard dashboard) {
+            tbDashboardService.delete(dashboard, user);
+        } else if (entity instanceof RuleChain ruleChain) {
+            tbRuleChainService.delete(ruleChain, user);
+        } else {
+            log.warn("[{}] Skipped device package entity {}: not found", tenantId, entityId);
         }
     }
 

@@ -2508,12 +2508,18 @@ public class EntityServiceTest extends AbstractControllerTest {
 
     @Test
     public void testFindEntitiesWithEntityViewFilter() {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("Device for entity view");
+        device.setType("default");
+        device = deviceService.saveDevice(device);
+
         EntityView entityView = new EntityView();
         entityView.setTenantId(tenantId);
         entityView.setCustomerId(customerId);
         entityView.setName("test");
         entityView.setType("default");
-        entityView.setEntityId(new DeviceId(UUID.randomUUID()));
+        entityView.setEntityId(device.getId());
         entityView.setKeys(new TelemetryEntityView(List.of("test"), null));
         entityView.setStartTimeMs(124);
         entityView.setEndTimeMs(256);
