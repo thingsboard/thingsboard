@@ -22,7 +22,7 @@
       {{'js-func.mini' | translate }}
     </button>
     <ng-content select="[toolbarSuffixButton]"></ng-content>
-    <button mat-icon-button class="tb-mat-32" (click)="fullscreen = !fullscreen"
+    <button mat-icon-button class="tb-mat-32" type="button" (click)="fullscreen = !fullscreen"
             matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
             matTooltipPosition="above">
       <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>

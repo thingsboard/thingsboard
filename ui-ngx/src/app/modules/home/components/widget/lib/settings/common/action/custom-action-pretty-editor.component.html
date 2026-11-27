@@ -6,7 +6,7 @@
 -->
 <div class="tb-custom-action-pretty" tb-fullscreen [fullscreen]="fullscreen">
   <div class="tb-action-expand-button flex flex-row items-center justify-end" [class.tb-fullscreen-editor]="fullscreen">
-    <button *ngIf="!fullscreen"
+    <button type="button" *ngIf="!fullscreen"
             class="lt-md:!hidden"
             mat-icon-button
             matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
@@ -14,7 +14,7 @@
             (click)="fullscreen = true">
       <mat-icon>fullscreen</mat-icon>
     </button>
-    <button *ngIf="fullscreen"
+    <button type="button" *ngIf="fullscreen"
             mat-button
             matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
             matTooltipPosition="above"

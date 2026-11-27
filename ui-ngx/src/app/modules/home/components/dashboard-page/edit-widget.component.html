@@ -5,6 +5,7 @@
 
 -->
 <form [formGroup]="widgetFormGroup">
+  <button type="submit" disabled hidden aria-hidden="true"></button>
   <fieldset [disabled]="isLoading$ | async">
     <tb-widget-config
       #widgetConfigComponent
@@ -18,6 +19,7 @@
       formControlName="widgetConfig">
       <div class="tb-widget-config-header-prefix">
         <button mat-button
+                type="button"
                 *ngIf="previewMode"
                 (click)="previewMode = false">
           <mat-icon>chevron_left</mat-icon>
@@ -27,6 +29,7 @@
                 class="gt-sm:!hidden"
                 [disabled]="!widgetFormGroup.valid"
                 mat-button color="primary"
+                type="button"
                 (click)="previewMode = true">
           <mat-icon>visibility</mat-icon>
           {{ 'widget-config.preview' | translate }}
@@ -37,6 +40,7 @@
                 class="lt-md:!hidden"
                 [disabled]="!widgetFormGroup.valid"
                 mat-button color="primary"
+                type="button"
                 (click)="previewMode = true">
           <mat-icon>visibility</mat-icon>
           {{ 'widget-config.preview' | translate }}
@@ -44,12 +48,14 @@
         <div class="flex flex-row items-center justify-start gap-3">
           <button [disabled]="!widgetFormGroup.dirty"
             mat-stroked-button color="primary"
+            type="button"
             (click)="onRevertWidgetConfig()">
             <mat-icon>close</mat-icon>
             {{ 'action.decline' | translate }}
           </button>
           <button [disabled]="!widgetFormGroup.valid || !widgetFormGroup.dirty"
             mat-flat-button color="primary"
+            type="button"
             (click)="onApplyWidgetConfig()">
             <mat-icon>done</mat-icon>
             {{ 'action.apply' | translate }}

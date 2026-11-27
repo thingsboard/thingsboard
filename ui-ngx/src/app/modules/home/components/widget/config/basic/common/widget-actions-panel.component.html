@@ -15,10 +15,10 @@
         </mat-chip>
       </ng-container>
     </mat-chip-listbox>
-    <button mat-stroked-button color="primary" *ngIf="!hasWidgetActions">
+    <button type="button" mat-stroked-button color="primary" *ngIf="!hasWidgetActions">
       {{ 'widget-config.add-action' | translate }}
     </button>
-    <button mat-icon-button color="primary" *ngIf="hasWidgetActions">
+    <button type="button" mat-icon-button color="primary" *ngIf="hasWidgetActions">
       <mat-icon>add</mat-icon>
     </button>
   </div>

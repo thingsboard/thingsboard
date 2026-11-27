@@ -14,7 +14,7 @@
     </div>
     <div class="tb-html-container-settings-panel flex flex-1 flex-col" tb-fullscreen [fullscreen]="fullscreen">
       <div class="tb-action-expand-button flex flex-row items-center justify-end">
-        <button mat-stroked-button
+        <button type="button" mat-stroked-button
                 matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
                 matTooltipPosition="above"
                 (click)="toggleFullScreen()">
@@ -51,7 +51,7 @@
                         {{ 'widget.resource-is-extension' | translate }}
                       </mat-checkbox>
                     }
-                    <button mat-icon-button color="primary"
+                    <button type="button" mat-icon-button color="primary"
                             (click)="removeResource(i)"
                             matTooltip="{{'widget.remove-resource' | translate}}"
                             matTooltipPosition="above">
@@ -64,7 +64,7 @@
                       class="tb-prompt flex items-center justify-center">widgets.html-container.no-resources</span>
               }
               <div>
-                <button mat-raised-button color="primary"
+                <button type="button" mat-raised-button color="primary"
                         (click)="addResource()"
                         matTooltip="{{'widget.add-resource' | translate}}"
                         matTooltipPosition="above">

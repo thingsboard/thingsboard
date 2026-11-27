@@ -5,6 +5,7 @@
 
 -->
 <form class="tb-add-widget-dialog" [formGroup]="widgetFormGroup">
+  <button type="submit" disabled hidden aria-hidden="true"></button>
   <mat-toolbar color="primary">
     <div class="tb-add-widget-toolbar">
       <h2>{{'widget.add' | translate}}:</h2>
@@ -48,6 +49,7 @@
       [previewHeight]="widgetConfig.typeParameters.previewHeight">
       <div class="tb-preview-panel-content">
         <button mat-button
+                type="button"
                 (click)="previewMode = false">
           <mat-icon>chevron_left</mat-icon>
           {{ 'action.back' | translate }}
@@ -72,6 +74,7 @@
         {{ 'widget-config.preview' | translate }}
       </button>
       <button mat-raised-button color="primary"
+              type="button"
               (click)="add()"
               [disabled]="!widgetFormGroup.valid">
         {{ 'action.add' | translate }}
