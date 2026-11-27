@@ -137,7 +137,7 @@ public class BasicHttpIntegration<T extends HttpIntegrationMsg<?>> extends Abstr
 
         boolean contentTypePresent = false;
         for (Entry<String, String> kv : downlink.getMetadata().entrySet()) {
-            if (kv.getKey().startsWith(HEADER)) {
+            if (kv.getKey().regionMatches(true, 0, HEADER, 0, HEADER.length())) {
                 String headerName = kv.getKey().substring(HEADER.length());
                 responseHeaders.add(headerName, kv.getValue());
                 if (headerName.equalsIgnoreCase("Content-Type")) {
