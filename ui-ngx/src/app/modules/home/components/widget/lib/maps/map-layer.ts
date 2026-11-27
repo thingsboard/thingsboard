@@ -249,7 +249,7 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
           return null;
         }
         return L.TB.MapLibreGL.mapLibreGLLayer({
-          style: spec,
+          style: this.referenceLayerStyle(spec),
           overlay: true
         });
       })
