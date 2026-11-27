@@ -79,7 +79,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
       '| numlist bullist | outdent indent  | removeformat | code | fullscreen',
     toolbar_mode: 'sliding',
     height: 400,
-    content_style: 'body { margin: 0; }'
+    content_style: 'body { margin: 0; padding: 0 6px; }'
   });
 
   private propagateChange = null;
