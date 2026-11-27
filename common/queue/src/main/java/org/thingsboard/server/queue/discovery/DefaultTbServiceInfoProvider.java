@@ -75,6 +75,8 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     private List<ServiceType> serviceTypes;
     private List<JobType> taskTypes;
     private ServiceInfo serviceInfo;
+    // volatile: set once by the thread that reports the context as ready, read by the discovery scheduler on every regeneration
+    private volatile Set<String> transports = Collections.emptySet();
 
     private boolean ready = true;
 
@@ -151,11 +153,10 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
 
     @AfterContextReady
     public void setTransports() {
-        serviceInfo = ServiceInfo.newBuilder(serviceInfo)
-                .addAllTransports(getTransportServices().stream()
-                        .map(TbTransportService::getName)
-                        .collect(Collectors.toSet()))
-                .build();
+        transports = getTransportServices().stream()
+                .map(TbTransportService::getName)
+                .collect(Collectors.toUnmodifiableSet());
+        generateNewServiceInfoWithCurrentSystemInfo();
     }
 
     private Collection<TbTransportService> getTransportServices() {
@@ -194,6 +195,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         }
         builder.setReady(ready);
         builder.addAllTaskTypes(taskTypes.stream().map(JobType::name).toList());
+        builder.addAllTransports(transports);
         return serviceInfo = builder.build();
     }
 
