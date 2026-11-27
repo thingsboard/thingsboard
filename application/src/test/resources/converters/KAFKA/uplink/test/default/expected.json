@@ -1,0 +1,18 @@
+{
+  "deviceName": "43T1YH-REE",
+  "deviceType": "Monitoring sensor",
+  "attributes": {},
+  "telemetry": {
+    "ts": 1638876127000,
+    "values": {
+      "Temperature": 61,
+      "Humidity": 31,
+      "Fan": 0,
+      "Port": 10,
+      "Freq": 24300,
+      "Pressure": 89,
+      "rssi": -130,
+      "serial": "230165HRT"
+    }
+  }
+}
