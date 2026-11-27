@@ -1,0 +1,16 @@
+{
+  "deviceName": "0123456789abcdef01234567",
+  "deviceType": "Particle device",
+  "groupName": "Particle devices",
+  "attributes": {
+    "particleDeviceId": "0123456789abcdef01234567"
+  },
+  "telemetry": {
+    "ts": 1786363473940,
+    "values": {
+      "temperature": 23.5,
+      "humidity": 60,
+      "battery": 98
+    }
+  }
+}

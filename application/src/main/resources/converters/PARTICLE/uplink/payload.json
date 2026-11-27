@@ -1,0 +1,6 @@
+{
+  "event": "tb/telemetry",
+  "data": "{\"deviceType\":\"Particle device\",\"temperature\":23.5,\"humidity\":60,\"battery\":98}",
+  "coreid": "0123456789abcdef01234567",
+  "published_at": "2026-08-10T12:04:33.940Z"
+}

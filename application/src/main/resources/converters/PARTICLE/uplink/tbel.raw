@@ -1,0 +1,50 @@
+/** Decoder **/
+
+// Particle webhook body
+var data = decodeToJson(payload);
+
+// Particle event data must contain valid JSON.
+var eventData = decodeToJson(data.data);
+
+var deviceName = data.coreid;
+var deviceType = eventData.deviceType != null ? eventData.deviceType : "Particle";
+var groupName = "Particle devices";
+
+var timestamp = Date.now();
+if (data.published_at != null) {
+    timestamp = new Date(data.published_at).getTime();
+}
+
+var attributes = {
+    integrationName: metadata["integrationName"],
+    particleDeviceId: data.coreid
+};
+
+// Move known non-telemetry fields into attributes when present.
+if (eventData.firmwareVersion != null) {
+    attributes.firmwareVersion = eventData.firmwareVersion;
+}
+if (eventData.hardwareModel != null) {
+    attributes.hardwareModel = eventData.hardwareModel;
+}
+
+// Exclude fields already used for device metadata/attributes.
+var excludeFromTelemetryList = [
+    "deviceType",
+    "deviceName",
+    "firmwareVersion",
+    "hardwareModel"
+];
+
+var telemetry = toFlatMap(eventData, excludeFromTelemetryList, true);
+
+return {
+    deviceName: deviceName,
+    deviceType: deviceType,
+    groupName: groupName,
+    attributes: attributes,
+    telemetry: {
+        ts: timestamp,
+        values: telemetry
+    }
+};
