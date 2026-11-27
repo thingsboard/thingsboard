@@ -1,0 +1,16 @@
+{
+  "deduplicationId": "7658d04d-7f1c-4eb6-900b-d948f3061a9d",
+  "time": "2026-10-20T14:42:52.653+00:00",
+  "deviceInfo": {
+    "tenantId": "6e073e9a-6b4f-4747-b22c-7507e0fdebfb",
+    "tenantName": "ChirpStack",
+    "applicationId": "c3f2c4aa-07c8-4d6c-8a86-7ea2d4a52dca",
+    "applicationName": "Sample Application",
+    "deviceProfileId": "d8ee6c09-414c-4b2e-888a-8e8f86e2197a",
+    "deviceProfileName": "chirpstack-sensor",
+    "deviceName": "chirpstack sensor 001",
+    "devEui": "24e124538b223213",
+    "deviceClassEnabled": "CLASS_A",
+    "tags": {}
+  }
+}

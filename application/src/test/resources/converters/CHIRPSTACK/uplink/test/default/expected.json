@@ -1,19 +1,19 @@
 {
   "entityType": "ASSET",
-  "name": "Asset 1000000000000001",
-  "profile": "Chirpstack default device profile",
+  "name": "Asset 24e124538b223213",
+  "profile": "chirpstack-sensor",
   "telemetry": {
-    "ts": 1684741625404,
+    "ts": 1792507372653,
     "values": {
       "battery": 95,
-      "temperature": 36.6,
-      "saturation": 99
+      "temperature": 23.45,
+      "saturation": 80
     }
   },
   "attributes": {
-    "sn": 32310067,
-    "devAddr": "20000001",
-    "fPort": 85,
-    "eui": "1000000000000001"
+    "sn": 12345678,
+    "devAddr": "01a44d4c",
+    "fPort": 84,
+    "eui": "24e124538b223213"
   }
 }

@@ -972,8 +972,8 @@ public class ConverterControllerTest extends AbstractControllerTest {
 
     @Test
     public void testChirpStackNotDefaultDecoder() throws IOException {
-        String expectedDecodedMessage = "{\"entityType\":\"ASSET\",\"name\":\"Asset 1000000000000001\",\"profile\":\"IndustrialSensorProfile\",\"customer\":\"MyCustomer\",\"group\":\"SensorsGroup\"," +
-                "\"telemetry\":{\"ts\":1684741625404,\"values\":{\"battery\":95,\"temperature\":36.6}},\"attributes\":{\"devAddr\":\"20000001\",\"fPort\":85,\"eui\":\"1000000000000001\"}}";
+        String expectedDecodedMessage = "{\"entityType\":\"ASSET\",\"name\":\"Asset 24e124538b223213\",\"profile\":\"IndustrialSensorProfile\",\"customer\":\"MyCustomer\",\"group\":\"SensorsGroup\"," +
+                "\"telemetry\":{\"ts\":1792507372653,\"values\":{\"battery\":95,\"temperature\":23.45}},\"attributes\":{\"devAddr\":\"01a44d4c\",\"fPort\":84,\"eui\":\"24e124538b223213\"}}";
 
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.ASSET, "Asset $eui", "$deviceProfileName", Set.of("eui", "fPort", "devAddr"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.CHIRPSTACK, 2);

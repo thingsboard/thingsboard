@@ -1,48 +1,48 @@
 {
-   "deduplicationId": "57433366-50a6-4dc2-8145-2df1bbc70d9e",
-   "time": "2023-05-22T07:47:05.404859+00:00",
-   "deviceInfo": {
-       "tenantId": "52f14cd4-c6f1-4fbd-8f87-4025e1d49242",
-       "tenantName": "ChirpStack",
-       "applicationId": "ca739e26-7b67-4f14-b69e-d568c22a5a75",
-       "applicationName": "Chirpstack application",
-       "deviceProfileId": "605d08d4-65f5-4d2c-8a5a-3d2457662f79",
-       "deviceProfileName": "Chirpstack default device profile",
-       "deviceName": "Device name",
-       "devEui": "1000000000000001",
-       "tags": {}
-    },
-       "devAddr": "20000001",
-       "adr": true,
-       "dr": 5,
-       "fCnt": 4,
-       "fPort": 85,
-       "confirmed": false,
-       "data": "Ae0DM18OTGM=",
-       "rxInfo": [{
-           "gatewayId": "6a7e111a10000000",
-           "uplinkId": 24022,
-           "time": "2023-05-22T07:47:05.404859+00:00",
-           "rssi": -35,
-           "snr": 11.5,
-           "channel": 2,
-           "rfChain": 1,
-           "location": {},
-           "context": "EFwMtA==",
-           "metadata": {
-               "region_common_name": "EU868",
-               "region_config_id": "eu868"
-               },
-           "crcStatus": "CRC_OK"
-       }],
-       "txInfo": {
-           "frequency": 868500000,
-           "modulation": {
-               "lora": {
-                   "bandwidth": 125000,
-                   "spreadingFactor": 7,
-                   "codeRate": "CR_4_5"
-           }
-        }
+  "deduplicationId": "7658d04d-7f1c-4eb6-900b-d948f3061a9d",
+  "time": "2026-10-20T14:42:52.653+00:00",
+  "deviceInfo": {
+    "tenantId": "6e073e9a-6b4f-4747-b22c-7507e0fdebfb",
+    "tenantName": "ChirpStack",
+    "applicationId": "c3f2c4aa-07c8-4d6c-8a86-7ea2d4a52dca",
+    "applicationName": "Sample Application",
+    "deviceProfileId": "d8ee6c09-414c-4b2e-888a-8e8f86e2197a",
+    "deviceProfileName": "chirpstack-sensor",
+    "deviceName": "chirpstack sensor 001",
+    "devEui": "24e124538b223213",
+    "deviceClassEnabled": "CLASS_A",
+    "tags": {}
+  },
+  "devAddr": "01a44d4c",
+  "adr": true,
+  "dr": 5,
+  "fCnt": 153,
+  "fPort": 84,
+  "confirmed": false,
+  "data": "ALxhTl8JKVA=",
+  "rxInfo": [
+    {
+      "gatewayId": "24e124fffef64e9e",
+      "uplinkId": 25127,
+      "gwTime": "2026-10-20T14:42:52.653481+00:00",
+      "nsTime": "2026-10-20T14:42:52.670509207+00:00",
+      "rssi": -68,
+      "snr": 13.2,
+      "channel": 4,
+      "location": {},
+      "context": "Hw9+zQ==",
+      "crcStatus": "CRC_OK"
     }
+  ],
+  "txInfo": {
+    "frequency": 867300000,
+    "modulation": {
+      "lora": {
+        "bandwidth": 125000,
+        "spreadingFactor": 7,
+        "codeRate": "CR_4_5"
+      }
+    }
+  },
+  "regionConfigId": "eu868"
 }
