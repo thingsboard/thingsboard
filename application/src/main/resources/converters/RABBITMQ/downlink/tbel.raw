@@ -1,0 +1,12 @@
+/** Encoder **/
+
+// Publish the message data as is.
+var result = {
+    // Payload content type: JSON, TEXT, or BINARY (Base64).
+    contentType: "JSON",
+    data: JSON.stringify(msg),
+    // The integration does not use the downlink metadata.
+    metadata: {}
+};
+
+return result;

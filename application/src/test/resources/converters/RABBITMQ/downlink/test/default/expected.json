@@ -1,0 +1,5 @@
+{
+  "contentType": "JSON",
+  "data": "{\"temperatureUploadFrequency\":60,\"humidityUploadFrequency\":30}",
+  "metadata": {}
+}
