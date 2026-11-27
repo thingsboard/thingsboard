@@ -84,7 +84,7 @@ export class ApiKeysTableConfig extends EntityTableConfig<ApiKeyInfo> {
         entity => this.apiKeyStatus(entity), entity => this.apiKeyStatusStyle(entity), false),
       new EntityTableColumn<ApiKeyInfo>('expirationTime', 'api-key.expiration-time', '120px',
         (entity) => entity.expirationTime != 0 ?
-          this.datePipe.transform(entity.expirationTime, 'dd/MM/yyyy, HH:mm') :
+          this.datePipe.transform(entity.expirationTime, 'tbDateTimeNoSeconds') :
           this.translate.instant('api-key.expiration-time-never'),
         ),
     );

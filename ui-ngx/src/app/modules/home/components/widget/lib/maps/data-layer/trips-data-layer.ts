@@ -18,7 +18,6 @@ import L from 'leaflet';
 import { deepClone, isDefined, isUndefined, plainColorFromVariable } from '@core/utils';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import moment from 'moment/moment';
 import { createTooltip, updateTooltip } from '@home/components/widget/lib/maps/data-layer/data-layer-utils';
 import _ from 'lodash';
 import {
@@ -28,6 +27,7 @@ import {
   TbMapDataLayer
 } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { MarkerDataProcessor } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
+import { TbDatePipe } from '@shared/models/date.pipe';
 
 type TripRouteData = {[time: number]: FormattedData<TbMapDatasource>};
 
@@ -53,11 +53,14 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   private currentPositionData: FormattedData<TbMapDatasource>;
   private pointData: FormattedData<TbMapDatasource>;
 
+  private readonly datePipe: TbDatePipe;
+
   constructor(private rawRouteData: FormattedData<TbMapDatasource>[],
               private latestData: FormattedData<TbMapDatasource>,
               settings: TripsDataLayerSettings,
               dataLayer: TbTripsDataLayer) {
     super(settings, dataLayer);
+    this.datePipe = this.dataLayer.getCtx().$injector.get(TbDatePipe);
     this.tripRouteData = this.prepareTripRouteData();
     this.create();
   }
@@ -344,14 +347,16 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     const timeStep = this.dataLayer.getMap().getTimeStep();
     const timeline = this.dataLayer.getMap().hasTimeline();
     const dsData = this.dataLayer.getMap().getData();
+    const minTimeText = minTime !== Infinity ? this.datePipe.transform(minTime) : '';
+    const maxTimeText = maxTime !== -Infinity ? this.datePipe.transform(maxTime) : '';
     for (const data of this.rawRouteData) {
       const currentTime = data.time;
       const normalizeTime = timeline ? (minTime
         + Math.ceil((currentTime - minTime) / timeStep) * timeStep) : currentTime;
       result[normalizeTime] = {
         ...data,
-        minTime: minTime !== Infinity ? moment(minTime).format('YYYY-MM-DD HH:mm:ss') : '',
-        maxTime: maxTime !== -Infinity ? moment(maxTime).format('YYYY-MM-DD HH:mm:ss') : '',
+        minTime: minTimeText,
+        maxTime: maxTimeText,
         rotationAngle: this.settings.rotateMarker ? this.settings.offsetAngle : 0
       };
     }

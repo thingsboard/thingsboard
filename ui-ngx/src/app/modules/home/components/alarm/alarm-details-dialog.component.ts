@@ -114,7 +114,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       .patchValue(this.translate.instant(alarmSeverityTranslations.get(alarm.severity)));
     if (alarm.startTs) {
       this.alarmFormGroup.get('startTime')
-        .patchValue(this.datePipe.transform(alarm.startTs, 'yyyy-MM-dd HH:mm:ss'));
+        .patchValue(this.datePipe.transform(alarm.startTs));
     }
     if (alarm.startTs || alarm.clearTs) {
       let duration = '';

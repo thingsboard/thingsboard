@@ -11,7 +11,7 @@
       <span class="mat-headline-5 card-title" translate>profile.jwt-token</span>
     </mat-card-title>
     <div class="flex flex-row items-center justify-between">
-      <div class="token-text">{{ 'profile.token-valid-till' | translate }} <span class="date">{{ jwtTokenExpiration | date: 'yyyy-MM-dd HH:mm:ss' }}</span></div>
+      <div class="token-text">{{ 'profile.token-valid-till' | translate }} <span class="date">{{ jwtTokenExpiration | tbDate }}</span></div>
       <button mat-raised-button
         color="primary"
         type="button"

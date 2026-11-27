@@ -28,7 +28,6 @@ import {
   AgentAppConfigType,
   AgentAppEventActionType,
   agentAppEventActionTypeTranslationMap,
-  AgentAppProfile,
   AgentAppProfileRelationInfo,
   AgentAppTemplate,
   AgentApplicationType,
@@ -354,7 +353,7 @@ export class AgentProfileMergedProfilesComponent implements OnInit, OnChanges, O
   }
 
   formatDate(ts: number): string {
-    return this.datePipe.transform(ts, 'yyyy-MM-dd HH:mm:ss') || '';
+    return this.datePipe.transform(ts) || '';
   }
 
   selectAction(row: ProfileRow, action: AgentBulkAction): void {

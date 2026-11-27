@@ -26,6 +26,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 import { SchedulerEventService } from '@core/http/scheduler-event.service';
 import {
   ScheduledReportTableHeaderComponent
@@ -54,7 +55,8 @@ export class ScheduledReportsTableConfigResolver  {
               private translate: TranslateService,
               private utils: UtilsService,
               private datePipe: DatePipe,
-              private popoverService: TbPopoverService) {}
+              private popoverService: TbPopoverService,
+              private dateTimeFormatService: DateTimeFormatService) {}
 
   resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<ScheduledReportInfo> {
     const config = new EntityTableConfig<ScheduledReportInfo>();
@@ -138,7 +140,8 @@ export class ScheduledReportsTableConfigResolver  {
       columns.push(new EntityTableColumn<ScheduledReportInfo>('customerTitle', title, '20%'));
     }
     columns.push(new EntityTableColumn<ScheduledReportInfo>('schedule', 'scheduled-report.schedule',
-      config.componentsData.includeCustomers ? '20%' : '25%', (scheduledReport) => scheduleInfo(scheduledReport.schedule, this.translate),
+      config.componentsData.includeCustomers ? '20%' : '25%',
+      (scheduledReport) => scheduleInfo(scheduledReport.schedule, this.translate, this.dateTimeFormatService),
       () => ({}), false));
     return columns;
   }

@@ -7,6 +7,7 @@ import {
   schedulerWeekday
 } from '@shared/models/scheduler-event.models';
 import { TranslateService } from '@ngx-translate/core';
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 import _moment from 'moment';
 
 export enum schedulerCalendarView {
@@ -93,17 +94,20 @@ export interface SchedulerWeekDay {
 export const scheduleInfo = (
   schedule: SchedulerEventSchedule,
   translate: TranslateService,
+  dateTimeFormatService: DateTimeFormatService,
   startTime: _moment.Moment = _moment(schedule.startTime)
 ): string => {
+  const dateFormat = dateTimeFormatService.getMomentDateFormat();
+  const timeFormat = dateTimeFormatService.getMomentTimeFormatWithoutSeconds();
   let info = '';
   if (!schedule.repeat) {
-    const start = startTime.local().format('MMM DD, YYYY, hh:mma');
+    const start = startTime.local().format(`${dateFormat}, ${timeFormat}`);
     info += start;
     return info;
   } else {
-    info += startTime.local().format('hh:mma');
+    info += startTime.local().format(timeFormat);
     info += '<br/>';
-    info += translate.instant('scheduler.starting-from') + ' ' + startTime.local().format('MMM DD, YYYY') + ', ';
+    info += translate.instant('scheduler.starting-from') + ' ' + startTime.local().format(dateFormat) + ', ';
     if (schedule.repeat.type === SchedulerRepeatType.DAILY) {
       info += translate.instant('scheduler.daily') + ', ';
     } else if (schedule.repeat.type === SchedulerRepeatType.EVERY_N_DAYS) {
@@ -125,7 +129,7 @@ export const scheduleInfo = (
       });
     }
     info += translate.instant('scheduler.until') + ' ';
-    info += _moment.utc(schedule.repeat.endsOn).local().format('MMM DD, YYYY');
+    info += _moment.utc(schedule.repeat.endsOn).local().format(dateFormat);
     return info;
   }
 }

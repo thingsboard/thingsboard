@@ -7,6 +7,7 @@ import { EntitiesDataSource, EntitiesFetchFunction } from '@home/models/datasour
 import { Observable, of } from 'rxjs';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { DatePipe } from '@angular/common';
+import { TbDateFormat } from '@shared/models/date-time-format.models';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { EntityType, EntityTypeResource, EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { EntityComponent } from '@home/components/entity/entity.component';
@@ -133,7 +134,7 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
               title: string,
               datePipe: DatePipe,
               width: string = '0px',
-              dateFormat: string = 'yyyy-MM-dd HH:mm:ss',
+              dateFormat: TbDateFormat | (string & {}) = 'tbDateTime',
               cellStyleFunction: CellStyleFunction<T> = () => ({})) {
     super(key,
           title,

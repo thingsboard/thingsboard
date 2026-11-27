@@ -86,7 +86,7 @@
         <ng-container matColumnDef="timestamp">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 150px; max-width: 150px; width: 150px;"> {{ 'version-control.created-time' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let entityVersion">
-            {{ entityVersion.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}
+            {{ entityVersion.timestamp | tbDate }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="id">

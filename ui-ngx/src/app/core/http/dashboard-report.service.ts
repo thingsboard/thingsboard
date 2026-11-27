@@ -20,6 +20,7 @@ import {
 import { CmdUpdateMsg, WebsocketCmd, WebsocketDataMsg } from '@shared/models/telemetry/telemetry.models';
 import { CmdWrapper } from '@shared/models/websocket/websocket.models';
 import { getFilenameFromHttpHeader } from '@core/utils';
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 
 // @dynamic
 @Injectable({
@@ -49,7 +50,8 @@ export class DashboardReportService {
     private utils: UtilsService,
     private http: HttpClient,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private dateTimeFormatService: DateTimeFormatService
   ) {
   }
 
@@ -57,6 +59,7 @@ export class DashboardReportService {
     const reportView = this.utils.getQueryParam('reportView') === 'true';
     if (reportView) {
       this.reportView = true;
+      this.dateTimeFormatService.setReportView(true);
       this.authService.loadUserFromAccessToken(null).subscribe(
         () => {
           window.addEventListener('message', this.onWindowMessageListener);

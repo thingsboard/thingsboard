@@ -42,7 +42,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
-import { DatetimeAdapter, MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
+import { DatetimeAdapter, MAT_DATETIME_FORMATS, MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { GridsterModule } from 'angular-gridster2';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -59,6 +59,7 @@ import { EditorModule, HUGERTE_SCRIPT_SRC } from '@hugerte/hugerte-angular';
 import { HUGERTE_ASSETS_PATH } from '@shared/models/hugerte/hugerte.models';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { AutofocusDirective } from '@shared/directives/auto-focus.directive';
+import { DatetimepickerTwelveHourDirective } from '@shared/directives/datetimepicker-twelvehour.directive';
 import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 import { PopoverContentResizeDirective } from '@shared/directives/popover-content-resize.directive';
 import { ContextMenuDirective } from '@shared/directives/context-menu.directive';
@@ -186,7 +187,7 @@ import { MultipleImageInputComponent } from '@shared/components/multiple-image-i
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';
 import { PhoneInputComponent } from '@shared/components/phone-input.component';
 import { TbSparkLineComponent } from './components/spark-line/tb-spark-line.component';
-import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
+import { CUSTOM_DATETIME_FORMATS, CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
 import { NotificationComponent } from '@shared/components/notification/notification.component';
@@ -276,6 +277,7 @@ import {
   AutocompleteAutoScrollRepositionDirective
 } from '@shared/directives/autocomplete-auto-scroll-reposition.directive';
 import { SafeSvgPipe } from '@shared/pipe/safe-svg.pipe';
+import { TbDatePipe } from '@shared/models/date.pipe';
 import {
   RequestPackWhiteLabelingDialogComponent
 } from '@shared/components/dialog/request-pack-white-labeling-dialog.component';
@@ -289,7 +291,9 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
 
 @NgModule({
   providers: [
-    DatePipe,
+    // Intentional: widget code receives this pipe as ctx.date, so a bare ctx.date.transform(value) now renders the user's
+    // global date+time format instead of Angular's mediumDate. Behaviour change for custom widgets - see the upgrade notes.
+    { provide: DatePipe, useExisting: TbDatePipe },
     SelectableColumnsPipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -323,6 +327,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
       useValue: 'en-GB'
     },
     { provide: DatetimeAdapter, useClass: CustomDateAdapter },
+    { provide: MAT_DATETIME_FORMATS, useValue: CUSTOM_DATETIME_FORMATS },
     { provide: HELP_MARKDOWN_COMPONENT_TOKEN, useValue: HelpMarkdownComponent },
     { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
     { provide: MatPaginatorIntl, useClass: CustomPaginatorIntl },
@@ -458,6 +463,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     LedLightComponent,
     MarkdownEditorComponent,
     AutofocusDirective,
+    DatetimepickerTwelveHourDirective,
     TruncateWithTooltipDirective,
     FormRowDirective,
     ContextMenuDirective,
@@ -555,7 +561,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DistanceUnitInputComponent,
     RgbaInputComponent,
     HslaInputComponent,
-    InputChangeDirective
+    InputChangeDirective,
+    TbDatePipe
   ],
   imports: [
     CommonModule,
@@ -774,6 +781,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     LedLightComponent,
     MarkdownEditorComponent,
     AutofocusDirective,
+    DatetimepickerTwelveHourDirective,
     TruncateWithTooltipDirective,
     FormRowDirective,
     ContextMenuDirective,
@@ -868,7 +876,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimeUnitInputComponent,
     PasswordRequirementsTooltipComponent,
     DistanceUnitInputComponent,
-    DynamicMatDialogModule
+    DynamicMatDialogModule,
+    TbDatePipe
   ]
 })
 export class SharedModule { }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
 
@@ -27,7 +28,6 @@ import {
   parseWithTranslation
 } from '@home/components/widget/lib/maps-legacy/common-maps-utils';
 import { FormattedData, WidgetConfig } from '@shared/models/widget.models';
-import moment from 'moment';
 import {
   formattedDataArrayFromDatasourceData,
   formattedDataFormDatasourceData,
@@ -39,6 +39,7 @@ import {
 } from '@core/utils';
 import { MapWidgetInterface } from '@home/components/widget/lib/maps-legacy/map-widget.interface';
 import { firstValueFrom, from } from 'rxjs';
+import { TbDatePipe } from '@shared/models/date.pipe';
 
 interface DataMap {
   [key: string]: FormattedData;
@@ -59,7 +60,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   private updatePending = false;
   private mapWidgetUpdatePending = false;
 
-  constructor(private cd: ChangeDetectorRef, private sanitizer: DomSanitizer) { }
+  constructor(private cd: ChangeDetectorRef, private sanitizer: DomSanitizer, private datePipe: TbDatePipe) { }
 
   @Input() ctx: WidgetContext;
 
@@ -300,13 +301,15 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     const result: {[time: number]: FormattedData} = {};
     const latKeyName = this.settings.latKeyName;
     const lngKeyName = this.settings.lngKeyName;
+    const minTimeText = this.minTime !== Infinity ? this.datePipe.transform(this.minTime) : '';
+    const maxTimeText = this.maxTime !== -Infinity ? this.datePipe.transform(this.maxTime) : '';
     for (const data of originData) {
       const currentTime = data.time;
       const normalizeTime = this.minTime + Math.ceil((currentTime - this.minTime) / this.normalizationStep) * this.normalizationStep;
       result[normalizeTime] = {
         ...data,
-        minTime: this.minTime !== Infinity ? moment(this.minTime).format('YYYY-MM-DD HH:mm:ss') : '',
-        maxTime: this.maxTime !== -Infinity ? moment(this.maxTime).format('YYYY-MM-DD HH:mm:ss') : '',
+        minTime: minTimeText,
+        maxTime: maxTimeText,
         rotationAngle: this.settings.rotationAngle
       };
     }
