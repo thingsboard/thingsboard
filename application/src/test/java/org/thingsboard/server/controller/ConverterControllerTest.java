@@ -1024,6 +1024,39 @@ public class ConverterControllerTest extends AbstractControllerTest {
         }
     }
 
+    @Test
+    public void testDownLinkConverter_whenTbelRaiseError_thenPlainMessage() {
+        String error = testEncoderError("TBEL", "raiseError(\"Device is offline\");");
+
+        assertThat(error).isEqualTo("Failed to execute script: Device is offline");
+    }
+
+    @Test
+    public void testDownLinkConverter_whenJsError_thenErrorIsReturned() {
+        String error = testEncoderError("JS", "throw new Error(\"Device is offline\");");
+
+        assertThat(error).startsWith("Failed to execute script: javax.script.ScriptException: Error: Device is offline");
+    }
+
+    @Test
+    public void testDownLinkConverter_whenTbelCompilationError_thenErrorIsReturned() {
+        String error = testEncoderError("TBEL", "return {msg: ;");
+
+        assertThat(error).startsWith("Failed to execute script: Can't compile script");
+    }
+
+    private String testEncoderError(String scriptLang, String encoder) {
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("encoder", encoder);
+        inputParams.put("msg", "{}");
+        inputParams.set("metadata", JacksonUtil.newObjectNode());
+        inputParams.put("msgType", "POST_TELEMETRY_REQUEST");
+        inputParams.set("integrationMetadata", JacksonUtil.newObjectNode());
+
+        JsonNode response = doPost("/api/converter/testDownLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
+        return response.get("error").asText();
+    }
+
     public void testDecoder(String decoderFileName, String payloadExample, String expectedResult) throws IOException {
         testDecoder(decoderFileName, payloadExample, expectedResult, null);
     }
