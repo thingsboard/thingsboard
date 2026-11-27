@@ -123,12 +123,12 @@
         <div class="k-quiet">
           <div class="k-wait warn" role="status">
             <mat-icon class="tb-mat-18" aria-hidden="true">schedule</mat-icon>
-            <span>{{ 'ai-assistant.hand-over.nothing-heard' | translate: {minutes: quietMinutes()} }}</span>
+            <span>{{ (undecoded() ? 'ai-assistant.hand-over.not-decoded' : 'ai-assistant.hand-over.nothing-heard') | translate: {minutes: quietMinutes()} }}</span>
             @if (waiting()) {
               <span class="clock">{{ clock() }}</span>
             }
           </div>
-          @if (handOver().quiet) {
+          @if (handOver().quiet && !undecoded()) {
             <p class="ob-hint">{{ handOver().quiet }}</p>
           }
           <div class="k-chips">

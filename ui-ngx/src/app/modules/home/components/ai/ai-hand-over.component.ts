@@ -99,6 +99,7 @@ export class AiHandOverComponent implements AfterViewChecked {
     Math.max(MIN_SILENCE_MS, 2 * 1000 * (this.handOver().waitFor === 'gateway' ? 0 : this.handOver().intervalSeconds ?? 0))));
   readonly quiet = computed(() => this.waiting() && this.elapsed() >= this.silenceMs());
   readonly quietMinutes = computed(() => Math.max(2, Math.floor(this.elapsed() / 60000)));
+  readonly undecoded = computed(() => this.wait()?.check?.failedStep === 'decoded');
   readonly stoppedQuiet = computed(() => {
     const wait = this.wait();
     return !!wait && !wait.running && !!wait.check && !wait.check.dataArriving;

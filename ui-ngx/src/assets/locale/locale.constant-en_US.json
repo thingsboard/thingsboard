@@ -2209,6 +2209,7 @@
             "wait-uplink": "listening for the first uplink",
             "wait-gateway": "listening for the gateway",
             "nothing-heard": "nothing heard for {{minutes}} min",
+            "not-decoded": "uplinks arrived but were not decoded",
             "keep-waiting": "It is on now, keep waiting",
             "keep-waiting-prompt": "It is on. Keep waiting for the data.",
             "what-wrong": "What could be wrong?",
