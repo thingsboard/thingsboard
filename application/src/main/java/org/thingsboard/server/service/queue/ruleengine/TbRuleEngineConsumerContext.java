@@ -4,9 +4,11 @@ package org.thingsboard.server.service.queue.ruleengine;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.cache.RedisCircuitBreaker;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -47,5 +49,7 @@ public class TbRuleEngineConsumerContext {
     private final PartitionService partitionService;
     private final TbQueueProducerProvider producerProvider;
     private final TbQueueAdmin queueAdmin;
+    @Autowired(required = false)
+    private RedisCircuitBreaker redisCircuitBreaker; // present only with cache.type=redis
 
 }

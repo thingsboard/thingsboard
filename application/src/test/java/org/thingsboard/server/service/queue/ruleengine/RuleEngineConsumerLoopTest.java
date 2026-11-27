@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.cache.RedisCircuitBreaker;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -56,6 +57,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,9 +67,12 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -184,6 +189,48 @@ class RuleEngineConsumerLoopTest {
         MoreExecutors.shutdownAndAwaitTermination(scheduler, Duration.ofSeconds(30));
         MoreExecutors.shutdownAndAwaitTermination(mgmtExecutor, Duration.ofSeconds(30));
         MoreExecutors.shutdownAndAwaitTermination(consumersExecutor, Duration.ofSeconds(30));
+    }
+
+    @Test
+    void givenRedisUnavailable_whenConsumerRuns_thenDoesNotPollUntilRedisRecovers() {
+        var partition = TopicPartitionInfo.builder()
+                .tenantId(TenantId.SYS_TENANT_ID)
+                .topic(mainQueue.getTopic())
+                .partition(0)
+                .myPartition(true)
+                .useInternalPartition(false)
+                .build();
+        for (int i = 0; i < 100; i++) {
+            var tbMsg = TbMsg.newMsg()
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(deviceId)
+                    .data("{\"temperature\":123}")
+                    .metaData(TbMsgMetaData.EMPTY)
+                    .build();
+            var toRuleEngineMsg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                    .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                    .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                    .setTbMsgProto(TbMsg.toProto(tbMsg))
+                    .addAllRelationTypes(Set.of("Success"))
+                    .build();
+            storage.put(partition.getFullTopicName(), new TbProtoQueueMsg<>(UUID.randomUUID(), toRuleEngineMsg, new DefaultTbQueueMsgHeaders()));
+        }
+        var redisHealthy = new AtomicBoolean(false);
+        RedisCircuitBreaker circuitBreaker = mock(RedisCircuitBreaker.class);
+        when(circuitBreaker.isHealthy()).thenAnswer(invocation -> redisHealthy.get());
+        ruleEngineConsumerContext.setRedisCircuitBreaker(circuitBreaker);
+
+        consumerManager.init(mainQueue);
+        consumerManager.update(Set.of(partition));
+
+        verify(consumer, after(500).never()).poll(anyLong());
+        assertThat(storage.getLagTotal()).isEqualTo(100);
+
+        redisHealthy.set(true);
+        await().atMost(Duration.ofSeconds(10L)).until(() -> storage.getLagTotal() == 0);
+
+        consumerManager.stop();
+        consumerManager.awaitStop();
     }
 
     @Test

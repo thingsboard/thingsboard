@@ -87,15 +87,20 @@ public abstract class VersionedRedisTbCache<K extends VersionedCacheKey, V exten
     }
 
     private void doPut(K key, V value, Long version, Expiration expiration) {
-        if (!cacheEnabled) {
-            return;
-        }
-        log.trace("put [{}][{}][{}]", key, value, version);
-        final byte[] rawKey = getRawKey(key);
-        // The script has one key, so in cluster mode the cluster client routes it, follows MOVED/ASK redirects and
-        // renews its slot map on connection errors.
-        try (var connection = getConnectionFactory().getConnection()) {
-            doPut(rawKey, value, version, expiration, connection);
+        try {
+            if (!cacheEnabled) {
+                return;
+            }
+            log.trace("put [{}][{}][{}]", key, value, version);
+            final byte[] rawKey = getRawKey(key);
+            // The script has one key, so in cluster mode the cluster client routes it, follows MOVED/ASK redirects and
+            // renews its slot map on connection errors.
+            try (var connection = getConnectionFactory().getConnection()) {
+                doPut(rawKey, value, version, expiration, connection);
+            }
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
         }
     }
 
