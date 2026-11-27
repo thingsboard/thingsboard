@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -19,7 +20,7 @@ import {
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
-import { TbMap } from '@home/components/widget/lib/maps/map';
+import type { TbMap } from '@home/components/widget/lib/maps/map';
 import { MapSetting } from '@shared/models/widget/maps/map.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
@@ -50,6 +51,7 @@ export class MapWidgetComponent implements OnInit, OnDestroy {
   padding: string;
 
   private map: TbMap<MapSetting>;
+  private destroyed = false;
 
   constructor(public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
@@ -67,6 +69,7 @@ export class MapWidgetComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.destroyed = true;
     if (this.map) {
       this.map.destroy();
     }
@@ -76,7 +79,16 @@ export class MapWidgetComponent implements OnInit, OnDestroy {
     const borderRadius = this.ctx.$widgetElement.css('borderRadius');
     this.overlayStyle = {...this.overlayStyle, ...{borderRadius}};
     this.cd.detectChanges();
-    this.map = createMap(this.ctx, this.settings, this.mapElement.nativeElement);
+    createMap(this.ctx, this.settings, this.mapElement.nativeElement).then(
+      (map) => {
+        if (this.destroyed) {
+          map?.destroy();
+        } else {
+          this.map = map;
+        }
+      },
+      (error) => console.error('Failed to load map', error)
+    );
   }
 
 }

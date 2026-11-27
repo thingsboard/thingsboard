@@ -5,7 +5,7 @@ import L, { TB } from 'leaflet';
 import { guid, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
 import { GestureHandling } from 'leaflet-gesture-handling';
-import { Map as MapLibreGLMap, setWorkerUrl } from 'maplibre-gl';
+import type { Map as MapLibreGLMap } from 'maplibre-gl';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -1090,8 +1090,19 @@ const chinaProvider = (type: string, options?: L.TileLayerOptions): L.TB.TileLay
   return new ChinaProvider(type, options);
 }
 
-// The worker is copied to assets by angular.json, bundlers cannot resolve it from import.meta.url
-setWorkerUrl(new URL('assets/maplibre-gl/maplibre-gl-worker.mjs', document.baseURI).href);
+let mapLibreGL: Promise<typeof import('maplibre-gl')>;
+
+const loadMapLibreGL = (): Promise<typeof import('maplibre-gl')> => {
+  if (!mapLibreGL) {
+    mapLibreGL = import('maplibre-gl').then((module) => {
+      // The worker is copied to assets by angular.json, bundlers cannot resolve it from import.meta.url
+      module.setWorkerUrl(new URL('assets/maplibre-gl/maplibre-gl-worker.mjs', document.baseURI).href);
+      return module;
+    });
+    mapLibreGL.catch(() => mapLibreGL = null);
+  }
+  return mapLibreGL;
+};
 
 // Same as MapLibre's own default maxZoom
 const MAP_LIBRE_GL_DEFAULT_MAX_ZOOM = 22;
@@ -1107,6 +1118,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   private _offset: L.Point;
   private _zooming: boolean;
   private _glError = false;
+  private _glInitId = 0;
 
   constructor(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions) {
     super();
@@ -1158,6 +1170,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     map.getPane(paneName).removeChild(this._container);
     map._removeZoomLimit(this);
 
+    this._glInitId++;
     if (this._glMap) {
       this._glMap.remove();
     }
@@ -1221,6 +1234,26 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _initGL() {
+    this._glError = false;
+    const initId = ++this._glInitId;
+    loadMapLibreGL().then(
+      (mapLibre) => {
+        // Skip if the layer was removed, or removed and added again, while the library was loading
+        if (initId === this._glInitId && this._map) {
+          this._createGL(mapLibre.Map);
+          this._update();
+        }
+      },
+      (error) => {
+        if (initId === this._glInitId) {
+          this._glError = true;
+          this.fire(WEBGL_ERROR_EVENT, { error });
+        }
+      }
+    );
+  }
+
+  private _createGL(MapLibreGLMapClass: typeof MapLibreGLMap) {
     const center = this._map.getCenter();
     const options = L.extend({}, this.options, {
       container: this._container,
@@ -1228,9 +1261,8 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
       zoom: this._map.getZoom() - 1,
       attributionControl: false
     });
-    this._glError = false;
     try {
-      this._glMap = new MapLibreGLMap(options);
+      this._glMap = new MapLibreGLMapClass(options);
     } catch (e) {
       this._glError = true;
       this.fire(WEBGL_ERROR_EVENT, { error: e });
