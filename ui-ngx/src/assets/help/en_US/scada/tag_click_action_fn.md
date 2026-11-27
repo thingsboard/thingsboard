@@ -21,6 +21,9 @@ A JavaScript function invoked when user clicks on SVG element with specific tag.
 
 <div class="divider"></div>
 
+A tag can have either an *on click* or an *on double click* action, but not both: every double click also fires two clicks.
+If the symbol metadata contains both, only the click action is executed.
+
 ##### Examples without setting values for callAction function
 
 

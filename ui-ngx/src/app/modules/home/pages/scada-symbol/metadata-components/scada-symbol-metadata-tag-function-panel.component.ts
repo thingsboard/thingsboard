@@ -15,10 +15,7 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetService } from '@core/http/widget.service';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { AceHighlightRules } from '@shared/models/ace/ace.models';
-import {
-  scadaSymbolClickActionHighlightRules,
-  scadaSymbolRenderFunctionHighlightRules
-} from '@home/pages/scada-symbol/scada-symbol-editor.models';
+import { scadaSymbolRenderFunctionHighlightRules } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 
 @Component({
@@ -35,9 +32,6 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
 
   @Input()
   tagFunction: string;
-
-  @Input()
-  tagFunctionType: 'renderFunction' | 'clickAction';
 
   @Input()
   tag: string;
@@ -58,13 +52,13 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
 
   tagFunctionFormGroup: UntypedFormGroup;
 
-  panelTitle: string;
+  panelTitle = 'scada.state-render-function';
 
-  tagFunctionArgs: string[];
+  tagFunctionArgs = ['ctx', 'element'];
 
-  tagFunctionHelpId: string;
+  tagFunctionHelpId = 'scada/tag_state_render_fn';
 
-  highlightRules: AceHighlightRules;
+  highlightRules: AceHighlightRules = scadaSymbolRenderFunctionHighlightRules;
 
   constructor(private fb: UntypedFormBuilder,
               private widgetService: WidgetService) {
@@ -78,17 +72,6 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
     );
     if (this.disabled) {
       this.tagFunctionFormGroup.disable({emitEvent: false});
-    }
-    if (this.tagFunctionType === 'renderFunction') {
-      this.panelTitle = 'scada.state-render-function';
-      this.tagFunctionArgs = ['ctx', 'element'];
-      this.highlightRules = scadaSymbolRenderFunctionHighlightRules;
-      this.tagFunctionHelpId = 'scada/tag_state_render_fn';
-    } else if (this.tagFunctionType === 'clickAction') {
-      this.panelTitle = 'scada.tag.on-click-action';
-      this.tagFunctionArgs = ['ctx', 'element', 'event'];
-      this.highlightRules = scadaSymbolClickActionHighlightRules;
-      this.tagFunctionHelpId = 'scada/tag_click_action_fn';
     }
   }
 

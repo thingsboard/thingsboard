@@ -1,0 +1,67 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-scada-symbol-metadata-tag-actions-panel" [formGroup]="actionsFormGroup">
+  <div class="flex flex-row items-center gap-4">
+    <mat-chip-set>
+      <mat-chip>
+        <span>{{ tag }}</span>
+      </mat-chip>
+    </mat-chip-set>
+    <div class="tb-form-panel-title" translate>scada.tag.actions</div>
+  </div>
+  <tb-toggle-select [(ngModel)]="selectedTrigger" [ngModelOptions]="{standalone: true}">
+    @for (trigger of actionTriggers; track trigger) {
+      <ng-template #triggerLabel>
+        <span [class.tb-action-trigger-enabled]="isEnabled(trigger)">{{ actionTriggerInfo[trigger].name | translate }}</span>
+      </ng-template>
+      <tb-toggle-option [value]="trigger" [template]="triggerLabel">{{ actionTriggerInfo[trigger].name | translate }}</tb-toggle-option>
+    }
+  </tb-toggle-select>
+  @for (trigger of actionTriggers; track trigger) {
+    @if (trigger === selectedTrigger) {
+      @let exclusiveTrigger = exclusiveActionTrigger(trigger);
+      <div [formGroupName]="trigger"
+           tb-hint-tooltip-icon="{{ exclusiveTrigger ? ('scada.tag.action-conflict' | translate: {trigger: (actionTriggerInfo[exclusiveTrigger].name | translate)}) : '' }}">
+        <mat-slide-toggle class="mat-slide" formControlName="enabled">
+          {{ actionTriggerInfo[trigger].enabledLabel | translate }}
+        </mat-slide-toggle>
+      </div>
+    }
+  }
+  <div class="-m-2.5 flex flex-col gap-4 overflow-auto p-2.5">
+    @for (trigger of actionTriggers; track trigger) {
+      @if (trigger === selectedTrigger) {
+        <ng-container [formGroupName]="trigger">
+          <tb-js-func minHeight="300px"
+                      formControlName="actionFunction"
+                      [highlightRules]="highlightRules"
+                      [editorCompleter]="completer"
+                      [functionArgs]="actionFunctionArgs"
+                      [helpId]="actionTriggerInfo[trigger].helpId">
+          </tb-js-func>
+        </ng-container>
+      }
+    }
+  </div>
+  <div class="flex h-10 flex-row items-end justify-end gap-4">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ (disabled ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    @if (!disabled) {
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="applyActions()"
+              [disabled]="actionsFormGroup.invalid || !actionsFormGroup.dirty">
+        {{ 'action.apply' | translate }}
+      </button>
+    }
+  </div>
+</div>

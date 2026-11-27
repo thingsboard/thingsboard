@@ -1,0 +1,23 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../../../../../../scss/constants';
+
+.tb-scada-symbol-metadata-tag-actions-panel {
+  width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  @media #{$mat-lt-md} {
+    width: 90vw;
+  }
+  .tb-action-trigger-enabled::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+    vertical-align: middle;
+  }
+}
