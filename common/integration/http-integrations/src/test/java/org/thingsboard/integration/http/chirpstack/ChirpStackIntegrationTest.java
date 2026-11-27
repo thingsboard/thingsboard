@@ -1,0 +1,109 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+package org.thingsboard.integration.http.chirpstack;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.integration.api.IntegrationContext;
+import org.thingsboard.integration.api.TbIntegrationInitParams;
+import org.thingsboard.integration.api.converter.TBDownlinkDataConverter;
+import org.thingsboard.integration.api.data.DownlinkData;
+import org.thingsboard.integration.api.data.IntegrationDownlinkMsg;
+import org.thingsboard.integration.http.DownlinkCaptureServer;
+import org.thingsboard.server.common.data.id.IntegrationId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.integration.Integration;
+import org.thingsboard.server.common.data.integration.IntegrationType;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class ChirpStackIntegrationTest {
+
+    private DownlinkCaptureServer server;
+    private ChirpStackIntegration integration;
+    private TBDownlinkDataConverter downlinkConverter;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        server = new DownlinkCaptureServer();
+        downlinkConverter = mock(TBDownlinkDataConverter.class);
+        integration = new ChirpStackIntegration();
+        integration.init(new TbIntegrationInitParams(mock(IntegrationContext.class), buildConfiguration(), null, downlinkConverter));
+    }
+
+    @AfterEach
+    void tearDown() {
+        server.close();
+    }
+
+    @Test
+    void binaryDownlinkIsSentAsBase64() throws Exception {
+        sendDownlink("BINARY", Base64.getDecoder().decode("Af8="));
+
+        assertThat(sentData()).isEqualTo("Af8=");
+    }
+
+    @Test
+    void textDownlinkIsSentAsIs() throws Exception {
+        sendDownlink("TEXT", "Kj8=".getBytes(StandardCharsets.UTF_8));
+
+        assertThat(sentData()).isEqualTo("Kj8=");
+    }
+
+    private void sendDownlink(String contentType, byte[] data) throws Exception {
+        DownlinkData downlinkData = DownlinkData.builder()
+                .contentType(contentType)
+                .data(data)
+                .metadata(Map.of("DevEUI", "0102030405060708", "fPort", "2"))
+                .build();
+        when(downlinkConverter.convertDownLink(any(), any(), any())).thenReturn(List.of(downlinkData));
+
+        TbMsg tbMsg = TbMsg.newMsg()
+                .type("ATTRIBUTES_UPDATED")
+                .originator(new IntegrationId(UUID.randomUUID()))
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data("{}")
+                .build();
+        IntegrationDownlinkMsg downlinkMsg = mock(IntegrationDownlinkMsg.class);
+        when(downlinkMsg.getTbMsg()).thenReturn(tbMsg);
+        integration.onDownlinkMsg(downlinkMsg);
+    }
+
+    private String sentData() throws InterruptedException {
+        JsonNode body = JacksonUtil.toJsonNode(server.takeRequest().body());
+        return body.get("queueItem").get("data").asText();
+    }
+
+    private Integration buildConfiguration() {
+        ObjectNode root = JacksonUtil.newObjectNode();
+        root.putObject("metadata");
+        ObjectNode client = root.putObject("clientConfiguration");
+        client.put("applicationServerUrl", server.getUrl());
+        client.put("applicationServerAPIToken", "token");
+        client.put("useAPI4Plus", true);
+
+        Integration configuration = new Integration();
+        configuration.setId(new IntegrationId(UUID.randomUUID()));
+        configuration.setTenantId(TenantId.SYS_TENANT_ID);
+        configuration.setName("chirpstack");
+        configuration.setType(IntegrationType.CHIRPSTACK);
+        configuration.setConfiguration(root);
+        return configuration;
+    }
+
+}

@@ -131,7 +131,9 @@ public class ThingParkIntegration extends AbstractHttpIntegration<ThingParkInteg
                     if (!metadata.containsKey(F_PORT)) {
                         throw new RuntimeException("FPort is missing in the downlink metadata!");
                     }
-                    String payload = new String(downlink.getData(), StandardCharsets.UTF_8);
+                    String payload = "BINARY".equals(downlink.getContentType())
+                            ? BaseEncoding.base16().encode(downlink.getData())
+                            : new String(downlink.getData(), StandardCharsets.UTF_8);
                     String params = DEV_EUI + "=" + metadata.get(DEV_EUI) + "&" + F_PORT + "=" + metadata.get(F_PORT) + "&" + PAYLOAD + "=" + payload;
                     if (metadata.containsKey(F_CNT_DN)) {
                         params += "&" + F_CNT_DN + "=" + metadata.get(F_CNT_DN);

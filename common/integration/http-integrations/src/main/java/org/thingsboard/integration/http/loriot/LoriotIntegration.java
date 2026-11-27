@@ -186,8 +186,6 @@ public class LoriotIntegration extends BasicHttpIntegration<JsonHttpIntegrationM
                         throw new RuntimeException("Port should be on the range from 1 to 223!");
                     }
 
-                    String data = new String(downlink.getData(), StandardCharsets.UTF_8);
-
                     ObjectNode payload = JacksonUtil.newObjectNode();
                     // must always have the value 'tx'
                     payload.put("cmd", "tx");
@@ -195,11 +193,11 @@ public class LoriotIntegration extends BasicHttpIntegration<JsonHttpIntegrationM
                     payload.put(PORT, port);
                     payload.put(APP_ID, loriotConfiguration.getAppId());
 
-                    String isHexEncodedStr = metadata.get(IS_HEX_ENCODED);
-                    if (StringUtils.isNotEmpty(isHexEncodedStr) && Boolean.parseBoolean(isHexEncodedStr)) {
-                        payload.put(DATA, data);
+                    boolean isHexEncoded = Boolean.parseBoolean(metadata.get(IS_HEX_ENCODED));
+                    if (isHexEncoded && !"BINARY".equals(downlink.getContentType())) {
+                        payload.put(DATA, new String(downlink.getData(), StandardCharsets.UTF_8));
                     } else {
-                        payload.put(DATA, toHex(data));
+                        payload.put(DATA, Hex.toHexString(downlink.getData()));
                     }
 
                     if (metadata.containsKey(CONFIRMED)) {
@@ -242,9 +240,5 @@ public class LoriotIntegration extends BasicHttpIntegration<JsonHttpIntegrationM
             status = "ERROR";
             reportDownlinkError(context, msg, status, exception);
         }
-    }
-
-    public String toHex(String data) {
-        return Hex.toHexString(data.getBytes());
     }
 }
