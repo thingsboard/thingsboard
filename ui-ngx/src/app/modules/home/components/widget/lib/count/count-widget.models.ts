@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ColorSettings,
   ColorType,
@@ -8,6 +9,10 @@ import {
   defaultColorFunction,
   Font
 } from '@shared/models/widget-settings.models';
+import { WidgetConfigComponentData } from '@home/models/widget-component.models';
+import { Datasource, DatasourceType } from '@shared/models/widget.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { UtilsService } from '@core/services/utils.service';
 
 export enum CountCardLayout {
   column = 'column',
@@ -110,3 +115,20 @@ export const countDefaultSettings = (alarmElseEntity: boolean): CountWidgetSetti
   chevronSizeUnit: 'px',
   chevronColor: 'rgba(0, 0, 0, 0.38)'
 });
+
+export const normalizeCountWidgetDatasource = (configData: WidgetConfigComponentData, type: DatasourceType, utils: UtilsService,
+                                                 onNormalize?: (datasource: Datasource) => void): void => {
+  let datasources = configData.config.datasources;
+  if (!datasources || !datasources.length) {
+    datasources = [{}];
+    configData.config.datasources = datasources;
+  }
+  if (datasources[0].type !== type) {
+    datasources[0].type = type;
+    delete datasources[0].name;
+    datasources[0].dataKeys = [utils.createKey({name: 'count'}, DataKeyType.count)];
+    if (onNormalize) {
+      onNormalize(datasources[0]);
+    }
+  }
+};
