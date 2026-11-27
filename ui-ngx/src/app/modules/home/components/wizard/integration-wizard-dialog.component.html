@@ -163,7 +163,7 @@
           [genericAdditionalInfoTemplate]="genericAdditionalInfo"
           [executeRemotelyTemplate]="executeRemotely"
           [integrationType]="integrationWizardForm.get('type').value"
-          [isSetDownlink]="!!downlinkConverterForm.get('downlinkConverterId').value || downlinkConverterForm.get('converterType').value === 'new'"
+          [isSetDownlink]="isDownlinkConverterSet"
           [isEdgeTemplate]="isEdgeTemplate"
         ></tb-integration-configuration>
         <ng-template #genericAdditionalInfo>

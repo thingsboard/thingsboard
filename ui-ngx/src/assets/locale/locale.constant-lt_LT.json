@@ -2863,7 +2863,6 @@
     "is-gateway": "Gateway",
     "overwrite-activity-time": "Perrašyti aktyvumo laiką prijungtam įrenginiui",
     "device-filter-title": "Įrenginių filtras",
-    "filter-title": "Filtras",
     "device-state": "Įrenginio būsena",
     "state": "Būsena",
     "any": "Visos",
@@ -5671,8 +5670,6 @@
     "access-id-required": "Prieigos ID yra privalomas.",
     "access-key": "Prieigos raktas",
     "access-key-required": "Prieigos raktas yra privalomas.",
-    "access-key-min-length": "Prieigos raktas per trumpas.",
-    "access-key-max-length": "Prieigos raktas per ilgas.",
     "connection-parameters": "Ryšio parametrai",
     "service-bus-namespace-name": "Service Bus vardų srities pavadinimas",
     "service-bus-namespace-name-required": "Service Bus vardų srities pavadinimas yra privalomas.",
@@ -5780,7 +5777,7 @@
     "opc-ua-type": "Tipas",
     "opc-ua-keystore-type": "Tipas",
     "opc-ua-keystore-type-required": "Tipas yra privalomas",
-    "opc-ua-keystore-location": "Vieta *",
+    "opc-ua-keystore-location": "Vieta",
     "opc-ua-keystore-password": "Slaptažodis",
     "opc-ua-keystore-password-required": "Slaptažodis yra privalomas",
     "opc-ua-keystore-alias": "Pseudonimas",
@@ -6527,9 +6524,6 @@
     "step-configuration": "Konfigūracija",
     "step-provisioning": "Paruošimas",
     "device-install-step-error": "Nepavyko",
-    "device-install-step-pending": "Laukiama",
-    "device-install-step-running": "Kuriama...",
-    "device-install-step-success": "Sukurta",
     "device-install-step-type-DASHBOARD": "Skydelis",
     "device-install-step-type-DEVICE": "Įrenginys",
     "device-install-step-type-DEVICE_PROFILE": "Įrenginio profilis",
@@ -7361,8 +7355,8 @@
   "position": {
     "top": "Viršus",
     "bottom": "Apačia",
-    "left": "Kairioji pusė",
-    "right": "Dešinioji pusė"
+    "left": "Kairė",
+    "right": "Dešinė"
   },
   "profile": {
     "profile": "Profilis",
@@ -7581,7 +7575,6 @@
     "drop-file": "Nuvilkite JavaScript failą arba spustelėkite, kad pasirinktumėte failą, kurį norite įkelti.",
     "drop-resource-file-or": "Nuvilkite JavaScript failą arba",
     "javascript-library": "JavaScript biblioteka",
-    "javascript-type": "JavaScript tipas",
     "scripts": "Skriptai",
     "script-type": "Skripto tipas",
     "javascript-resource-details": "JavaScript ištekliaus informacija",
@@ -12601,8 +12594,6 @@
       "check-status-settings": "Būsenos tikrinimo nustatymai",
       "perform-rpc-status-check": "Vykdyti RPC įrenginio būsenos patikrinimą",
       "retrieve-led-status-value-method": "LED būsenos gavimo metodas",
-      "led-status-value-attribute": "Įrenginio atributas, kuriame saugoma LED būsena",
-      "led-status-value-timeseries": "Įrenginio laiko eilutės, kuriose saugoma LED būsena",
       "check-status-method": "RPC įrenginio būsenos tikrinimo metodas",
       "parse-led-status-value-function": "LED būsenos reikšmės analizės funkcija",
       "knob-title": "Rankenėlės pavadinimas"

@@ -10,6 +10,7 @@ import {
   ComponentLifecycleEventTranslationMap,
   DeviceEvent,
   DeviceEventTranslationMap,
+  isSysAdminNotificationType,
   NotificationRule,
   NotificationTarget,
   TriggerType,
@@ -552,19 +553,8 @@ export class RuleNotificationDialogComponent extends
   }
 
   private allowTriggerTypes(): TriggerType[] {
-    const sysAdminAllowTriggerTypes = new Set([
-      TriggerType.ENTITIES_LIMIT,
-      TriggerType.API_USAGE_LIMIT,
-      TriggerType.NEW_PLATFORM_VERSION,
-      TriggerType.RATE_LIMITS,
-      TriggerType.TASK_PROCESSING_FAILURE,
-      TriggerType.RESOURCES_SHORTAGE
-    ]);
-
-    if (this.isSysAdmin()) {
-      return Array.from(sysAdminAllowTriggerTypes);
-    }
-    return Object.values(TriggerType).filter(type => !sysAdminAllowTriggerTypes.has(type));
+    const isSysAdmin = this.isSysAdmin();
+    return Object.values(TriggerType).filter(type => isSysAdminNotificationType(type) === isSysAdmin);
   }
 
   get allowEntityTypeForEntityAction(): EntityType[] {

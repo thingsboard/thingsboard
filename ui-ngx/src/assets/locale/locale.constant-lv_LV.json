@@ -1648,7 +1648,7 @@
     "opc-ua-type": "Tips",
     "opc-ua-keystore-type": "Tips",
     "opc-ua-keystore-type-required": "Tips ir nepieciešams",
-    "opc-ua-keystore-location": "Vieta *",
+    "opc-ua-keystore-location": "Vieta",
     "opc-ua-keystore-password": "Parole",
     "opc-ua-keystore-password-required": "Parole ir nepieciešama",
     "opc-ua-keystore-alias": "Segvārds",

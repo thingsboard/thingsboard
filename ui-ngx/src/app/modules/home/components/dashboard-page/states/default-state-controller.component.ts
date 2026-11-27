@@ -217,7 +217,7 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
     if (result && result.length > 1) {
       result = [ result[result.length - 1] ];
     }
-    return this.normalizeStateObject(result);
+    return this.normalizeIncomingStateObject(result);
   }
 
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {

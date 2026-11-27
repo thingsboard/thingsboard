@@ -45,7 +45,7 @@
         @if (gotoMenuResult.hasMatches) {
           @if (gotoMenuResult.nameMatches.length) {
             @for (link of gotoMenuResult.nameMatches; track link) {
-              <mat-option class="tb-goto-menu-link" [value]="null" (onSelectionChange)="gotoLink(link)">
+              <mat-option class="tb-goto-menu-link" [value]="''" (onSelectionChange)="$event.isUserInput && gotoLink(link)">
                 <ng-container *ngTemplateOutlet="linkOption; context:{link: link}"></ng-container>
               </mat-option>
             }
@@ -55,7 +55,7 @@
           }
           @if (gotoMenuResult.crumbMatches.length) {
             @for (link of gotoMenuResult.crumbMatches; track link) {
-              <mat-option class="tb-goto-menu-link" [value]="null" (onSelectionChange)="gotoLink(link)">
+              <mat-option class="tb-goto-menu-link" [value]="''" (onSelectionChange)="$event.isUserInput && gotoLink(link)">
                 <ng-container *ngTemplateOutlet="linkOption; context:{link: link}"></ng-container>
               </mat-option>
             }

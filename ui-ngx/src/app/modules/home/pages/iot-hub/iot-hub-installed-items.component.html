@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-installed-items-page flex h-full flex-col">
@@ -14,16 +15,38 @@
   <!-- Header -->
   <div class="tb-installed-header">
     <h1 class="tb-installed-title">{{ 'iot-hub.installed-items' | translate }}</h1>
-    @if (!updatesChecked) {
-      <button mat-flat-button color="primary" (click)="checkForUpdates()" [disabled]="isCheckingUpdates">
-        @if (isCheckingUpdates) {
-          <mat-spinner matButtonIcon class="mr-2" diameter="18"></mat-spinner>
-        } @else {
-          <mat-icon matButtonIcon>update</mat-icon>
+    <div class="flex items-center gap-4">
+      <!-- Always there, so a screen reader announces each change of the note -->
+      <span class="inline-flex items-center gap-2 text-sm leading-5 tracking-[0.2px] text-black/[.76]" role="status">
+        @if (updatesCheckFailed) {
+          <mat-icon class="tb-mat-20 text-[#f66716]">warning</mat-icon>
+          {{ 'iot-hub.check-for-updates-failed' | translate }}
+        } @else if (updatesChecked && updatesCount > 0) {
+          <mat-icon class="tb-mat-20 text-[#f44336]">arrow_circle_up</mat-icon>
+          {{ 'iot-hub.items-with-update' | translate:{ count: updatesCount, total: installedCount } }}
+        } @else if (updatesChecked && updatesCount === 0) {
+          <mat-icon class="tb-mat-20 text-[#198038]">check_circle</mat-icon>
+          {{ 'iot-hub.no-newer-versions' | translate }}
         }
-        {{ 'iot-hub.check-for-updates' | translate }}
-      </button>
-    }
+      </span>
+      @if (!updatesChecked || updatesCheckFailed) {
+        <button mat-flat-button color="primary" (click)="checkForUpdates()" [disabled]="isCheckingUpdates">
+          @if (isCheckingUpdates) {
+            <mat-spinner matButtonIcon class="mr-2" diameter="18"></mat-spinner>
+          } @else {
+            <mat-icon matButtonIcon>update</mat-icon>
+          }
+          {{ (updatesCheckFailed ? 'iot-hub.try-again' : 'iot-hub.check-for-updates') | translate }}
+        </button>
+      }
+      @if (updatesChecked) {
+        @if (onlyUpdates) {
+          <button mat-stroked-button color="primary" (click)="showOnlyUpdates(false)">{{ 'iot-hub.show-all-items' | translate }}</button>
+        } @else if (updatesCount > 0) {
+          <button mat-stroked-button color="primary" (click)="showOnlyUpdates(true)">{{ 'iot-hub.show-only-updates' | translate }}</button>
+        }
+      }
+    </div>
   </div>
 
   <!-- Filter + chips row -->

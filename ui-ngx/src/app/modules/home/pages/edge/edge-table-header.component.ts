@@ -13,7 +13,6 @@ import { Authority } from '@shared/models/authority.enum';
 @Component({
     selector: 'tb-edge-table-header',
     templateUrl: './edge-table-header.component.html',
-    styleUrls: [],
     standalone: false
 })
 export class EdgeTableHeaderComponent extends EntityTableHeaderComponent<EdgeInfo | Edge> implements OnInit {

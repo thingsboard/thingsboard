@@ -28,6 +28,7 @@ import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -268,6 +269,16 @@ public final class TbMsg implements Serializable {
             }
         }
         return ts;
+    }
+
+    /**
+     * The keys whose numeric-looking string values must stay strings when the message data is parsed again.
+     *
+     * @see TbMsgMetaData#putTypeCastDisabledKeys
+     */
+    @JsonIgnore
+    public Set<String> getTypeCastDisabledKeys() {
+        return metaData.getTypeCastDisabledKeys();
     }
 
     private TbMsgType getInternalType(String type) {

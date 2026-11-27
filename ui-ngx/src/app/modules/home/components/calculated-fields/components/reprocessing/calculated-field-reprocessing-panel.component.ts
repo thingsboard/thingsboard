@@ -210,11 +210,13 @@ export class CalculatedFieldReprocessingPanelComponent implements OnInit {
     if (this.showEntityProcessing) {
       const total = this.job().result.totalCount;
       if (isDefinedAndNotNull(total)) {
+        this.destroy$.next();
         const process = processTask(this.job().result);
-        const progress = process > 0 ? Math.round(process / total * 100) : (total > 0 ? 0 : 100);
-        if (progress > this.processProgress()) {
-          this.processProgress.set(progress);
+        let progress = total > 0 ? Math.floor(process / total * 100) : 100;
+        if (workingTask.includes(this.job().status)) {
+          progress = Math.min(progress, 99);
         }
+        this.processProgress.set(progress);
         this.processInfo.set(`${process}/${total} (${progress}%)`);
       }
     }

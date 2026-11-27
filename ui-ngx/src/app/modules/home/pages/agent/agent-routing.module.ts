@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { inject, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, ResolveFn, Route, RouterModule, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, ResolveFn, Route, Router, RouterModule, Routes } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
@@ -12,7 +12,7 @@ import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { AgentService } from '@core/http/agent.service';
 import { AgentInfo } from '@shared/models/agent.models';
-import { resolveAgentIdParam } from '@home/pages/agent/util/agent-route-params';
+import { isAgentsSectionPath, resolveAgentIdParam } from '@home/pages/agent/util/agent-route-params';
 import { MenuId } from '@core/services/menu.models';
 import { AgentsTableConfigResolver } from '@home/pages/agent/agents-table-config.resolver';
 import { AgentProfilesTableConfigResolver } from '@home/pages/agent/agent-profiles-table-config.resolver';
@@ -47,6 +47,17 @@ const agentInfoBreadcrumbResolver: ResolveFn<AgentInfo | null> = (route) => {
     : of(null);
 };
 
+const agentTabsBackUrlResolver: ResolveFn<string | null> = () => {
+  const router = inject(Router);
+  const previousUrl = router.currentNavigation()?.previousNavigation?.finalUrl;
+  if (!previousUrl) {
+    return null;
+  }
+  const url = router.serializeUrl(previousUrl);
+  const path = url.split(/[?#]/)[0];
+  return isAgentsSectionPath(path) ? url : null;
+};
+
 const agentTabsBreadcrumbLabelFunction: BreadCrumbLabelFunction<RouterTabsComponent> =
   (route, translate, component, data, utils) => {
     const name = (route?.data?.agent as AgentInfo)?.name ?? '';
@@ -78,7 +89,8 @@ const agentTabsChildren = (entitiesTableConfig: any): Route => ({
     } as BreadCrumbConfig<RouterTabsComponent>
   },
   resolve: {
-    agent: agentInfoBreadcrumbResolver
+    agent: agentInfoBreadcrumbResolver,
+    agentTabsBackUrl: agentTabsBackUrlResolver
   },
   children: [
     {

@@ -41,8 +41,8 @@ public final class DedicatedConverterUtil {
     // String values of unwrapperKeys skip the type cast, so devAddr "01020304" stays a string.
     public static DedicatedUplinkData parseUplinkData(DedicatedConverterConfig config, JsonObject src, UplinkMetaData metadata, Set<String> unwrapperKeys) {
         Map<String, Object> kvMap = new HashMap<>(metadata.getKvMap());
-        Set<String> telemetryNoCastKeys = new HashSet<>();
-        Set<String> attributesNoCastKeys = new HashSet<>();
+        Set<String> telemetryTypeCastDisabledKeys = new HashSet<>();
+        Set<String> attributesTypeCastDisabledKeys = new HashSet<>();
 
         JsonElement telemetry;
         if (src.has(TELEMETRY)) {
@@ -51,20 +51,20 @@ public final class DedicatedConverterUtil {
             if (telemetry.isJsonArray()) {
                 JsonArray telemetryArray = telemetry.getAsJsonArray();
                 Set<String> decoderKeys = getTelemetryKeys(telemetryArray);
-                addMetadataTelemetry(telemetryArray, kvMap, config.getTelemetry(), unwrapperKeys, telemetryNoCastKeys);
-                // The no-cast keys apply to every array element, so a key the decoder also sends is cast as before.
-                telemetryNoCastKeys.removeAll(decoderKeys);
+                addMetadataTelemetry(telemetryArray, kvMap, config.getTelemetry(), unwrapperKeys, telemetryTypeCastDisabledKeys);
+                // The type-cast-disabled keys apply to every array element, so a key the decoder also sends is cast as before.
+                telemetryTypeCastDisabledKeys.removeAll(decoderKeys);
             } else if (telemetry.isJsonObject()) {
                 var obj = telemetry.getAsJsonObject();
                 if (obj.has(VALUES)) {
                     var values = obj.get(VALUES).getAsJsonObject();
-                    addKvs(values, kvMap, config.getTelemetry(), unwrapperKeys, telemetryNoCastKeys);
+                    addKvs(values, kvMap, config.getTelemetry(), unwrapperKeys, telemetryTypeCastDisabledKeys);
                 } else {
-                    addKvs(obj, kvMap, config.getTelemetry(), unwrapperKeys, telemetryNoCastKeys);
+                    addKvs(obj, kvMap, config.getTelemetry(), unwrapperKeys, telemetryTypeCastDisabledKeys);
                 }
             }
         } else {
-            telemetry = addKvs(new JsonObject(), kvMap, config.getTelemetry(), unwrapperKeys, telemetryNoCastKeys);
+            telemetry = addKvs(new JsonObject(), kvMap, config.getTelemetry(), unwrapperKeys, telemetryTypeCastDisabledKeys);
         }
 
         JsonObject attributes;
@@ -74,7 +74,7 @@ public final class DedicatedConverterUtil {
             attributes = new JsonObject();
         }
 
-        addKvs(attributes, kvMap, config.getAttributes(), unwrapperKeys, attributesNoCastKeys);
+        addKvs(attributes, kvMap, config.getAttributes(), unwrapperKeys, attributesTypeCastDisabledKeys);
 
         EntityType entityType = getProperty(src, "type", EntityType::valueOf, config::getType);
         String entityName = getProperty(src, "name", () -> processTemplate(config.getName(), kvMap));
@@ -95,8 +95,8 @@ public final class DedicatedConverterUtil {
                 .group(group)
                 .telemetry(telemetry)
                 .attributes(attributes)
-                .telemetryNoCastKeys(telemetryNoCastKeys)
-                .attributesNoCastKeys(attributesNoCastKeys)
+                .telemetryTypeCastDisabledKeys(telemetryTypeCastDisabledKeys)
+                .attributesTypeCastDisabledKeys(attributesTypeCastDisabledKeys)
                 .build();
     }
 
@@ -117,17 +117,17 @@ public final class DedicatedConverterUtil {
 
     // The metadata keys join the script's element at the uplink ts, where the script's values win as in an object result.
     // Without such an element they get their own one at the uplink ts: an element without ts is saved at the server time.
-    private static void addMetadataTelemetry(JsonArray telemetry, Map<String, Object> kvMap, Set<String> keys, Set<String> unwrapperKeys, Set<String> noCastKeys) {
+    private static void addMetadataTelemetry(JsonArray telemetry, Map<String, Object> kvMap, Set<String> keys, Set<String> unwrapperKeys, Set<String> typeCastDisabledKeys) {
         Long uplinkTs = getUplinkTs(kvMap);
         if (uplinkTs != null) {
             for (JsonElement element : telemetry) {
                 if (element.isJsonObject() && isValuesAtTs(element.getAsJsonObject(), uplinkTs)) {
-                    addKvs(element.getAsJsonObject().getAsJsonObject(VALUES), kvMap, keys, unwrapperKeys, noCastKeys);
+                    addKvs(element.getAsJsonObject().getAsJsonObject(VALUES), kvMap, keys, unwrapperKeys, typeCastDisabledKeys);
                     return;
                 }
             }
         }
-        JsonObject values = addKvs(new JsonObject(), kvMap, keys, unwrapperKeys, noCastKeys);
+        JsonObject values = addKvs(new JsonObject(), kvMap, keys, unwrapperKeys, typeCastDisabledKeys);
         if (values.isEmpty()) {
             return;
         }
@@ -175,14 +175,14 @@ public final class DedicatedConverterUtil {
         return keys;
     }
 
-    private static JsonObject addKvs(JsonObject kvsObj, Map<String, Object> kvMap, Set<String> keys, Set<String> unwrapperKeys, Set<String> noCastKeys) {
+    private static JsonObject addKvs(JsonObject kvsObj, Map<String, Object> kvMap, Set<String> keys, Set<String> unwrapperKeys, Set<String> typeCastDisabledKeys) {
         if (CollectionsUtil.isNotEmpty(keys) && !kvMap.isEmpty()) {
             kvMap.entrySet().stream()
                     .filter(e -> keys.contains(e.getKey()) && !kvsObj.has(e.getKey()))
                     .forEach(e -> {
                         kvsObj.add(e.getKey(), GSON.toJsonTree(e.getValue()));
                         if (e.getValue() instanceof String && unwrapperKeys.contains(e.getKey())) {
-                            noCastKeys.add(e.getKey());
+                            typeCastDisabledKeys.add(e.getKey());
                         }
                     });
         }

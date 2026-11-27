@@ -52,7 +52,6 @@
 
     <appender name="licenseErrorLogAppender" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.err</target>
-        <withJansi>true</withJansi>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>WARN</level>
         </filter>

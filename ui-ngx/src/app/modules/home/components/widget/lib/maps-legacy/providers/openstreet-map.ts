@@ -23,6 +23,9 @@ export class OpenStreetMap extends LeafletMap {
           tileLayer = L.tileLayer(options.customProviderTileUrl);
         } else {
           tileLayer = L.tileLayer.provider(options.mapProvider || 'OpenStreetMap.Mapnik');
+          if (tileLayer.options.attribution && options.mapProvider?.startsWith('Esri.')) {
+            L.Util.setOptions(tileLayer, {attribution: `Powered by Esri | ${tileLayer.options.attribution}`});
+          }
         }
         tileLayer.addTo(map);
         if (this.ctx.reportService.reportView) {

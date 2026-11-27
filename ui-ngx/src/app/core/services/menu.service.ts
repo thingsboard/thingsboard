@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
 import { getCurrentOpenedMenuSections, selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
-import { filter, map, take } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, take } from 'rxjs/operators';
 import {
   buildUserHome,
   buildUserMenu,
@@ -246,6 +246,13 @@ export class MenuService {
   public menuLinkById(id: string): Observable<MenuSection | undefined> {
     return this.availableMenuLinks$.pipe(
       map((links) => links.find(link => link.id === id))
+    );
+  }
+
+  public isMenuLinkAvailable(id: string): Observable<boolean> {
+    return this.menuLinkById(id).pipe(
+      map(link => !!link),
+      distinctUntilChanged()
     );
   }
 

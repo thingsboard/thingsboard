@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -17,9 +18,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.secret.SecretConfigurationService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -43,6 +46,9 @@ public class AdminControllerTest extends AbstractControllerTest {
 
     @MockitoBean
     private SecretConfigurationService secretConfigurationService;
+
+    @Autowired
+    private AdminSettingsService adminSettingsService;
 
     @Test
     public void testFindAdminSettingsByKey() throws Exception {
@@ -109,6 +115,30 @@ public class AdminControllerTest extends AbstractControllerTest {
         doPost("/api/admin/settings", adminSettings)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("is prohibited")));
+    }
+
+    @Test
+    public void testSaveAdminSettingsRefusesVersionControlKeys() throws Exception {
+        loginTenantAdmin();
+        checkVersionControlKeysRefused(tenantId);
+
+        loginSysAdmin();
+        checkVersionControlKeysRefused(TenantId.SYS_TENANT_ID);
+    }
+
+    private void checkVersionControlKeysRefused(TenantId settingsTenantId) throws Exception {
+        Map<String, String> values = Map.of(
+                "entitiesVersionControl", "{\"repositoryUri\":\"repo1\",\"defaultBranch\":\"main\"}",
+                "autoCommitSettings", "{}");
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            AdminSettings settings = new AdminSettings();
+            settings.setKey(entry.getKey());
+            settings.setJsonValue(JacksonUtil.toJsonNode(entry.getValue()));
+            doPost("/api/admin/settings", settings)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(statusReason(containsString("version control API")));
+            assertThat(adminSettingsService.findAdminSettingsByTenantIdAndKey(settingsTenantId, entry.getKey())).isNull();
+        }
     }
 
     @Test

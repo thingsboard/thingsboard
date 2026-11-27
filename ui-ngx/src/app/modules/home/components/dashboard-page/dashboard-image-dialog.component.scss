@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 $previewSize: 300px !default;
 
 :host {
 
   mat-form-field.rect-field {
-    max-width: 80px;
+    max-width: 96px;
   }
 
   .tb-image-preview {

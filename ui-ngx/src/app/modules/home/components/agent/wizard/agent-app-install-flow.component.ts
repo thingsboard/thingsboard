@@ -6,8 +6,8 @@ import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatStepper, StepperOrientation } from '@angular/material/stepper';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { BehaviorSubject, combineLatest, forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, share, startWith } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, EMPTY, forkJoin, Observable, of, Subscription } from 'rxjs';
+import { catchError, map, share, shareReplay, startWith, switchMap, take } from 'rxjs/operators';
 import { PageComponent } from '@shared/components/page.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AgentService } from '@core/http/agent.service';
@@ -101,6 +101,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   composeTypeKeys: string[] = [];
   loadingTemplate = false;
   loadError = '';
+  mergeError = '';
   private advanceAfterTypeSelect = false;
 
   appName = '';
@@ -112,6 +113,13 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   useProfile = true;
   selectedProfile: AgentAppProfile | null = null;
   loadingProfiles = false;
+  typesWithoutTemplates = new Set<AgentApplicationType>();
+  // No templates and no existing profiles: nothing can be installed for the type.
+  unavailableTypes = new Set<AgentApplicationType>();
+  detectingTypes = true;
+  private typeAvailability$: Observable<void>;
+  private typeLoadSubscription: Subscription | null = null;
+  private mergeSubscription: Subscription | null = null;
 
   profileSelectFormGroup: UntypedFormGroup;
   filteredProfiles: Observable<AgentAppProfile[]>;
@@ -153,6 +161,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   private pendingCustomCompose: string | null = null;
 
   readonly canCreateAppProfile: boolean;
+  private readonly canReadAppProfiles: boolean;
 
   constructor(private router: Router,
               private translate: TranslateService,
@@ -166,6 +175,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
               private destroyRef: DestroyRef) {
     super();
     this.canCreateAppProfile = this.userPermissionsService.hasGenericPermission(Resource.AGENT_APP_PROFILE, Operation.CREATE);
+    this.canReadAppProfiles = this.userPermissionsService.hasGenericPermission(Resource.AGENT_APP_PROFILE, Operation.READ);
     this.profileSelectFormGroup = this.fb.group({ profile: [null] });
     const text$ = this.profileSelectFormGroup.get('profile').valueChanges.pipe(
       startWith(this.profileSelectFormGroup.get('profile').value),
@@ -217,10 +227,42 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
         }
       });
     }
-    this.loader.prewarmTemplates(this.typeCards.map(card => card.type));
+    const types = this.lockedType ? [this.lockedType] : this.typeCards.map(card => card.type);
+    this.detectTypeAvailability(types);
+    this.loader.prewarmTemplates(types, this.destroyRef);
     if (this.lockedType) {
       this.selectType(this.lockedType);
     }
+  }
+
+  private detectTypeAvailability(types: AgentApplicationType[]) {
+    this.typeAvailability$ = forkJoin(types.map(type => forkJoin([
+      this.loader.loadTemplatesByType(type).pipe(catchError(() => of(null))),
+      this.canReadAppProfiles ? this.loader.loadProfiles(type).pipe(catchError(() => of(null))) : of([])
+    ]))).pipe(
+      map(results => {
+        results.forEach(([templates, profiles], index) => {
+          if (templates && !this.edgeTemplateCompatibility.filterTemplates(templates).length) {
+            this.typesWithoutTemplates.add(types[index]);
+            if (profiles && !this.edgeTemplateCompatibility.filterProfiles(profiles).length) {
+              this.unavailableTypes.add(types[index]);
+            }
+          }
+        });
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+    this.typeAvailability$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.detectingTypes = false;
+    });
+  }
+
+  isTypeDisabled(type: AgentApplicationType): boolean {
+    return this.detectingTypes || this.unavailableTypes.has(type);
+  }
+
+  get canCreateProfileForType(): boolean {
+    return this.canCreateAppProfile && !this.typesWithoutTemplates.has(this.selectedType);
   }
 
   selectType(type: AgentApplicationType) {
@@ -228,11 +270,14 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
       return;
     }
     this.selectedType = type;
+    this.typeLoadSubscription?.unsubscribe();
+    this.mergeSubscription?.unsubscribe();
     this.template = null;
     this.composeType = null;
     this.composeTypeKeys = [];
     this.composeYaml = '';
     this.mergedApp = null;
+    this.loadingTemplate = false;
     this.selectedProfile = null;
     this.profileSelectFormGroup.get('profile').patchValue(null, { emitEvent: false });
     this.availableProfiles = [];
@@ -241,6 +286,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     this.pendingCustomCompose = null;
     this.appName = this.defaultAppName(type);
     this.loadError = '';
+    this.mergeError = '';
     this.advanceAfterTypeSelect = !this.lockedType;
 
     if (this.useProfile) {
@@ -266,12 +312,16 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
       this.savedProfile = this.selectedProfile;
     }
     this.useProfile = value;
+    this.typeLoadSubscription?.unsubscribe();
+    this.mergeSubscription?.unsubscribe();
     this.selectedProfile = null;
     this.profileSelectFormGroup.get('profile').patchValue(null, { emitEvent: false });
     this.template = null;
     this.composeYaml = '';
     this.mergedApp = null;
+    this.loadingTemplate = false;
     this.loadError = '';
+    this.mergeError = '';
     this.credentialValues = {};
     if (this.selectedType) {
       if (value) {
@@ -322,6 +372,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   selectProfile(profile: AgentAppProfile) {
     if (!profile) { return; }
     this.selectedProfile = profile;
+    this.mergeSubscription?.unsubscribe();
     this.profileSelectFormGroup.get('profile').patchValue(profile, { emitEvent: false });
     this.composeYaml = dumpCompose(profile);
     this.initCredentialValues();
@@ -413,7 +464,9 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     const draft = buildRelatedMergeDraft(
       this.agentId, this.selectedType!, this.appName, tpl,
       this.composeYaml, dockerComposeConfig(this.mergedApp)?.compose);
-    this.loader.merge(
+    this.mergeError = '';
+    this.mergeSubscription?.unsubscribe();
+    this.mergeSubscription = this.loader.merge(
       tpl.currentVersion, tpl.appType, draft, this.useProfile ? undefined : (this.composeType || undefined),
       this.relatedEntityId || undefined, undefined, true
     ).subscribe({
@@ -430,7 +483,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
         }
       },
       error: () => {
-        this.loadError = this.translate.instant('agent.app-install-merge-failed');
+        this.mergeError = this.translate.instant('agent.app-install-merge-failed');
       }
     });
   }
@@ -454,6 +507,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   private clearProfileSelection() {
     this.selectedProfile = null;
+    this.mergeSubscription?.unsubscribe();
     this.composeYaml = '';
     this.credentialValues = {};
     this.template = null;
@@ -463,14 +517,16 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   private loadProfilesForType(type: AgentApplicationType) {
     this.loadingProfiles = true;
-    const templates$: Observable<AgentAppTemplate[]> = VIRTUAL_APP_TYPES.includes(type) && this.canCreateAppProfile
+    const templates$: Observable<AgentAppTemplate[]> = this.canCreateAppProfile
       ? this.loader.loadTemplatesByType(type).pipe(catchError(() => of([])))
       : of([]);
-    forkJoin([this.loader.loadProfiles(type), templates$]).subscribe({
+    const profiles$: Observable<AgentAppProfile[]> = this.canReadAppProfiles ? this.loader.loadProfiles(type) : of([]);
+    this.typeLoadSubscription = forkJoin([profiles$, templates$]).subscribe({
       next: ([allProfiles, allTemplates]) => {
         const profiles = this.edgeTemplateCompatibility.filterProfiles(allProfiles);
         const templates = this.edgeTemplateCompatibility.filterTemplates(allTemplates);
-        this.availableProfiles = [...profiles, ...buildVirtualAppProfiles(templates, allProfiles)];
+        const virtualProfiles = VIRTUAL_APP_TYPES.includes(type) ? buildVirtualAppProfiles(templates, allProfiles) : [];
+        this.availableProfiles = [...profiles, ...virtualProfiles];
         this.loadingProfiles = false;
         this.advanceFromTypeStep();
       },
@@ -483,7 +539,18 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   private loadTemplateForType(type: AgentApplicationType) {
     this.loadingTemplate = true;
-    this.loader.loadTemplate(type).subscribe({
+    this.typeLoadSubscription = this.typeAvailability$.pipe(
+      take(1),
+      switchMap(() => {
+        if (this.typesWithoutTemplates.has(type)) {
+          this.loadingTemplate = false;
+          this.loadError = this.translate.instant('agent.app-no-templates');
+          return EMPTY;
+        }
+        return this.loader.loadTemplate(type);
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: tpl => this.applyTemplate(tpl),
       error: () => {
         this.loadError = this.translate.instant('agent.app-install-template-failed');
@@ -528,7 +595,9 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   private runMergeForPreview(tpl: AgentAppTemplate) {
     const draft = buildInstallMergeDraft(this.agentId, this.selectedType!, this.appName, tpl);
-    this.loader.merge(tpl.currentVersion, tpl.appType, draft, this.composeType || undefined, this.relatedEntityId || undefined, undefined, true).subscribe({
+    this.mergeError = '';
+    this.mergeSubscription?.unsubscribe();
+    this.mergeSubscription = this.loader.merge(tpl.currentVersion, tpl.appType, draft, this.composeType || undefined, this.relatedEntityId || undefined, undefined, true).subscribe({
       next: merged => {
         this.mergedApp = merged;
         if (!this.useProfile) {
@@ -541,7 +610,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
         }
       },
       error: () => {
-        this.loadError = this.translate.instant('agent.app-install-merge-failed');
+        this.mergeError = this.translate.instant('agent.app-install-merge-failed');
       }
     });
   }
@@ -609,6 +678,9 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   }
 
   canSubmit(): boolean {
+    if (this.mergeError) {
+      return false;
+    }
     if (this.relatedEntityRequired && !this.relatedEntityId?.id) {
       return false;
     }

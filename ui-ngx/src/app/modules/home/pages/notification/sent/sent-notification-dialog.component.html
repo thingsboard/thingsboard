@@ -96,42 +96,42 @@
                     }
                   }
                 </section>
+                @if (!isSysAdmin()) {
+                  <div class="tb-form-panel stroked no-padding-bottom no-gap mb-5">
+                    <mat-slide-toggle class="toggle" formControlName="attachReport">
+                      <div tb-hint-tooltip-icon="{{ 'notification.attach-report-hint' | translate }}" translate>
+                        notification.attach-report
+                      </div>
+                    </mat-slide-toggle>
+                    @if (notificationRequestForm.get('template.configuration.attachReport').value) {
+                      <div class="tb-form-panel outlined">
+                        <tb-report-template-autocomplete
+                          required
+                          appearance="outline"
+                          [type]="ReportTemplateType.REPORT"
+                          includeCustomers
+                          showError
+                          formControlName="reportTemplateId">
+                          <span tb-error>{{'report-template.report-template-required' | translate}}</span>
+                        </tb-report-template-autocomplete>
+                        <tb-entity-autocomplete
+                          appearance="outline"
+                          required
+                          useFullEntityId
+                          [entityType]="entityType.USER"
+                          formControlName="userId">
+                        </tb-entity-autocomplete>
+                        <tb-timezone-select
+                          appearance="outline"
+                          userTimezoneByDefault
+                          required
+                          formControlName="timezone">
+                        </tb-timezone-select>
+                      </div>
+                    }
+                  </div>
+                }
               </section>
-              @if (!isSysAdmin()) {
-                <div class="tb-form-panel stroked no-padding-bottom no-gap mb-5">
-                  <mat-slide-toggle class="toggle" formControlName="attachReport">
-                    <div tb-hint-tooltip-icon="{{ 'notification.attach-report-hint' | translate }}" translate>
-                      notification.attach-report
-                    </div>
-                  </mat-slide-toggle>
-                  @if (notificationRequestForm.get('template.configuration.attachReport').value) {
-                    <div class="tb-form-panel outlined">
-                      <tb-report-template-autocomplete
-                        required
-                        appearance="outline"
-                        [type]="ReportTemplateType.REPORT"
-                        includeCustomers
-                        showError
-                        formControlName="reportTemplateId">
-                        <span tb-error>{{'report-template.report-template-required' | translate}}</span>
-                      </tb-report-template-autocomplete>
-                      <tb-entity-autocomplete
-                        appearance="outline"
-                        required
-                        useFullEntityId
-                        [entityType]="entityType.USER"
-                        formControlName="userId">
-                      </tb-entity-autocomplete>
-                      <tb-timezone-select
-                        appearance="outline"
-                        userTimezoneByDefault
-                        required
-                        formControlName="timezone">
-                      </tb-timezone-select>
-                    </div>
-                  }
-                </div>
-              }
             </section>
           }
         </div>

@@ -1743,7 +1743,7 @@
     "opc-ua-type": "ტიპი",
     "opc-ua-keystore-type": "ტიპი",
     "opc-ua-keystore-type-required": "ტიპი სავალდებულოა",
-    "opc-ua-keystore-location": "ლოკაცია *",
+    "opc-ua-keystore-location": "ლოკაცია",
     "opc-ua-keystore-password": "პაროლი",
     "opc-ua-keystore-password-required": "პაროლი სავალდებულოა",
     "opc-ua-keystore-alias": "ზედმესახელი",

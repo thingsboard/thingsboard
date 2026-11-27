@@ -45,6 +45,20 @@ export function agentEntityUrl(route: ActivatedRouteSnapshot, agentId: string, .
   return '/' + [url, ...tail].join('/');
 }
 
+const AGENTS_SECTION_PATH = /\/edgeManagement\/agents\/(all|(groups|shared)\/[^/]+)\/?$/;
+
+export function isAgentsSectionPath(path: string): boolean {
+  return AGENTS_SECTION_PATH.test(path);
+}
+
+export function agentsListUrl(route: ActivatedRouteSnapshot, agentId: string): string {
+  return agentEntityUrl(route, agentId).replace(/\/[^/]+$/, '');
+}
+
+export function agentTabsBackUrl(route: ActivatedRouteSnapshot): string | null {
+  return route.pathFromRoot.find(r => r.data?.agentTabsBackUrl)?.data.agentTabsBackUrl ?? null;
+}
+
 // Deepest activated route snapshot — for callers (dialogs, table configs) that
 // only have a Router and need the scope of the page currently displayed.
 export function currentAgentRouteSnapshot(router: Router): ActivatedRouteSnapshot {

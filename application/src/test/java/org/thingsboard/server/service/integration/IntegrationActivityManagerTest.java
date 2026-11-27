@@ -697,7 +697,7 @@ public class IntegrationActivityManagerTest {
 
         IntegrationCallback<Void> callbackMock = mock(IntegrationCallback.class);
         doCallRealMethod().when(integrationServiceMock).processUplinkData(eq(integration), any(UUID.class), eq(uplinkDataProto), eq(callbackMock));
-        doCallRealMethod().when(integrationServiceMock).process(any(), eq(uplinkDataProto.getPostTelemetryMsg()), any());
+        doCallRealMethod().when(integrationServiceMock).process(any(), eq(uplinkDataProto.getPostTelemetryMsg()), any(), any());
         long expectedTime = 123L;
         when(integrationServiceMock.getCurrentTimeMillis()).thenReturn(expectedTime);
 
@@ -734,7 +734,7 @@ public class IntegrationActivityManagerTest {
                 .setPostAttributesMsg(postAttributeMsg).build();
 
         doCallRealMethod().when(integrationServiceMock).processUplinkData(eq(integration), any(UUID.class), eq(uplinkDataProto), isNull());
-        doCallRealMethod().when(integrationServiceMock).process(any(), eq(uplinkDataProto.getPostAttributesMsg()), isNull());
+        doCallRealMethod().when(integrationServiceMock).process(any(), eq(uplinkDataProto.getPostAttributesMsg()), any(), isNull());
         long expectedTime = 123L;
         when(integrationServiceMock.getCurrentTimeMillis()).thenReturn(expectedTime);
 

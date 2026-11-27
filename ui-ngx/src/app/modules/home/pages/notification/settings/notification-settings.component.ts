@@ -5,20 +5,26 @@ import { Component, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormArray, FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import {
+  isNotificationTypeReceivable,
   NotificationDeliveryMethod,
   NotificationDeliveryMethodInfoMap,
+  NotificationType,
+  NotificationUserSetting,
   NotificationUserSettings
 } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { DialogService } from '@core/services/dialog.service';
 import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+
+type NotificationSettingRow = NotificationUserSetting & { name: string };
 
 @Component({
     selector: 'tb-notification-settings',
@@ -39,6 +45,8 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     NotificationDeliveryMethod.SLACK,
     NotificationDeliveryMethod.MICROSOFT_TEAMS
   ]);
+
+  private userPrefs: {[key: string]: NotificationUserSetting} = {};
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
@@ -70,31 +78,43 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
   }
 
   private patchNotificationSettings(settings: NotificationUserSettings) {
-    const notificationSettingsControls: Array<AbstractControl> = [];
-    if (settings.prefs) {
-      this.prepareNotificationSettings(settings.prefs).forEach(setting =>
-        notificationSettingsControls.push(this.fb.control({value: setting, disabled: this.readonly}, [Validators.required]))
-      );
-    }
-    this.notificationSettings.setControl('prefs', this.fb.array(notificationSettingsControls), {emitEvent: false});
+    this.userPrefs = settings.prefs ?? {};
+    this.setPrefsValue(this.prepareNotificationSettings(this.userPrefs));
   }
 
-  private prepareNotificationSettings(prefs: any) {
-    return Object.entries(prefs).map((value: any) => {
-      value[1].name = value[0];
-      if (!value[1].enabled && Object.values(value[1].enabledDeliveryMethods).some(deliveryMethod => deliveryMethod === true)) {
-        const enabledDeliveryMethod = deepClone(value[1].enabledDeliveryMethods);
-        Object.keys(enabledDeliveryMethod).forEach(key => {
-          enabledDeliveryMethod[key] = false;
-        });
-        value[1].enabledDeliveryMethods = enabledDeliveryMethod;
-      }
-      value[1].enabledDeliveryMethods = Object.assign(
-        this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {}),
-        value[1].enabledDeliveryMethods
-      );
-      return value[1];
-    });
+  private setPrefsValue(prefs: NotificationSettingRow[]) {
+    const prefsArray = this.notificationSettingsFormArray;
+    const sameRows = prefsArray.length === prefs.length &&
+      prefs.every((pref, index) => prefsArray.at(index).value?.name === pref.name);
+    if (sameRows) {
+      prefsArray.patchValue(prefs, {emitEvent: false});
+    } else {
+      this.notificationSettings.setControl('prefs', this.fb.array(
+        prefs.map(pref => this.fb.control({value: pref, disabled: this.readonly}, [Validators.required]))
+      ), {emitEvent: false});
+    }
+  }
+
+  private prepareNotificationSettings(prefs: {[key: string]: NotificationUserSetting}): NotificationSettingRow[] {
+    const authState = getCurrentAuthState(this.store);
+    return Object.entries(deepClone(prefs))
+      .filter(([type]) =>
+        isNotificationTypeReceivable(type as NotificationType, authState.authUser.authority, authState.edgesSupportEnabled))
+      .map((value: any) => {
+        value[1].name = value[0];
+        if (!value[1].enabled && Object.values(value[1].enabledDeliveryMethods).some(deliveryMethod => deliveryMethod === true)) {
+          const enabledDeliveryMethod = deepClone(value[1].enabledDeliveryMethods);
+          Object.keys(enabledDeliveryMethod).forEach(key => {
+            enabledDeliveryMethod[key] = false;
+          });
+          value[1].enabledDeliveryMethods = enabledDeliveryMethod;
+        }
+        value[1].enabledDeliveryMethods = Object.assign(
+          this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {}),
+          value[1].enabledDeliveryMethods
+        );
+        return value[1];
+      });
   }
 
   resetSettings() {
@@ -107,18 +127,11 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     ).subscribe(
       result => {
         if (result) {
-          const settings = this.prepareNotificationSettings(this.route.snapshot.data.userSettings.prefs);
-          const notificationSettingsControls: Array<AbstractControl> = [];
-          this.notificationSettings.reset({});
-          if (settings) {
-            settings.forEach((setting) => {
-              setting.enabled = true;
-              setting.enabledDeliveryMethods = this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {});
-              notificationSettingsControls.push(this.fb.control(setting, [Validators.required]));
-            });
-          }
-          this.notificationSettings.setControl('prefs', this.fb.array(notificationSettingsControls), {emitEvent: false});
-          this.save();
+          const allMethodsEnabled = this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {});
+          this.setPrefsValue(this.prepareNotificationSettings(this.userPrefs).map(setting =>
+            ({...setting, enabled: true, enabledDeliveryMethods: allMethodsEnabled})
+          ));
+          this.save({});
         }
       }
     );
@@ -163,21 +176,19 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     this.notificationSettings.markAsDirty();
   };
 
-  get notificationSettingsFormArray(): UntypedFormArray {
-    return this.notificationSettings.get('prefs') as UntypedFormArray;
+  get notificationSettingsFormArray(): FormArray<FormControl> {
+    return this.notificationSettings.get('prefs') as FormArray<FormControl>;
   }
 
-  save(): void {
-    const settings = {prefs: {}};
-    this.notificationSettings.getRawValue().prefs.forEach(value => {
-      const key = value.name;
-      delete value.name;
-      settings.prefs[key] = value;
+  save(basePrefs = this.userPrefs): void {
+    const settings = {prefs: deepClone(basePrefs)};
+    (this.notificationSettings.getRawValue().prefs as NotificationSettingRow[]).forEach(({name, ...pref}) => {
+      settings.prefs[name] = pref;
     });
     this.notificationService.saveNotificationUserSettings(settings).subscribe(
       (userSettings) => {
-        this.notificationSettings.get('prefs').reset({});
         this.patchNotificationSettings(userSettings);
+        this.notificationSettings.markAsPristine();
       }
     );
   }

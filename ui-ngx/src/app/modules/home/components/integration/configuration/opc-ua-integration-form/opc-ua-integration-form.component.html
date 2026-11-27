@@ -78,6 +78,7 @@
           <tb-secret-file-input formControlName="fileContent"
                                 label="{{ 'integration.opc-ua-keystore-location' | translate }}"
                                 inputId="location"
+                                required
                                 [existingFileName]="opcIntegrationConfigForm.get('keystore.location').value"
                                 (fileNameChanged)="opcIntegrationConfigForm.get('keystore.location').setValue($event)">
           </tb-secret-file-input>

@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { IotHubInstalledItemKeptEntities } from 'src/app/shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubInstalledItemKeptEntities, IotHubKeptEntity } from 'src/app/shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourceReferences } from '@shared/models/resource.models';
@@ -30,10 +30,8 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
 
   description: string;
 
-  // A device package keeps the entities other installed packages use, and the dialog lists them before the user confirms
-  keptReferences: ResourceReferences | null = null;
+  keptGroups: { reason: string; references: ResourceReferences }[] = [];
   keptTitle: string;
-  keptReason: string;
 
   constructor(
     protected store: Store<AppState>,
@@ -46,13 +44,21 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     super(store, router, dialogRef);
     this.description = this.translate.instant(data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc');
     const kept = data.keptEntities;
-    if (kept?.entities.length) {
-      this.keptReferences = kept.entities.map(entity => ({ id: entity.entityId as EntityId, name: entity.name }));
+    const shared = kept?.entities ?? [];
+    const referenced = kept?.referencedEntities ?? [];
+    const references = (entities: IotHubKeptEntity[]): ResourceReferences =>
+      entities.map(entity => ({ id: entity.entityId as EntityId, name: entity.name }));
+    if (shared.length) {
       // Kept because other packages use them, because the user had them before the package, or both
       const reasonKey = !kept.usedExistingCount ? 'iot-hub.remove-kept-used' :
         !kept.usedByItemsCount ? 'iot-hub.remove-kept-own' : 'iot-hub.remove-kept-own-or-used';
-      this.keptTitle = this.translate.instant('iot-hub.remove-kept-title', { kept: kept.entities.length });
-      this.keptReason = this.translate.instant(reasonKey, { kept: kept.entities.length });
+      this.keptGroups.push({ reason: this.translate.instant(reasonKey, { kept: shared.length }), references: references(shared) });
+    }
+    if (referenced.length) {
+      this.keptGroups.push({ reason: this.translate.instant('iot-hub.remove-kept-referenced'), references: references(referenced) });
+    }
+    if (this.keptGroups.length) {
+      this.keptTitle = this.translate.instant('iot-hub.remove-kept-title', { kept: shared.length + referenced.length });
     }
   }
 

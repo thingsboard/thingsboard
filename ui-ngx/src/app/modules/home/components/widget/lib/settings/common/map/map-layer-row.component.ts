@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -29,6 +30,8 @@ import {
   cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
+  esriLayerTranslationMap,
+  esriLayerTypes,
   googleMapLayerTranslationMap,
   googleMapLayerTypes,
   hereLayerTranslationMap,
@@ -39,8 +42,8 @@ import {
   mapProviderTranslationMap,
   openFreeMapStyleTranslationMap,
   openFreeMapStyleTypes,
+  mapLayerHasReferenceLayerApiKey,
   mapProviderHasApiKey,
-  mapProviderRequiresApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap,
   tencentLayerTranslationMap,
@@ -85,6 +88,10 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
 
   cartoLayerTranslationMap = cartoLayerTranslationMap;
 
+  esriLayerTypes = esriLayerTypes;
+
+  esriLayerTranslationMap = esriLayerTranslationMap;
+
   googleMapLayerTypes = googleMapLayerTypes;
 
   googleMapLayerTranslationMap = googleMapLayerTranslationMap;
@@ -126,8 +133,9 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       tileUrl: [null, [Validators.required]],
       vectorTiles: [false, []],
       customAttribution: [null, []],
-      apiKey: [null, [Validators.required]],
-      referenceLayer: [null, []]
+      apiKey: [null, []],
+      referenceLayer: [null, []],
+      referenceLayerApiKey: [null, []]
     });
     this.layerFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -228,10 +236,14 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
     if (mapProviderHasApiKey(provider)) {
-      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});
+    }
+    if (mapLayerHasReferenceLayerApiKey(provider, this.layerFormGroup.get('referenceLayer').value)) {
+      this.layerFormGroup.get('referenceLayerApiKey').enable({emitEvent: false});
+    } else {
+      this.layerFormGroup.get('referenceLayerApiKey').disable({emitEvent: false});
     }
   }
 

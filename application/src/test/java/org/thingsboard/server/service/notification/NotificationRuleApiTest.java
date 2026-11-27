@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.Notification;
@@ -897,6 +898,136 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
                 });
+    }
+
+    @Test
+    public void testSaveNotificationRule_templateOfOtherTenant_returnsBadRequest() throws Exception {
+        loginDifferentTenant();
+        NotificationTemplate otherTemplate = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Created", "Created", NotificationDeliveryMethod.WEB);
+        loginTenantAdmin();
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+
+        NotificationRule rule = newDeviceCreatedRule(otherTemplate.getId(), List.of(target.getUuidId()));
+        doPost("/api/notification/rule", rule).andExpect(status().isBadRequest());
+
+        assertThat(findNotificationRules().getData()).extracting(NotificationRuleInfo::getName).doesNotContain(rule.getName());
+    }
+
+    @Test
+    public void testSaveNotificationRule_targetOfOtherTenant_returnsForbidden() throws Exception {
+        loginDifferentTenant();
+        NotificationTarget otherTarget = createNotificationTarget(savedDifferentTenantUser.getId());
+        loginTenantAdmin();
+        NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Created", "Created", NotificationDeliveryMethod.WEB);
+
+        NotificationRule rule = newDeviceCreatedRule(template.getId(), List.of(otherTarget.getUuidId()));
+        doPost("/api/notification/rule", rule).andExpect(status().isForbidden());
+
+        NotificationTemplate alarmTemplate = createNotificationTemplate(NotificationType.ALARM, "Alarm", "Alarm", NotificationDeliveryMethod.WEB);
+        NotificationTarget ownTarget = createNotificationTarget(tenantAdminUserId);
+        NotificationRule alarmRule = new NotificationRule();
+        alarmRule.setName("Alarm rule " + UUID.randomUUID());
+        alarmRule.setEnabled(true);
+        alarmRule.setTemplateId(alarmTemplate.getId());
+        alarmRule.setTriggerType(NotificationRuleTriggerType.ALARM);
+        AlarmNotificationRuleTriggerConfig triggerConfig = new AlarmNotificationRuleTriggerConfig();
+        triggerConfig.setNotifyOn(Set.of(AlarmAction.CREATED));
+        alarmRule.setTriggerConfig(triggerConfig);
+        EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
+        recipientsConfig.setEscalationTable(Map.of(
+                0, List.of(ownTarget.getUuidId()),
+                60, List.of(otherTarget.getUuidId())
+        ));
+        alarmRule.setRecipientsConfig(recipientsConfig);
+        doPost("/api/notification/rule", alarmRule).andExpect(status().isForbidden());
+
+        assertThat(findNotificationRules().getData()).extracting(NotificationRuleInfo::getName)
+                .doesNotContain(rule.getName(), alarmRule.getName());
+    }
+
+    @Test
+    public void testSaveNotificationRule_systemTemplate_isSaved() throws Exception {
+        loginSysAdmin();
+        NotificationTemplate systemTemplate = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Created", "Created", NotificationDeliveryMethod.WEB);
+        loginTenantAdmin();
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+
+        NotificationRule rule = saveNotificationRule(newDeviceCreatedRule(systemTemplate.getId(), List.of(target.getUuidId())));
+
+        try {
+            assertThat(rule.getId()).isNotNull();
+            assertThat(rule.getTemplateId()).isEqualTo(systemTemplate.getId());
+        } finally {
+            // the rule references a system template, which afterEach deletes before the tenant
+            notificationRuleService.deleteNotificationRuleById(tenantId, rule.getId());
+        }
+    }
+
+    @Test
+    public void testSaveNotificationRule_nonExistentTarget_returnsNotFound() throws Exception {
+        NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Created", "Created", NotificationDeliveryMethod.WEB);
+
+        NotificationRule rule = newDeviceCreatedRule(template.getId(), List.of(UUID.randomUUID()));
+        doPost("/api/notification/rule", rule).andExpect(status().isNotFound());
+
+        assertThat(findNotificationRules().getData()).extracting(NotificationRuleInfo::getName).doesNotContain(rule.getName());
+    }
+
+    @Test
+    public void testRuleProcessing_deliversOnlyToTargetsOfRuleTenant() throws Exception {
+        loginDifferentTenant();
+        NotificationTarget otherTarget = createNotificationTarget(savedDifferentTenantUser.getId());
+        loginTenantAdmin();
+        NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Device created", "Device created", NotificationDeliveryMethod.WEB);
+        NotificationTarget ownTarget = createNotificationTarget(tenantAdminUserId);
+
+        NotificationRule rule = newDeviceCreatedRule(template.getId(), List.of(ownTarget.getUuidId(), otherTarget.getUuidId()));
+        rule.setTenantId(tenantId);
+        notificationRuleService.saveNotificationRule(tenantId, rule);
+        notificationRulesCache.evict(tenantId);
+
+        createDevice("Device 1", "default", "111");
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(getMyNotifications(false, 100)).extracting(Notification::getSubject).contains("Device created"));
+
+        loginDifferentTenant();
+        await().during(3, TimeUnit.SECONDS).atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(getMyNotifications(false, 100)).extracting(Notification::getSubject).doesNotContain("Device created"));
+    }
+
+    @Test
+    public void testRuleProcessing_templateOfOtherTenant_deliversNothing() throws Exception {
+        loginDifferentTenant();
+        NotificationTemplate otherTemplate = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Device created", "Device created", NotificationDeliveryMethod.WEB);
+        loginTenantAdmin();
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+
+        NotificationRule rule = newDeviceCreatedRule(otherTemplate.getId(), List.of(target.getUuidId()));
+        rule.setTenantId(tenantId);
+        notificationRuleService.saveNotificationRule(tenantId, rule);
+        notificationRulesCache.evict(tenantId);
+
+        createDevice("Device 1", "default", "111");
+        await().during(3, TimeUnit.SECONDS).atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(getMyNotifications(false, 100)).extracting(Notification::getSubject).doesNotContain("Device created"));
+    }
+
+    private NotificationRule newDeviceCreatedRule(NotificationTemplateId templateId, List<UUID> targets) {
+        EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
+        triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
+        triggerConfig.setCreated(true);
+
+        NotificationRule rule = new NotificationRule();
+        rule.setName("Device created " + UUID.randomUUID());
+        rule.setEnabled(true);
+        rule.setTemplateId(templateId);
+        rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        rule.setTriggerConfig(triggerConfig);
+
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        recipientsConfig.setTargets(targets);
+        rule.setRecipientsConfig(recipientsConfig);
+        return rule;
     }
 
     private <R> R checkNotificationAfter(Callable<R> action, BiConsumer<Notification, R> check) throws Exception {

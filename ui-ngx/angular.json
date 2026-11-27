@@ -73,6 +73,11 @@
                 "output": "/"
               },
               {
+                "glob": "worker-yaml.js",
+                "input": "./node_modules/ace-builds/src-noconflict/",
+                "output": "/"
+              },
+              {
                 "glob": "worker-tbel.js",
                 "input": "./src/app/shared/models/ace/tbel/",
                 "output": "/"

@@ -12,7 +12,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.role.Role;
-import org.thingsboard.server.dao.group.EntityGroupDao;
+import org.thingsboard.server.dao.group.EntityGroupInfoDao;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionDao;
 import org.thingsboard.server.dao.role.RoleDao;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -24,7 +24,7 @@ import org.thingsboard.server.exception.DataValidationException;
 public class GroupPermissionDataValidator extends DataValidator<GroupPermission> {
 
     private final TenantService tenantService;
-    private final EntityGroupDao entityGroupDao;
+    private final EntityGroupInfoDao entityGroupInfoDao;
     private final RoleDao roleDao;
     private final GroupPermissionDao groupPermissionDao;
 
@@ -52,7 +52,7 @@ public class GroupPermissionDataValidator extends DataValidator<GroupPermission>
         if (groupPermission.getUserGroupId() == null || groupPermission.getUserGroupId().isNullUid()) {
             throw new DataValidationException("Group Permission userGroupId should be specified!");
         } else {
-            EntityGroup entityGroup = entityGroupDao.findById(tenantId, groupPermission.getUserGroupId().getId());
+            EntityGroup entityGroup = entityGroupInfoDao.findByTenantIdAndId(groupPermission.getTenantId(), groupPermission.getUserGroupId().getId());
             if (entityGroup == null) {
                 throw new DataValidationException("Group Permission is referencing to non-existent user group!");
             } else if (entityGroup.getType() != EntityType.USER) {
@@ -63,7 +63,7 @@ public class GroupPermissionDataValidator extends DataValidator<GroupPermission>
             throw new DataValidationException("Group Permission roleId should be specified!");
         } else {
             Role role = roleDao.findById(tenantId, groupPermission.getRoleId().getId());
-            if (role == null) {
+            if (role == null || !(role.getTenantId().equals(groupPermission.getTenantId()) || role.getTenantId().isSysTenantId())) {
                 throw new DataValidationException("Group Permission is referencing to non-existent role!");
             }
         }
@@ -72,7 +72,7 @@ public class GroupPermissionDataValidator extends DataValidator<GroupPermission>
         }
 
         if (!groupPermission.getEntityGroupId().isNullUid()) {
-            EntityGroup entityGroup = entityGroupDao.findById(tenantId, groupPermission.getEntityGroupId().getId());
+            EntityGroup entityGroup = entityGroupInfoDao.findByTenantIdAndId(groupPermission.getTenantId(), groupPermission.getEntityGroupId().getId());
             if (entityGroup == null) {
                 throw new DataValidationException("Group Permission is referencing to non-existent entity group!");
             }

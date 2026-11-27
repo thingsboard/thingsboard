@@ -6,7 +6,7 @@
 
 -->
 <div class="mat-content mat-padding flex flex-col">
-  <mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>{{'dashboard.select-dashboard' | translate}}</mat-label>
     <mat-select matInput [(ngModel)]="dashboardId"
                 (ngModelChange)="dashboardSelected(dashboardId)">
