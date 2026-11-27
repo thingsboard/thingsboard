@@ -14,7 +14,9 @@ import {
   OnDestroy,
   OnInit,
   Renderer2,
-  SimpleChanges, Type,
+  SimpleChanges,
+  TemplateRef,
+  Type,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -121,6 +123,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   @ViewChild('entityTableHeader', {static: true}) entityTableHeaderAnchor: TbAnchorComponent;
 
+  @ViewChild('timewindowTemplate', {static: true}) timewindowTemplate: TemplateRef<any>;
+
   @ViewChild('searchInput') searchInputField: ElementRef;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -210,6 +214,12 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     }
   }
 
+  get timewindowInHeader(): boolean {
+    return !!this.entitiesTableConfig.headerComponent
+      && this.entitiesTableConfig.useTimePageLink
+      && this.entitiesTableConfig.timewindowPlacement === 'header';
+  }
+
   private init(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
 
     if (this.route.snapshot.data.replaceComponent) {
@@ -254,6 +264,9 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       const componentRef = viewContainerRef.createComponent(this.entitiesTableConfig.headerComponent);
       const headerComponent = componentRef.instance;
       headerComponent.entitiesTableConfig = this.entitiesTableConfig;
+      if (this.timewindowInHeader) {
+        headerComponent.timewindowTemplate = this.timewindowTemplate;
+      }
     }
 
     this.entitiesTableConfig.setTable(this);

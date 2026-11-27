@@ -78,6 +78,8 @@ export interface HeaderActionDescriptor {
 
 export type EntityTableColumnType = 'content' | 'action' | 'link' | 'chart' | 'progressBar' | 'entityChips';
 
+export type TimewindowPlacement = 'toolbar' | 'header';
+
 export class BaseEntityTableColumn<T extends BaseData<HasId>> {
   constructor(public type: EntityTableColumnType,
               public key: string,
@@ -206,6 +208,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   loadDataOnInit = true;
   onLoadAction: (route: ActivatedRoute) => void = null;
   useTimePageLink = false;
+  timewindowPlacement: TimewindowPlacement = 'toolbar';
   forAllTimeEnabled = false;
   defaultTimewindowInterval = historyInterval(DAY);
   entityType: EntityType = null;

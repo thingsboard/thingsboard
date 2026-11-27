@@ -8,7 +8,9 @@
   <tb-task-filter-config [ngModel]="taskManagerTableConfig.componentsData.filter"
                          (ngModelChange)="taskManagerChanged($event)">
   </tb-task-filter-config>
+  <ng-container *ngTemplateOutlet="timewindowTemplate"></ng-container>
   <mat-slide-toggle
+    class="[&_.mdc-label]:!whitespace-normal"
     [ngModel]="taskManagerTableConfig.componentsData.includeCustomers"
     (ngModelChange)="includeCustomersChanged($event)">
     {{ includeCustomersLabel | translate }}

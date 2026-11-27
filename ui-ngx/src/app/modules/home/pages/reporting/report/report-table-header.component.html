@@ -10,6 +10,7 @@
     (ngModelChange)="reportFilterChanged($event)">
   </tb-report-filter>
   <mat-slide-toggle
+    class="[&_.mdc-label]:!whitespace-normal"
     [ngModel]="entitiesTableConfig.componentsData.includeCustomers"
     (ngModelChange)="includeCustomersChanged($event)">
     {{ includeCustomersLabel | translate }}

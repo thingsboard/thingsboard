@@ -45,10 +45,13 @@
                 <span class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
               }
               <tb-anchor #entityTableHeader></tb-anchor>
-              @if (entitiesTableConfig.useTimePageLink) {
+              <ng-template #timewindowTemplate>
                 <tb-timewindow [(ngModel)]="timewindow"
                                (ngModelChange)="onTimewindowChange()"
                 asButton strokedButton historyOnly [forAllTimeEnabled]="entitiesTableConfig.forAllTimeEnabled"></tb-timewindow>
+              </ng-template>
+              @if (entitiesTableConfig.useTimePageLink && !timewindowInHeader) {
+                <ng-container *ngTemplateOutlet="timewindowTemplate"></ng-container>
               }
             </div>
             <span class="flex-1"></span>

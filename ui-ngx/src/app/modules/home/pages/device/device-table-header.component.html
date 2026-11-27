@@ -15,6 +15,7 @@
     </ng-template>
   </tb-filter-button>
   <mat-slide-toggle
+    class="[&_.mdc-label]:!whitespace-normal"
     style="margin-left: 32px;"
     [ngModel]="entitiesTableConfig.componentsData.includeCustomers"
     (ngModelChange)="includeCustomersChanged($event)">
