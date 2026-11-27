@@ -9,18 +9,17 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.AbstractIntegration;
 import org.thingsboard.integration.api.IntegrationContext;
 import org.thingsboard.integration.api.TbIntegrationInitParams;
+import org.thingsboard.integration.api.data.ContentType;
 import org.thingsboard.integration.api.data.UplinkData;
 import org.thingsboard.integration.api.data.UplinkMetaData;
-import org.thingsboard.server.common.data.StringUtils;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -74,8 +73,10 @@ public class AwsSqsIntegration extends AbstractIntegration<SqsIntegrationMsg> {
                     try {
                         SqsIntegrationMsg sqsMessage = toSqsIntegrationMsg(message);
                         process(sqsMessage);
-                    } catch (IOException e) {
-                        log.error("Failed to process message: " + message + ". Reason: " + e.getMessage(), e);
+                    } catch (Exception e) {
+                        log.error("[{}][{}] Failed to parse SQS message [{}]", configuration.getTenantId().getId(), configuration.getId().getId(), message.getMessageId(), e);
+                        integrationStatistics.incErrorsOccurred();
+                        persistDebug(context, "Uplink", ContentType.JSON, () -> toDebugMessage(message), "ERROR", e);
                     } finally {
                         sqs.deleteMessage(sqsConfiguration.getQueueUrl(), message.getReceiptHandle());
                     }
@@ -95,11 +96,18 @@ public class AwsSqsIntegration extends AbstractIntegration<SqsIntegrationMsg> {
         }
     }
 
-    private SqsIntegrationMsg toSqsIntegrationMsg(Message message) throws IOException {
-        String unescaped = StringEscapeUtils.unescapeJson(message.getBody());
-        unescaped = StringUtils.removeStart(unescaped, "\"");
-        unescaped = StringUtils.removeEnd(unescaped, "\"");
-        JsonNode node = JacksonUtil.toJsonNode(unescaped);
+    private static String toDebugMessage(Message message) {
+        ObjectNode json = JacksonUtil.newObjectNode();
+        json.put("messageId", message.getMessageId());
+        json.put("payload", message.getBody());
+        return JacksonUtil.toString(json);
+    }
+
+    private SqsIntegrationMsg toSqsIntegrationMsg(Message message) {
+        JsonNode node = JacksonUtil.toJsonNode(message.getBody());
+        if (node.isTextual()) {
+            node = JacksonUtil.toJsonNode(node.asText());
+        }
         return new SqsIntegrationMsg(node, metadataTemplate.getKvMap());
     }
 
