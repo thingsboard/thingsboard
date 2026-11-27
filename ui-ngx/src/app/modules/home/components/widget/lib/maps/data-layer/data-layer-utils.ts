@@ -14,6 +14,7 @@ import { DataLayerPatternProcessor } from '@home/components/widget/lib/maps/data
 interface TooltipState {
   processor: DataLayerPatternProcessor;
   data: FormattedData<TbMapDatasource>;
+  content?: string;
 }
 
 const tooltipStates = new WeakMap<L.Popup, TooltipState>();
@@ -72,20 +73,27 @@ export const updateTooltip = (map: TbMap<any>,
                               processor: DataLayerPatternProcessor,
                               data: FormattedData<TbMapDatasource>,
                               dsData: FormattedData<TbMapDatasource>[]): void => {
-  tooltipStates.set(tooltip, {processor, data});
+  tooltipStates.set(tooltip, {processor, data, content: tooltipStates.get(tooltip)?.content});
   if (tooltip.isOpen()) {
-    renderTooltip(tooltip, dsData);
-    if (tooltip.getElement()) {
+    // Rebuilding the popup DOM on every update can replace an action button between mousedown and mouseup
+    if (renderTooltip(tooltip, dsData) && tooltip.getElement()) {
       bindTooltipActions(map, tooltip, settings, data);
     }
   }
 }
 
-const renderTooltip = (tooltip: L.Popup, dsData: FormattedData<TbMapDatasource>[]): void => {
+const renderTooltip = (tooltip: L.Popup, dsData: FormattedData<TbMapDatasource>[]): boolean => {
   const state = tooltipStates.get(tooltip);
+  let changed = false;
   if (state) {
-    tooltip.setContent(processTooltipTemplate(state.processor.processPattern(state.data, dsData)));
+    const content = processTooltipTemplate(state.processor.processPattern(state.data, dsData));
+    if (content !== state.content) {
+      state.content = content;
+      tooltip.setContent(content);
+      changed = true;
+    }
   }
+  return changed;
 }
 
 const bindTooltipActions = (map: TbMap<any>, tooltip: L.Popup, settings: DataLayerTooltipSettings, data: FormattedData<TbMapDatasource>): void => {
@@ -98,7 +106,8 @@ const bindTooltipActions = (map: TbMap<any>, tooltip: L.Popup, settings: DataLay
         if (action) {
           element.onclick = ($event) =>
           {
-            map.dataItemClick($event, action, data);
+            // Handlers survive updates that don't change the content, so take the latest data
+            map.dataItemClick($event, action, tooltipStates.get(tooltip)?.data ?? data);
             return false;
           };
         }

@@ -1097,7 +1097,7 @@ setWorkerUrl(new URL('assets/maplibre-gl/maplibre-gl-worker.mjs', document.baseU
 const mapLibreGlDefaultMaxZoom = 22;
 // Web Mercator latitude limit
 const mapLibreGlMaxLatitude = 85.051129;
-// MapLibre renders the world plus 3 copies on each side, it's longitude limit
+// MapLibre renders the world plus 3 copies on each side; longitude limit in degrees
 const mapLibreGlMaxLongitude = 180 + 3 * 360;
 
 class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
@@ -1330,6 +1330,14 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     if (this._ownMaxBounds && map.options.maxBounds === this._ownMaxBounds) {
       map.setMaxBounds(null);
       map.options.maxBoundsViscosity = this._prevMaxBoundsViscosity;
+      // A base layer added before this one was removed (layer switch) skipped its own limit, hand it over
+      let handedOff = false;
+      map.eachLayer((layer) => {
+        if (!handedOff && layer !== this && layer instanceof MapLibreGLLayer && !layer.options.overlay) {
+          layer._limitPan(map);
+          handedOff = true;
+        }
+      });
     }
     this._ownMaxBounds = null;
   }
