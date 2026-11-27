@@ -1,84 +1,58 @@
+/** Decoder **/
+
+// Decode the incoming payload to a JSON object.
 var data = decodeToJson(payload);
 
-var deviceName = data.deviceId != null ? data.deviceId : "Device A";
-var deviceType = data.deviceType != null ? data.deviceType : "default";
-var groupName = "Control room";
-// var customerName = 'Customer A';
-// use assetName and assetType instead of deviceName and deviceType
-// to automatically create assets instead of devices.
-// var assetName = 'Asset A';
-// var assetType = 'building';
-var dateString = data.timestamp != null ? data.timestamp : "";
+// The device name comes from deviceId. Reject the message if it is missing or empty.
+var deviceName = data.deviceId != null ? data.deviceId.toString().trim() : "";
+if (deviceName.isEmpty()) {
+    raiseError("Payload has no deviceId");
+}
+// The device profile comes from deviceType. If it is missing or empty, the "default" profile is used.
+var deviceType = data.deviceType != null ? data.deviceType.toString().trim() : "";
+if (deviceType.isEmpty()) {
+    deviceType = "default";
+}
 
-// --- attributes and telemetry objects ---
-var telemetry = {};
+// Use the ISO 8601 timestamp if provided; otherwise, use the current server time.
+var ts = data.timestamp != null ? new Date(data.timestamp).getTime() : Date.now();
+
+// Static device properties become attributes.
 var attributes = {};
-// --- attributes and telemetry objects ---
-
-// --- Timestamp parsing
-var timestamp = -1;
-if (dateString != null) {
-  timestamp = new Date(dateString).getTime();
-  if (timestamp == -1) {
-      var secondsSeparatorIndex = dateString.lastIndexOf('.') + 1;
-      var millisecondsEndIndex = dateString.lastIndexOf('+');
-      if (millisecondsEndIndex == -1) {
-          millisecondsEndIndex = dateString.lastIndexOf('Z');
-      }
-      if (millisecondsEndIndex == -1) {
-          millisecondsEndIndex = dateString.lastIndexOf('-');
-      }
-      if (millisecondsEndIndex == -1) {
-          if (dateString.length >= secondsSeparatorIndex + 3) {
-              dateString = dateString.substring(0, secondsSeparatorIndex + 3);
-          }
-      } else {
-          dateString = dateString.substring(0, secondsSeparatorIndex + 3) +
-              dateString.substring(millisecondsEndIndex, dateString.length);
-      }
-      timestamp = new Date(dateString).getTime();
-  }
+if (data.location != null) {
+    attributes.latitude = data.location.latitude;
+    attributes.longitude = data.location.longitude;
+    attributes.altitude = data.location.altitude;
 }
-// If we cannot parse timestamp - we will use the current timestamp
-if (timestamp == -1) {
-    timestamp = Date.now();
-}
-// --- Timestamp parsing
-
-// You can add some keys manually to attributes or telemetry
-telemetry.receivedAlarms = data.alarms;
-
-// You can exclude some keys from the result
-var excludeFromTelemetryList = ["deviceId", "deviceType", "alarms", "location", "timestamp", "version", "manufacturer"];
-var excludeFromAttributesList = ["batteryLevel", "batteryStatus"];
-
-// Message parsing
-var telemetryData = {};
-var attributesData = {};
-// To avoid paths in the decoded objects we passing false value to function as "pathInKey" argument.
-// Warning: pathInKey can cause already found fields to be overwritten with the last value found, e.g. receive_at from uplink_message will be written receive_at in the root.
-telemetryData.putAll(toFlatMap(data, excludeFromTelemetryList, false));
-attributesData.putAll(toFlatMap(data.?metadata, excludeFromAttributesList, false));
-
-if (!telemetryData.isEmpty()) {
-    telemetry.putAll(telemetryData);
-}
-if (!attributesData.isEmpty()) {
-    attributes.putAll(attributesData);
+if (data.metadata != null) {
+    attributes.version = data.metadata.version;
+    attributes.manufacturer = data.metadata.manufacturer;
 }
 
-var result = {
+// Measurements and state become telemetry.
+var telemetry = {
+    temperature: data.temperature,
+    pressure: data.pressure,
+    status: data.status,
+    receivedAlarms: data.alarms
+};
+if (data.vibration != null) {
+    telemetry.vibrationX = data.vibration.x;
+    telemetry.vibrationY = data.vibration.y;
+    telemetry.vibrationZ = data.vibration.z;
+}
+if (data.metadata != null) {
+    telemetry.batteryLevel = data.metadata.batteryLevel;
+    telemetry.batteryStatus = data.metadata.batteryStatus;
+}
+
+// Return the converted uplink message.
+return {
     deviceName: deviceName,
     deviceType: deviceType,
-//  assetName: assetName,
-//  assetType: assetType,
-//  customerName: customerName,
-    groupName: groupName,
     attributes: attributes,
     telemetry: {
-        ts: timestamp,
+        ts: ts,
         values: telemetry
     }
 };
-
-return result;

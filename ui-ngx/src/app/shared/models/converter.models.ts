@@ -37,6 +37,7 @@ export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.TTI,'/assets/converters/TTI/uplink/js.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/uplink/js.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/js.raw'],
+  [IntegrationType.AZURE_IOT_HUB, '/assets/converters/AZURE_IOT_HUB/uplink/js.raw'],
   [IntegrationType.TPE, '/assets/converters/TPE/uplink/js.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/uplink/js.raw']
 ]);

@@ -960,6 +960,81 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAzureIotHubDefaultDecoder() throws Exception {
+        String uplinkDir = "converters/AZURE_IOT_HUB/uplink/";
+        ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(uplinkDir + "payload.json").orElseThrow());
+        JsonNode metadata = JacksonUtil.toJsonNode(readResource(uplinkDir + "metadata.json").orElseThrow());
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String decoder = readResource(uplinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // A missing, null, empty or blank deviceType gives the "default" profile; spaces around it are trimmed.
+            assertAzureIotHubDecoded(softly, scriptLang + ": no deviceType",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceType", null), metadata), "8F4A2C6D", "default");
+            assertAzureIotHubDecoded(softly, scriptLang + ": deviceType null",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceType", payload.nullNode()), metadata), "8F4A2C6D", "default");
+            assertAzureIotHubDecoded(softly, scriptLang + ": deviceType empty",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceType", payload.textNode("")), metadata), "8F4A2C6D", "default");
+            assertAzureIotHubDecoded(softly, scriptLang + ": deviceType blank",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceType", payload.textNode("   ")), metadata), "8F4A2C6D", "default");
+            assertAzureIotHubDecoded(softly, scriptLang + ": deviceType with spaces",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceType", payload.textNode(" Packing machine ")), metadata), "8F4A2C6D", "Packing machine");
+
+            // Spaces around deviceId are trimmed; a numeric deviceId is used as the device name.
+            assertAzureIotHubDecoded(softly, scriptLang + ": deviceId with spaces",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceId", payload.textNode(" 8F4A2C6D ")), metadata), "8F4A2C6D", "Packing machine");
+            assertAzureIotHubDecoded(softly, scriptLang + ": numeric deviceId",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceId", payload.numberNode(12345)), metadata), "12345", "Packing machine");
+
+            // A missing, null, empty or blank deviceId rejects the message.
+            assertAzureIotHubRejected(softly, scriptLang + ": no deviceId",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceId", null), metadata));
+            assertAzureIotHubRejected(softly, scriptLang + ": deviceId null",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceId", payload.nullNode()), metadata));
+            assertAzureIotHubRejected(softly, scriptLang + ": deviceId empty",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceId", payload.textNode("")), metadata));
+            assertAzureIotHubRejected(softly, scriptLang + ": deviceId blank",
+                    decodeAzureIotHubUplink(decoder, scriptLang, withField(payload, "deviceId", payload.textNode("   ")), metadata));
+        }
+        softly.assertAll();
+    }
+
+    // A copy of the payload with the field set to the value, or without the field if the value is null.
+    private static ObjectNode withField(ObjectNode payload, String field, JsonNode value) {
+        ObjectNode copy = payload.deepCopy();
+        if (value == null) {
+            copy.remove(field);
+        } else {
+            copy.set(field, value);
+        }
+        return copy;
+    }
+
+    private JsonNode decodeAzureIotHubUplink(String decoder, ScriptLanguage scriptLang, JsonNode payload, JsonNode metadata) {
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("decoder", decoder);
+        inputParams.set("metadata", metadata);
+        inputParams.put("payload", Base64.getEncoder().encodeToString(payload.toString().getBytes(StandardCharsets.UTF_8)));
+        return doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
+    }
+
+    private static void assertAzureIotHubDecoded(SoftAssertions softly, String description, JsonNode response, String deviceName, String deviceType) {
+        softly.assertThat(response.get("error").asText()).as(description).isEmpty();
+        JsonNode output = JacksonUtil.toJsonNode(response.get("output").asText());
+        softly.assertThat(output).as(description).isNotNull();
+        if (output != null) {
+            softly.assertThat(output.path("deviceName").asText()).as(description).isEqualTo(deviceName);
+            softly.assertThat(output.path("deviceType").asText()).as(description).isEqualTo(deviceType);
+        }
+    }
+
+    private static void assertAzureIotHubRejected(SoftAssertions softly, String description, JsonNode response) {
+        softly.assertThat(response.get("output").asText()).as(description).isEmpty();
+        softly.assertThat(response.get("error").asText()).as(description).contains("Payload has no deviceId");
+    }
+
+    @Test
     public void testTPENotDefaultDecoder() throws IOException {
         String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"Device 1000000000000001\",\"profile\":\"IndustrialSensorProfile\",\"customer\":\"MyCustomer\",\"group\":\"SensorsGroup\"," +
                 "\"telemetry\":{\"ts\":1732828102138,\"values\":{\"battery\":95,\"temperature\":36.6}},\"attributes\":{\"mType\":2,\"eui\":\"1000000000000001\",\"fCntDn\":2}}";

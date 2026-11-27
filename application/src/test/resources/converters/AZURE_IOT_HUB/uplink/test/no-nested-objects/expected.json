@@ -1,0 +1,14 @@
+{
+  "deviceName": "8F4A2C6D",
+  "deviceType": "Packing machine",
+  "attributes": {},
+  "telemetry": {
+    "ts": 1791973800000,
+    "values": {
+      "temperature": 25.5,
+      "pressure": 1013.25,
+      "status": "OK",
+      "receivedAlarms": []
+    }
+  }
+}
