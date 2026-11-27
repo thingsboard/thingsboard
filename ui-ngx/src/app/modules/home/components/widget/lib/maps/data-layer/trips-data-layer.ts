@@ -431,6 +431,8 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
 
   private rawTripsData: FormattedData<TbMapDatasource>[][];
   private latestTripsData: FormattedData<TbMapDatasource>[];
+  private subscribedEntityIds = new Set<string>();
+  private lastDataEntityIds = new Set<string>();
 
   constructor(protected map: TbMap<any>,
               inputSettings: TripsDataLayerSettings) {
@@ -445,13 +447,16 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
     return this.settings.showMarker;
   }
 
-  public prepareTripsData(tripsData: FormattedData<TbMapDatasource>[][], tripsLatestData: FormattedData<TbMapDatasource>[]): {minTime: number; maxTime: number} {
+  public prepareTripsData(tripsData: FormattedData<TbMapDatasource>[][], tripsLatestData: FormattedData<TbMapDatasource>[],
+                           datasources: TbMapDatasource[]): {minTime: number; maxTime: number} {
     let minTime = Infinity;
     let maxTime = -Infinity;
-    this.rawTripsData =
-      tripsData.filter(d => !!d.length && d[0].$datasource.mapDataIds.includes(this.mapDataId)).map(
-        item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
-    this.latestTripsData = tripsLatestData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
+    const filteredTripsData = tripsData.filter(d => !!d.length && this.hasData(d[0]));
+    this.subscribedEntityIds = new Set(
+      datasources.filter(d => this.belongsToLayer(d)).map(d => d.entityId)
+    );
+    this.rawTripsData = filteredTripsData.map(item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
+    this.latestTripsData = tripsLatestData.filter(d => this.hasData(d));
     this.rawTripsData.forEach((dataSource) => {
       minTime = Math.min(dataSource[0].time, minTime);
       maxTime = Math.max(dataSource[dataSource.length - 1].time, maxTime);
@@ -460,9 +465,10 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   }
 
   public updateTrips() {
-    const toDelete = new Set(Array.from(this.layerItems.keys()));
+    const currentDataEntityIds = new Set<string>();
     this.rawTripsData.forEach(rawTripData => {
       const entityId = rawTripData[0].entityId;
+      currentDataEntityIds.add(entityId);
       let tripItem = this.layerItems.get(entityId);
       if (tripItem) {
         tripItem.update(rawTripData);
@@ -471,15 +477,20 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
         tripItem = new TbTripDataItem(rawTripData, latestData, this.settings, this);
         this.layerItems.set(entityId, tripItem);
       }
-      toDelete.delete(entityId);
     });
-    toDelete.forEach((key) => {
-      this.removeItem(key);
+    // an entity missing data for a single update is tolerated (avoids marker flicker on a momentarily empty payload);
+    // it is only dropped once it also has no data in the previous update, or is no longer subscribed at all.
+    Array.from(this.layerItems.keys()).forEach(entityId => {
+      if (!currentDataEntityIds.has(entityId) &&
+        (!this.subscribedEntityIds.has(entityId) || !this.lastDataEntityIds.has(entityId))) {
+        this.removeItem(entityId);
+      }
     });
+    this.lastDataEntityIds = currentDataEntityIds;
   }
 
   public updateTripsLatestData(tripsLatestData: FormattedData<TbMapDatasource>[]) {
-    this.latestTripsData = tripsLatestData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
+    this.latestTripsData = tripsLatestData.filter(d => this.hasData(d));
     this.layerItems.forEach((item, entityId) => {
       const latestData = this.latestTripsData.find(d => d.entityId === entityId);
       item.updateLatestData(latestData);
