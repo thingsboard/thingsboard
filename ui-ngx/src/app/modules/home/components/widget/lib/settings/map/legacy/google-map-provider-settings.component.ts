@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -64,7 +65,7 @@ export class GoogleMapProviderSettingsComponent extends PageComponent implements
 
   ngOnInit(): void {
     this.providerSettingsFormGroup = this.fb.group({
-      gmApiKey: [null, [Validators.required]],
+      gmApiKey: [null, []],
       gmDefaultMapType: [null, [Validators.required]]
     });
     this.providerSettingsFormGroup.valueChanges.pipe(

@@ -44,11 +44,11 @@ export class GoogleMap extends LeafletMap {
     }, options.gmApiKey);
   }
 
-  private loadGoogle(callback: () => void, apiKey = 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q') {
+  private loadGoogle(callback: () => void, apiKey: string) {
     if (gmGlobals[apiKey]) {
       callback();
     } else {
-      this.resource.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}`).subscribe({
+      this.resource.loadResource(`https://maps.googleapis.com/maps/api/js${apiKey ? `?key=${apiKey}` : ''}`).subscribe({
         next: () => {
           gmGlobals[apiKey] = true;
           callback();
