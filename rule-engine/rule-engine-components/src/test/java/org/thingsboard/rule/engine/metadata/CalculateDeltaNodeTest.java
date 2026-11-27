@@ -730,6 +730,114 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
                                             BiConsumer<TbContext, TbMsg> verificationMethod) {
     }
 
+    @ParameterizedTest
+    @MethodSource("invalidCurrentValuesWithCaching")
+    public void givenInvalidCurrentValue_whenOnMsg_thenKeepPreviousValueAndTimestamp(String value, boolean useCache) throws TbNodeException {
+        config.setUseCache(useCache);
+        config.setAddPeriodBetweenMsgs(true);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        mockFindLatestAsync(new BasicTsKvEntry(10L, new LongDataEntry("pulseCounter", 100L)));
+
+        var firstMsg = counterMsg("100", 10L);
+        var invalidMsg = counterMsg(value, 20L);
+        var nextMsg = counterMsg("110", 30L);
+
+        node.onMsg(ctxMock, firstMsg);
+        node.onMsg(ctxMock, invalidMsg);
+        node.onMsg(ctxMock, nextMsg);
+
+        var errorCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctxMock).tellFailure(eq(invalidMsg), errorCaptor.capture());
+        var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock, times(2)).tellSuccess(msgCaptor.capture());
+        assertEquals("{\"pulseCounter\":110,\"delta\":10,\"periodInMs\":20}", msgCaptor.getAllValues().get(1).getData());
+        assertThat(errorCaptor.getValue()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Calculation failed. Value of telemetry [pulseCounter] must be a finite number!");
+        verify(timeseriesServiceMock, times(useCache ? 1 : 3)).findLatest(TENANT_ID, DUMMY_DEVICE_ORIGINATOR, "pulseCounter");
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidCurrentValues")
+    public void givenInvalidFirstValue_whenOnMsg_thenDoNotInitializeCache(String value) throws TbNodeException {
+        config.setAddPeriodBetweenMsgs(true);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
+        when(timeseriesServiceMock.findLatest(TENANT_ID, DUMMY_DEVICE_ORIGINATOR, "pulseCounter"))
+                .thenReturn(Futures.immediateFuture(Optional.empty()));
+        var invalidMsg = counterMsg(value, 20L);
+
+        node.onMsg(ctxMock, invalidMsg);
+        node.onMsg(ctxMock, counterMsg("110", 30L));
+
+        verify(ctxMock).tellFailure(eq(invalidMsg), any(IllegalArgumentException.class));
+        var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock).tellSuccess(msgCaptor.capture());
+        assertEquals("{\"pulseCounter\":110,\"delta\":0,\"periodInMs\":0}", msgCaptor.getValue().getData());
+        verify(timeseriesServiceMock, times(2)).findLatest(TENANT_ID, DUMMY_DEVICE_ORIGINATOR, "pulseCounter");
+    }
+
+    private static Stream<String> invalidCurrentValues() {
+        return Stream.of("\"broken\"", "\"\"", "\"   \"", "null", "true", "false", "{}", "[]",
+                "\"NaN\"", "\"Infinity\"", "\"-Infinity\"", "1e309", "-1e309");
+    }
+
+    private static Stream<Arguments> invalidCurrentValuesWithCaching() {
+        return invalidCurrentValues().flatMap(value -> Stream.of(Arguments.of(value, true), Arguments.of(value, false)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("validCurrentValues")
+    public void givenValidCurrentValue_whenOnMsg_thenPreserveNumericConversion(String value, double expected) throws TbNodeException {
+        node.init(ctxMock, nodeConfiguration);
+        mockFindLatestAsync(new BasicTsKvEntry(10L, new LongDataEntry("pulseCounter", 0L)));
+
+        node.onMsg(ctxMock, counterMsg(value, 20L));
+
+        var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock).tellSuccess(msgCaptor.capture());
+        verify(ctxMock, never()).tellFailure(any(), any());
+        var result = JacksonUtil.toJsonNode(msgCaptor.getValue().getData());
+        assertEquals(expected, result.get("delta").asDouble());
+        assertEquals(JacksonUtil.toJsonNode(value), result.get("pulseCounter"));
+    }
+
+    private static Stream<Arguments> validCurrentValues() {
+        return Stream.of(Arguments.of("0", 0.0), Arguments.of("12", 12.0), Arguments.of("12.5", 12.5),
+                Arguments.of("\"12\"", 12.0), Arguments.of("\" 12.5 \"", 12.5), Arguments.of("\"1.25e1\"", 12.5),
+                Arguments.of("\"+12.5\"", 12.5), Arguments.of("\"0x1.9p3\"", 12.5), Arguments.of("\"12.5d\"", 12.5));
+    }
+
+    @Test
+    public void givenNumericCounterReset_whenOnMsg_thenUseResetValueForNextDelta() throws TbNodeException {
+        config.setAddPeriodBetweenMsgs(true);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        mockFindLatestAsync(new BasicTsKvEntry(10L, new LongDataEntry("pulseCounter", 100L)));
+        var resetMsg = counterMsg("10", 20L);
+
+        node.onMsg(ctxMock, resetMsg);
+        node.onMsg(ctxMock, counterMsg("15", 30L));
+
+        var errorCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctxMock).tellFailure(eq(resetMsg), errorCaptor.capture());
+        assertThat(errorCaptor.getValue()).hasMessage("Delta value is negative!");
+        var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock).tellSuccess(msgCaptor.capture());
+        assertEquals("{\"pulseCounter\":15,\"delta\":5,\"periodInMs\":10}", msgCaptor.getValue().getData());
+    }
+
+    private TbMsg counterMsg(String value, long ts) {
+        var metadata = new TbMsgMetaData();
+        metadata.putValue("ts", Long.toString(ts));
+        return TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(metadata)
+                .data("{\"pulseCounter\":" + value + "}")
+                .build();
+    }
+
     private void mockFindLatestAsync(TsKvEntry tsKvEntry) {
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
