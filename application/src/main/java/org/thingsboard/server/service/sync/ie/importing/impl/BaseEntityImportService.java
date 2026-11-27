@@ -65,6 +65,7 @@ import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -554,9 +555,20 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     protected void replaceIdsRecursively(EntitiesImportCtx ctx, IdProvider idProvider, JsonNode json,
                                          Set<String> skippedRootFields, Pattern includedFieldsPattern,
                                          LinkedHashSet<EntityType> hints) {
+        replaceIdsRecursively(ctx, idProvider, json, skippedRootFields, includedFieldsPattern, hints, Collections.emptySet());
+    }
+
+    /**
+     * @param preservedUuids uuids that are already resolved and must be kept as is. Without this, an id that cannot be
+     *                       found as any other entity type falls through to TENANT and is replaced with the current tenant id.
+     */
+    protected void replaceIdsRecursively(EntitiesImportCtx ctx, IdProvider idProvider, JsonNode json,
+                                         Set<String> skippedRootFields, Pattern includedFieldsPattern,
+                                         LinkedHashSet<EntityType> hints, Set<UUID> preservedUuids) {
         JacksonUtil.replaceUuidsRecursively(json, skippedRootFields, includedFieldsPattern,
-                uuid -> idProvider.getInternalIdByUuid(uuid, ctx.isFinalImportAttempt(), hints)
-                        .map(EntityId::getId).orElse(uuid), true);
+                uuid -> preservedUuids.contains(uuid) ? uuid :
+                        idProvider.getInternalIdByUuid(uuid, ctx.isFinalImportAttempt(), hints)
+                                .map(EntityId::getId).orElse(uuid), true);
     }
 
 }
