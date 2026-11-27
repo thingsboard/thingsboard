@@ -20,10 +20,6 @@ from notices.spdx import SpdxSyntaxError, leaves as spdx_leaves, parse as parse_
 MODELS_REL = 'application/src/main/data/lwm2m-registry'
 POM_REL = 'application/pom.xml'
 COMPONENT_NAME = 'lwm2m-registry'
-# Upstream OMA models that have no leading license comment (accepted risk):
-# 10244.xml (Works System VehicleControlUnit) was committed to OpenMobileAlliance/lwm2m-registry
-# in Nov 2018 before OMA enforced per-file headers and was never backfilled.
-HEADERLESS_MODELS = frozenset({'10244.xml'})
 
 COPYRIGHT_RE = re.compile(r'^\s*Copyright\s*(\(c\)|©)?\s*\d', re.IGNORECASE)
 INTRODUCTION = '''\
@@ -58,8 +54,6 @@ def read_models(directory):
         except OSError as err:
             raise stop(f'could not read LwM2M model {name}: {err}')
         if not found:
-            if name in HEADERLESS_MODELS:
-                continue
             raise stop(
                 f'LwM2M object model {name} in {MODELS_REL} has no leading XML license header comment. '
                 'Verify its upstream license, or remove the model if unlicensed.'

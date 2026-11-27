@@ -60,8 +60,6 @@ class HelpersTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with open(os.path.join(tmp, '1.xml'), 'w', encoding='utf-8') as f:
                 f.write(xml)
-            with open(os.path.join(tmp, '10244.xml'), 'w', encoding='utf-8') as f:
-                f.write('<?xml version="1.0"?><LWM2M/>')
             groups = read_models(tmp)
             self.assertEqual(len(groups), 1)
             with open(os.path.join(tmp, '99999.xml'), 'w', encoding='utf-8') as f:
