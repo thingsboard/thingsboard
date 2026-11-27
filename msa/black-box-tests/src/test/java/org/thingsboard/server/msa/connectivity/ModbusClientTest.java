@@ -110,10 +110,13 @@ public class ModbusClientTest extends AbstractContainerTest {
         ObjectNode sharedAttribute = JacksonUtil.newObjectNode();
         sharedAttribute.put("ctRatio", ctRatio);
 
-        testRestClient.postTelemetryAttribute(device.getId(), AttributeScope.SHARED_SCOPE, sharedAttribute);
-
+        // posted on every attempt: the first telemetry does not mean that the core has already processed the session's
+        // subscription to attribute updates, and an update that arrives before it is not delivered to the transport
         await("shared attribute written to the holding register").atMost(TIMEOUT * timeoutMultiplier, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(rpc("getCtRatio", null).path("value").asInt(-1)).isEqualTo(ctRatio));
+                .untilAsserted(() -> {
+                    testRestClient.postTelemetryAttribute(device.getId(), AttributeScope.SHARED_SCOPE, sharedAttribute);
+                    assertThat(rpc("getCtRatio", null).path("value").asInt(-1)).isEqualTo(ctRatio);
+                });
     }
 
     private JsonNode rpc(String method, Object params) {
