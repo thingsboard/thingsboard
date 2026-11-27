@@ -41,6 +41,7 @@ import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -120,6 +121,27 @@ public class RelatedEntitiesAggregationCalculatedFieldStateTest {
         state.update(arguments(), ctx);
 
         assertThat(state.getLastArgsRefreshTs()).isGreaterThan(-1);
+    }
+
+    @Test
+    void testUpdateEmptyArgumentsDoesNotRefreshLastArgsRefreshTs() {
+        assertThat(state.getLastArgsRefreshTs()).isEqualTo(-1);
+
+        state.update(Collections.emptyMap(), ctx);
+
+        assertThat(state.getLastArgsRefreshTs()).isEqualTo(-1);
+    }
+
+    @Test
+    void testPerformCalculationWhenWallClockSlightlyLagsScheduledTimer() throws Exception {
+        long dedupMs = TimeUnit.SECONDS.toMillis(60);
+        // Simulates scheduled timer firing after dedup interval with 2ms wall clock skew (59,998 ms elapsed)
+        state.setLastMetricsEvalTs(ts - dedupMs + 2);
+        state.setLastArgsRefreshTs(ts - TimeUnit.SECONDS.toMillis(10));
+
+        TelemetryCalculatedFieldResult calculatedFieldResult = (TelemetryCalculatedFieldResult) state.performCalculation(Collections.emptyMap(), ctx).get();
+        assertThat(calculatedFieldResult).isNotNull();
+        assertThat(calculatedFieldResult.isEmpty()).isFalse();
     }
 
     @Test
