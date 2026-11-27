@@ -221,7 +221,7 @@ export class EdgeComponent extends GroupEntityComponent<EdgeInfo> {
       this.dialog.open<AgentAppInstallWizardComponent, AgentAppInstallWizardData, AgentAppInstallWizardResult>(
         AgentAppInstallWizardComponent, {
           disableClose: false,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
             agentId: full.agentId?.id,
             agent: null,

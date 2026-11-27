@@ -296,7 +296,7 @@ export class AgentApplicationsTableConfigResolver {
       this.dialog.open<AgentAppInstallWizardComponent, AgentAppInstallWizardData, AgentAppInstallWizardResult>(
         AgentAppInstallWizardComponent, {
           disableClose: false,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
             agentId: this.agentId,
             agent: this.agent,
@@ -385,7 +385,7 @@ export class AgentApplicationsTableConfigResolver {
     this.dialog.open<AgentAppInstallWizardComponent, AgentAppInstallWizardData, AgentAppInstallWizardResult>(
       AgentAppInstallWizardComponent, {
         disableClose: false,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           agentId: this.agentId,
           agent: this.agent,
@@ -404,7 +404,7 @@ export class AgentApplicationsTableConfigResolver {
     return this.dialog.open<AgentAppInstallWizardComponent, AgentAppInstallWizardData, AgentAppInstallWizardResult>(
       AgentAppInstallWizardComponent, {
         disableClose: false,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { agentId: this.agentId, agent: this.agent }
       }
     ).afterClosed().pipe(

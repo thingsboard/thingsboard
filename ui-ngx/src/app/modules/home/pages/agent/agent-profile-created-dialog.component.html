@@ -4,18 +4,18 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div mat-dialog-title class="tb-agent-profile-created-header">
-  <h2 class="flex-1">
-    <mat-icon class="success-icon">check_circle</mat-icon>
-    <span translate>agent.agent-profile-created</span>
-  </h2>
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <mat-icon class="material-icons mr-2">check_circle</mat-icon>
+  <h2 translate>agent.agent-profile-created</h2>
+  <span class="flex-1"></span>
   <div tb-help="agentProfileProvisionCommand"></div>
-  <button mat-icon-button (click)="close()" tabindex="-1">
-    <mat-icon>close</mat-icon>
+  <button mat-icon-button
+          (click)="close()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
   </button>
-</div>
-
-<div mat-dialog-content class="tb-agent-profile-created-body">
+</mat-toolbar>
+<div mat-dialog-content>
 
   <section class="instructions-section">
     <h3>
@@ -63,13 +63,13 @@
 
 </div>
 
-<div mat-dialog-actions align="end" class="tb-agent-profile-created-footer">
-  <button mat-button (click)="close()">
-    {{ 'action.close' | translate }}
-  </button>
+<div mat-dialog-actions class="flex items-center justify-end">
+  <button mat-button
+          (click)="close()">{{ 'action.close' | translate }}</button>
   @if (agentProfile?.id?.id) {
-    <button mat-raised-button color="primary"
-      (click)="goToProfile()">
+    <button mat-raised-button
+            color="primary"
+            (click)="goToProfile()">
       <mat-icon>open_in_new</mat-icon>
       <span translate>agent.go-to-profile</span>
     </button>

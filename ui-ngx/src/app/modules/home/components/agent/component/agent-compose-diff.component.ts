@@ -221,15 +221,20 @@ export class AgentComposeDiffComponent implements AfterViewInit, OnChanges, OnDe
     requestAnimationFrame(() => this.whenReady(cb, frames - 1));
   }
 
-  private scheduleRebuild(): void {
+  private scheduleRebuild(frames = 60): void {
     if (this.rebuildHandle != null || this.destroyed) {
       return;
     }
     this.rebuildHandle = requestAnimationFrame(() => {
       this.rebuildHandle = null;
-      if (!this.destroyed) {
-        this.build();
+      if (this.destroyed) {
+        return;
       }
+      if (this.differ && !this.ready && frames > 0) {
+        this.scheduleRebuild(frames - 1);
+        return;
+      }
+      this.build();
     });
   }
 

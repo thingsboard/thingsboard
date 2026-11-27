@@ -611,7 +611,7 @@ export class AgentApplicationComponent extends EntityComponent<AgentApplicationI
       this.dialog.open<AgentAppInstallWizardComponent, AgentAppInstallWizardData, AgentAppInstallWizardResult>(
         AgentAppInstallWizardComponent, {
           disableClose: false,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
             agentId: full.agentId.id,
             agent: null,
@@ -662,7 +662,7 @@ export class AgentApplicationComponent extends EntityComponent<AgentApplicationI
       this.dialog.open<AgentAppInstallWizardComponent, AgentAppInstallWizardData, AgentAppInstallWizardResult>(
         AgentAppInstallWizardComponent, {
           disableClose: false,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
             agentId: full.agentId.id,
             agent: null,

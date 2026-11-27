@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { StepperOrientation } from '@angular/material/stepper';
+import { MatStepper, StepperOrientation } from '@angular/material/stepper';
 import { Observable } from 'rxjs';
 import { PageComponent } from '@shared/components/page.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,6 +51,10 @@ export class AgentAppUpdateFlowComponent extends PageComponent implements OnInit
   @Output() finished = new EventEmitter<AgentAppWizardFinish>();
   @Output() cancelled = new EventEmitter<AgentAppUpgradeResult | null>();
   @Output() back = new EventEmitter<void>();
+
+  @ViewChild('stepper', { static: false })
+  stepper: MatStepper;
+  selectedIndex = 0;
 
   bindings: StepBinding[] = [];
 
@@ -240,7 +244,7 @@ export class AgentAppUpdateFlowComponent extends PageComponent implements OnInit
     this.dialog.open<AgentAppProfileWizardComponent, AgentAppProfileWizardData, AgentAppProfile>(
       AgentAppProfileWizardComponent, {
         disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { profile: this.profileForCompare }
       }).afterClosed().subscribe(saved => {
         if (saved) {

@@ -2,10 +2,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 @use 'agent-wizard' as *;
 
-@include wizard-chrome;
+@include wizard-stepper-dialog(1280px);
 @include wizard-step-basics;
 @include wizard-type-cards;
 @include wizard-yaml-editor;
 @include wizard-diff;
 @include wizard-summary;
 @include agent-virtual-profile-badge;
+@include wizard-steps-locked;
+
+:host(.tb-embedded) {
+  display: block;
+  width: auto;
+  height: auto;
+}

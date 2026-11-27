@@ -5,20 +5,21 @@
 
 -->
 @if (!embedded) {
-  <mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
-    <div class="tb-install-wizard-toolbar-content">
-      <h2>{{ (isEdit ? 'agent.edit-profile' : 'agent.add-profile') | translate }}</h2>
-    </div>
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ (isEdit ? 'agent.edit-profile' : 'agent.add-profile') | translate }}</h2>
+    <span class="flex-1"></span>
     <div tb-help="agentProfiles"></div>
-    <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
-      <mat-icon>close</mat-icon>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
 }
+<div mat-dialog-content>
 
-<div mat-dialog-content class="tb-install-wizard-body flex min-h-[50vh] flex-col" [class.tb-install-wizard-embedded]="embedded">
-
-  <mat-stepper class="flex-1" linear #stepper [labelPosition]="(stepperLabelPosition | async)">
+  <mat-stepper linear #stepper [labelPosition]="(stepperLabelPosition | async)"
+    (selectionChange)="selectedIndex = $event.selectedIndex">
 
     <mat-step [stepControl]="step1Form" [label]="'agent.add-profile-step-details' | translate">
       <form [formGroup]="step1Form" autocomplete="off">
@@ -106,30 +107,31 @@
 
   </mat-stepper>
 
-  <div class="step-footer">
-    @if (stepper?.selectedIndex === 0) {
-      @if (showBack) {
-        <button mat-button type="button" (click)="back()">
-          <mat-icon>chevron_left</mat-icon>
-          {{ 'action.back' | translate }}
-        </button>
-      }
-      <button mat-button type="button" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <button mat-raised-button color="primary" type="button" [disabled]="step1Form.invalid" (click)="stepper.next()">
-        {{ 'action.next' | translate }}
-        <mat-icon iconPositionEnd>chevron_right</mat-icon>
-      </button>
-    } @else {
-      <button mat-button type="button" (click)="stepper.previous()">
-        <mat-icon>chevron_left</mat-icon>
-        {{ 'action.back' | translate }}
-      </button>
-      <button mat-raised-button color="primary" type="button"
-        [disabled]="!canSubmit()"
-        (click)="submit()">
-        {{ (isEdit ? 'action.save' : 'action.add') | translate }}
-      </button>
+</div>
+
+<div mat-dialog-actions>
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
+    @if (selectedIndex > 0 || showBack) {
+      <button mat-stroked-button
+              [disabled]="submitting"
+              (click)="back()">{{ 'action.back' | translate }}</button>
+    }
+    <span class="flex-1"></span>
+    @if (selectedIndex === 0) {
+      <button mat-stroked-button
+              color="primary"
+              [disabled]="step1Form.invalid"
+              (click)="stepper.next()">{{ 'action.next-with-label' | translate: { label: ('agent.add-profile-step-app-profiles' | translate) } }}</button>
     }
   </div>
-
+  <mat-divider class="w-full"></mat-divider>
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
+    <button mat-button
+            [disabled]="submitting"
+            (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button
+            color="primary"
+            [disabled]="selectedIndex === 0 || !canSubmit()"
+            (click)="submit()">{{ (isEdit ? 'action.save' : 'action.add') | translate }}</button>
+  </div>
 </div>

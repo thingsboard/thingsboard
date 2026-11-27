@@ -18,7 +18,7 @@ export class AgentProfileCreateDialogService {
     return this.dialog.open<AgentProfilePresetDialogComponent, AgentProfileWizardData, AgentProfile>(
       AgentProfilePresetDialogComponent, {
         disableClose: true,
-        panelClass: ['tb-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data
       }).afterClosed();
   }

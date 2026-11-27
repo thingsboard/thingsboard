@@ -21,6 +21,12 @@
   border: 1px solid $agent-divider-light;
   border-radius: 10px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+  @media #{$mat-lt-sm} {
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    padding: 16px;
+  }
 }
 
 .tb-deploy-card-icon {
@@ -33,11 +39,22 @@
   justify-content: center;
   background: color-mix(in srgb, var(--tb-primary-500) 14%, transparent);
 
+  @media #{$mat-lt-sm} {
+    width: 44px;
+    height: 44px;
+  }
+
   mat-icon {
     color: var(--tb-primary-600, var(--tb-primary-500));
     font-size: 32px;
     width: 32px;
     height: 32px;
+
+    @media #{$mat-lt-sm} {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
   }
 }
 
@@ -58,6 +75,10 @@
     font-size: 20px;
     font-weight: 600;
     color: $agent-text-primary;
+
+    @media #{$mat-lt-sm} {
+      font-size: 17px;
+    }
   }
 
   .tb-deploy-card-desc {
@@ -85,6 +106,13 @@
   align-items: flex-end;
   gap: 6px;
   flex-shrink: 0;
+
+  @media #{$mat-lt-sm} {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+  }
 }
 
 .tb-deploy-pill {
@@ -180,6 +208,10 @@
   border-radius: 10px;
   transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
   text-align: left;
+
+  @media #{$mat-lt-sm} {
+    padding: 16px;
+  }
 
   &:hover {
     border-color: color-mix(in srgb, var(--tb-primary-500) 40%, transparent);

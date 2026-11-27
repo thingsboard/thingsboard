@@ -93,10 +93,11 @@ $agent-type-generic-fg: #6a1b9a;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
     padding: 4px 0;
     font-size: 13px;
-    .label { color: $agent-text-secondary; }
-    .value { color: $agent-text-primary; font-weight: 500; }
+    .label { flex: none; color: $agent-text-secondary; }
+    .value { min-width: 0; color: $agent-text-primary; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
   }
 }
 

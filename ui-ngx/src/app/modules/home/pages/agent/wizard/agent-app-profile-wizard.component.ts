@@ -33,6 +33,10 @@ import {
 import { orderTemplatesNewestFirst } from '@home/pages/agent/util/template-version-order';
 import { EdgeTemplateCompatibilityService } from '@home/pages/agent/util/edge-template-compatibility.service';
 import { AgentAppWizardLoaderService } from '@home/pages/agent/wizard/agent-app-wizard-loader.service';
+import {
+  AGENT_APP_PROFILE_STEP_LABELS,
+  AgentAppProfileStepKey
+} from '@home/pages/agent/wizard/agent-app-wizard.models';
 
 export interface AgentAppProfileWizardData {
   profile?: AgentAppProfile;
@@ -57,6 +61,10 @@ interface TypeCard {
 export class AgentAppProfileWizardComponent
   extends DialogComponent<AgentAppProfileWizardComponent, AgentAppProfile>
   implements OnInit {
+
+  readonly stepLabels = AGENT_APP_PROFILE_STEP_LABELS;
+  steps: AgentAppProfileStepKey[] = [];
+  selectedIndex = 0;
 
   // Left (read-only) = raw template compose; right (editable) = same content,
   // user-editable. This is the value persisted on submit.
@@ -130,6 +138,7 @@ export class AgentAppProfileWizardComponent
   }
 
   ngOnInit() {
+    this.steps = this.buildSteps();
     const prefetchTypes = this.lockedAppType ? [this.lockedAppType] : this.typeCards.map(card => card.type);
     prefetchTypes.forEach(type => {
       this.loader.loadTemplatesByType(type).subscribe({ error: () => {} });
@@ -306,6 +315,22 @@ export class AgentAppProfileWizardComponent
 
   cancel() {
     this.dialogRef.close(undefined);
+  }
+
+  isLastStep(): boolean {
+    return this.selectedIndex === this.steps.length - 1;
+  }
+
+  canGoNext(): boolean {
+    return this.steps[this.selectedIndex] === 'type' ? this.canProceedFromType() : this.canSubmit();
+  }
+
+  nextStepLabel(): string {
+    return this.stepLabels[this.steps[this.selectedIndex + 1]] ?? '';
+  }
+
+  private buildSteps(): AgentAppProfileStepKey[] {
+    return this.editMode ? ['config', 'save'] : ['type', 'config', 'save'];
   }
 
   canProceedFromType(): boolean {

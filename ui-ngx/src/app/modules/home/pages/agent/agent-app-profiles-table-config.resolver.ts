@@ -133,7 +133,7 @@ export class AgentAppProfilesTableConfigResolver {
     return this.dialog.open<AgentAppProfileWizardComponent, AgentAppProfileWizardData, AgentAppProfile>(
       AgentAppProfileWizardComponent, {
         disableClose: false,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {}
       }
     ).afterClosed().pipe(

@@ -2,32 +2,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 @use '../../../components/agent/wizard/agent-wizard' as *;
 
-@include wizard-chrome;
+@include wizard-stepper-dialog(750px);
 
 :host {
-  display: block;
-  width: min(750px, 95vw);
-  min-width: 0;
-  max-width: 95vw;
-
-  .tb-install-wizard-body.tb-install-wizard-embedded {
-    padding: 16px 24px 0 !important;
-
-    mat-stepper {
-      flex: 1 1 auto;
-    }
-
-    .step-footer {
-      position: sticky;
-      bottom: 0;
-      z-index: 15;
-      background: #fff;
-      margin: 16px -24px 0;
-      padding: 8px;
-      min-height: 52px;
-    }
-  }
-
   // Sibling layout: button lives outside the entity-list's form-field so
   // clicking it counts as a genuine outside-click and MatAutocomplete closes
   // its panel naturally — no synthetic-event hacks needed.
@@ -38,7 +15,7 @@
     gap: 12px;
 
     .app-profile-picker-field {
-      flex: 1;
+      flex: 1 1 280px;
       min-width: 0;
     }
 

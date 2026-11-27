@@ -6,8 +6,10 @@
 :host {
   height: 100%;
   max-height: 100vh;
+  max-width: 100%;
   display: grid;
   grid-template-rows: min-content minmax(auto, 1fr) min-content;
+  grid-template-columns: minmax(0, 1fr);
 
   .tb-loader {
     display: flex;
@@ -49,13 +51,27 @@
   }
 
   .mat-mdc-dialog-content {
-    max-height: 80vh;
     padding: 0 16px 16px 16px;
     border-top: 16px solid #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    @media #{$mat-gt-xs} {
+      max-height: 80vh;
+    }
   }
 }
 
 :host ::ng-deep {
+  .mat-mdc-dialog-content > .tb-form-panel,
+  .mat-mdc-dialog-content > .tb-form-panel > .tb-form-panel,
+  .mat-mdc-tab-group,
+  .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
   .tb-markdown-view {
     padding: 16px 16px 32px 16px;
     div {

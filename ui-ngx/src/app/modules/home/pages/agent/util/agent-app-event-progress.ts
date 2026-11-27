@@ -24,7 +24,7 @@ export function openAgentAppEventProgress(
   return dialog.open<AgentAppEventProgressDialogComponent, AgentAppEventProgressDialogData, boolean>(
     AgentAppEventProgressDialogComponent, {
       disableClose: false,
-      panelClass: ['tb-dialog'],
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: { application, event }
     }
   ).afterClosed();

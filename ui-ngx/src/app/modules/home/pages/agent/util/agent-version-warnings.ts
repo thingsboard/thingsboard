@@ -15,7 +15,7 @@ export function confirmAppVersionWarning(dialog: MatDialog,
   return dialog.open<AgentAppVersionWarningDialogComponent, AgentAppVersionWarningDialogData, AgentAppVersionWarningResult>(
     AgentAppVersionWarningDialogComponent, {
       disableClose: false,
-      panelClass: ['tb-dialog'],
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data
     }).afterClosed().pipe(map(res => res ?? false));
 }

@@ -47,7 +47,6 @@ export { isAgentAppUpgradeResult } from '@home/pages/agent/wizard/agent-app-wiza
 @Component({
   selector: 'tb-agent-app-install-wizard',
   templateUrl: './agent-app-install-wizard.component.html',
-  styleUrls: ['./agent-app-install-wizard.component.scss'],
   standalone: false,
   providers: [AgentAppWizardLoaderService, AgentAppWizardSubmitService]
 })

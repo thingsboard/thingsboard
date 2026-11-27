@@ -41,6 +41,32 @@ export interface AgentAppWizardFinish {
   closeOnly?: boolean;
 }
 
+export type AgentAppInstallStepKey = 'agent' | 'type' | 'config' | 'summary' | 'deploy';
+
+export const AGENT_APP_INSTALL_STEP_LABELS: Record<AgentAppInstallStepKey, string> = {
+  agent: 'agent.deploy-select-agent-step',
+  type: 'agent.app-install-step1',
+  config: 'agent.app-install-step3',
+  summary: 'agent.app-install-step4',
+  deploy: 'agent.deploy-install-step'
+};
+
+export type AgentAppUpgradeStepKey = 'profile' | 'config' | 'summary';
+
+export const AGENT_APP_UPGRADE_STEP_LABELS: Record<AgentAppUpgradeStepKey, string> = {
+  profile: 'agent.app-upgrade-profile-step',
+  config: 'agent.app-install-step3',
+  summary: 'agent.app-install-step4'
+};
+
+export type AgentAppProfileStepKey = 'type' | 'config' | 'save';
+
+export const AGENT_APP_PROFILE_STEP_LABELS: Record<AgentAppProfileStepKey, string> = {
+  type: 'agent.app-install-step1',
+  config: 'agent.app-install-step3',
+  save: 'agent.app-profile-step-save'
+};
+
 export interface AgentTypeCard {
   type: AgentApplicationType;
   icon: string;

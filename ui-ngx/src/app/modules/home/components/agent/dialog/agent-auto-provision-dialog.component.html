@@ -4,18 +4,17 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
-  <div class="tb-install-wizard-toolbar-content">
-    <h2>{{ titleKey | translate }}</h2>
-  </div>
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2>{{ titleKey | translate }}</h2>
+  <span class="flex-1"></span>
   <div tb-help="agentProfileAutoProvision"></div>
-  <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
-    <mat-icon>close</mat-icon>
+  <button mat-icon-button (click)="cancel()" type="button">
+    <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-
-<div mat-dialog-content class="tb-install-wizard-body">
-  <mat-stepper linear #stepper [labelPosition]="(stepperLabelPosition | async)">
+<div mat-dialog-content>
+  <mat-stepper linear #stepper [labelPosition]="(stepperLabelPosition | async)"
+    (selectionChange)="selectedIndex = $event.selectedIndex">
 
     <mat-step [completed]="canProceed()"
       [label]="stepSelectKey | translate">
@@ -98,16 +97,6 @@
           }
         </div>
       </form>
-
-      <div class="step-footer">
-        <button mat-button type="button" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-        <button mat-raised-button color="primary" type="button"
-          [disabled]="!canProceed() || loading"
-          (click)="proceedToScript()">
-          <span>{{ 'action.next' | translate }}</span>
-          <mat-icon iconPositionEnd>chevron_right</mat-icon>
-        </button>
-      </div>
     </mat-step>
 
     <mat-step [label]="stepScriptKey | translate">
@@ -146,16 +135,30 @@
           <span translate>edge.auto-provision-no-script</span>
         </div>
       }
-
-
-      <div class="step-footer">
-        <button mat-button type="button" (click)="cancel()">{{ 'action.close' | translate }}</button>
-        <button mat-raised-button color="primary" type="button" (click)="goToProfile()">
-          <mat-icon>open_in_new</mat-icon>
-          <span translate>agent.go-to-profile</span>
-        </button>
-      </div>
     </mat-step>
 
   </mat-stepper>
+</div>
+<div mat-dialog-actions>
+  @if (selectedIndex === 0) {
+    <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
+      <button mat-stroked-button
+              color="primary"
+              [disabled]="!canProceed() || loading"
+              (click)="proceedToScript()">{{ 'action.next-with-label' | translate: { label: (stepScriptKey | translate) } }}</button>
+    </div>
+    <mat-divider class="w-full"></mat-divider>
+  }
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
+    <button mat-button
+            (click)="cancel()">{{ (selectedIndex === 0 ? 'action.cancel' : 'action.close') | translate }}</button>
+    @if (selectedIndex > 0) {
+      <button mat-raised-button
+              color="primary"
+              (click)="goToProfile()">
+        <mat-icon>open_in_new</mat-icon>
+        <span translate>agent.go-to-profile</span>
+      </button>
+    }
+  </div>
 </div>

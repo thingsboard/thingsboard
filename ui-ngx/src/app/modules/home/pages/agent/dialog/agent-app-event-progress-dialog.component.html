@@ -4,16 +4,15 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<mat-toolbar color="tb-primary" class="tb-progress-dialog-header">
-  <h2 mat-dialog-title translate>agent.app-event-progress-title</h2>
-  <span class="header-app-name">{{ subjectName }}</span>
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2>{{ 'agent.app-event-progress-title' | translate }}: {{ subjectName }}</h2>
+  <span class="flex-1"></span>
   <div tb-help="agentAppEvents"></div>
-  <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
-    <mat-icon>close</mat-icon>
+  <button mat-icon-button (click)="cancel()" type="button">
+    <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-
-<div mat-dialog-content class="tb-progress-body">
+<div mat-dialog-content>
   @if (loading) {
     <div class="tb-progress-loading">
       <mat-spinner diameter="20"></mat-spinner>
@@ -112,7 +111,7 @@
   }
 </div>
 
-<div mat-dialog-actions class="tb-progress-actions">
+<div mat-dialog-actions class="flex flex-wrap items-center justify-end">
   @if (canCancel) {
     <button mat-button color="warn" (click)="cancelEvent($event)">
       <mat-icon>cancel</mat-icon>

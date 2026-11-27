@@ -4,96 +4,72 @@
 @forward '../agent-shared';
 @use '../agent-shared' as *;
 
-@mixin wizard-chrome {
+@mixin wizard-dialog($width) {
   :host {
-    display: block;
-    width: min(1280px, 95vw);
-    min-width: 0;
-    max-width: 95vw;
-  }
-
-  .tb-install-wizard-toolbar {
-    display: flex; align-items: center; gap: 8px;
-    padding: 0 16px;
-    min-height: 56px;
-    .tb-install-wizard-toolbar-content {
-      flex: 1; min-width: 0;
-      display: flex; flex-direction: row; align-items: center; gap: 8px;
-      h2 { font-size: 20px; font-weight: 400; margin: 0; color: inherit; }
-      span { font-size: 20px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    }
-  }
-
-  .tb-install-wizard-body.tb-install-wizard-embedded {
-    max-height: none !important;
-    overflow-y: visible !important;
-    padding: 8px 0 !important;
-  }
-
-  .tb-install-wizard-body {
-    // No vertical padding: the sticky stepper header sits flush at the top and the
-    // sticky footer flush at the bottom, with the content carrying its own spacing.
-    padding: 0 24px !important;
-    // Cap the dialog body to the viewport. Allow vertical scroll so tall step
-    // content (e.g. update/upgrade step 2 with config sections + summary card +
-    // info box + footer) can reach its buttons. The ace editors inside are
-    // clamped so they don't contribute unbounded height, and .acediff__wrap has
-    // its own overflow killed — so the only outer scrollbar that appears here
-    // is a legitimate chrome scroll when the step content genuinely overflows.
-    max-height: 85vh;
-    overflow-y: auto;
-    // Contain horizontal overscroll so two-finger trackpad swipes inside the
-    // ace editors / diff panes don't bubble up to the browser's back/forward
-    // page navigation. Also block vertical bounce from escaping the dialog.
-    overscroll-behavior: contain;
-  }
-
-  :host ::ng-deep .mat-horizontal-stepper-wrapper {
-    margin-top: 0;
-  }
-
-  :host ::ng-deep .mat-horizontal-stepper-header-container {
-    margin-top: 0;
-    // Keep the step indicators (1)…(N) pinned at the top while content scrolls.
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    background: #fff;
-  }
-
-  :host ::ng-deep .mat-horizontal-stepper-header {
-    padding: 0 12px;
-  }
-
-  :host ::ng-deep .mat-horizontal-content-container {
-    padding: 12px 0;
-    // Material defaults this to `overflow: hidden`, which makes it a scroll
-    // container and anchors the sticky `.step-footer` here (content height, so it
-    // never sticks). `clip` still clips the sliding steps but is NOT a scroll
-    // container, so the footer anchors to the scrolling `.tb-install-wizard-body`.
-    overflow: clip;
+    height: 100%;
+    width: $width;
     max-width: 100%;
+    display: grid;
+    grid-template-rows: min-content auto min-content;
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  :host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
-    max-width: 100%;
+  :host-context(.mat-mdc-dialog-container) {
+    .mat-mdc-dialog-content {
+      overscroll-behavior: contain;
 
-    .tb-install-wizard-body {
-      max-width: 100%;
-      overflow-x: hidden;
+      @media #{$mat-gt-xs} {
+        max-height: 75vh;
+      }
+    }
+  }
+}
+
+@mixin wizard-stepper-dialog($width) {
+  @include wizard-dialog($width);
+
+  :host {
+    .dialog-actions-row {
+      padding: 8px;
     }
   }
 
-  :host ::ng-deep .mat-step-header {
-    // Kill the hover/focus background — navigation works, but no visual fill.
-    &:hover,
-    &.cdk-program-focused,
-    &.cdk-mouse-focused,
-    &.cdk-focused {
-      background-color: transparent !important;
+  :host-context(.mat-mdc-dialog-container) {
+    .mat-mdc-dialog-content {
+      padding: 0;
+      scrollbar-gutter: stable;
+    }
+
+    .mat-mdc-dialog-actions {
+      padding: 0;
     }
   }
 
+  :host ::ng-deep {
+    .mat-horizontal-stepper-header-container {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #fff;
+    }
+
+    .mat-horizontal-content-container,
+    .mat-vertical-content {
+      padding-top: 4px;
+    }
+
+    .mat-step-header {
+      &:hover,
+      &.cdk-program-focused,
+      &.cdk-mouse-focused,
+      &.cdk-focused {
+        background-color: transparent !important;
+      }
+    }
+  }
+}
+
+@mixin wizard-steps-locked {
   :host ::ng-deep .tb-steps-locked .mat-step-header[aria-selected="false"] {
     pointer-events: none;
     cursor: default;
@@ -106,22 +82,6 @@
     .mat-step-label {
       color: $agent-text-hint !important;
     }
-  }
-
-  .step-footer {
-    display: flex; align-items: center; justify-content: flex-end; gap: 8px;
-    padding: 12px 0; border-top: 1px solid $agent-divider-light; margin-top: 16px;
-    button mat-icon { font-size: 18px; width: 18px; height: 18px; }
-  }
-
-  // Pin the footer to the bottom of the scrolling body so its action buttons stay
-  // visible while tall step content scrolls. Skipped in embedded mode, where the
-  // body doesn't scroll (the host dialog does) and a sticky footer would misbehave.
-  .tb-install-wizard-body:not(.tb-install-wizard-embedded) .step-footer {
-    position: sticky;
-    bottom: 0;
-    z-index: 15;
-    background: #fff;
   }
 }
 
@@ -172,6 +132,16 @@
     mat-icon { font-size: 36px; width: 36px; height: 36px; color: var(--tb-primary-500); margin-bottom: 8px; }
     h4 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
     p { font-size: 13px; color: $agent-text-secondary; margin: 0; }
+
+    @media #{$mat-lt-sm} {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      column-gap: 12px;
+      align-items: center;
+      padding: 12px 16px;
+      text-align: left;
+      mat-icon { grid-row: span 2; font-size: 32px; width: 32px; height: 32px; margin: 0; }
+    }
   }
 }
 
@@ -216,7 +186,7 @@
   // .yaml-editor box but needs padding removed and a fixed height for ace layout.
   .yaml-editor-ace {
     padding: 0;
-    height: clamp(220px, calc(85vh - 280px), 520px);
+    height: clamp(220px, calc(75vh - 240px), 520px);
     overflow: hidden;
     ::ng-deep .ace_editor {
       font-family: $agent-mono-font !important;
@@ -283,6 +253,8 @@
     .diff-header {
       flex: 1 1 50%; box-sizing: border-box; padding: 8px 12px; font-size: 12px; font-weight: 500;
       letter-spacing: 0.3px;
+      min-width: 0; overflow-wrap: anywhere;
+      @media #{$mat-lt-sm} { padding: 6px 8px; font-size: 11px; }
       & + .diff-header { border-left: 1px solid $agent-divider; padding-right: 36px; }
       &.added { background: $agent-success-surface; color: $agent-color-success-dark; }
       &.removed { background: #fce4ec; color: $agent-color-error-dark; }
@@ -353,11 +325,7 @@
   .diff-viewer {
     position: relative;
     overflow: hidden;
-    // Fit within the wizard body (which no longer scrolls). Chrome above/below
-    // the editor (toolbar + stepper header + name field + footer + padding) is
-    // roughly 280px; the clamp floors at 220px so very short viewports still
-    // show a usable editor and cap at 520px on large displays.
-    height: clamp(220px, calc(85vh - 280px), 520px);
+    height: clamp(220px, calc(75vh - 240px), 520px);
     width: 100%;
 
     // ace-diff ships with `.acediff__wrap { overflow: auto }`. That creates an

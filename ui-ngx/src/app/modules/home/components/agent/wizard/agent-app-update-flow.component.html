@@ -5,36 +5,28 @@
 
 -->
 @if (!embedded) {
-  <mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     @if (showBack) {
-      <button mat-icon-button (click)="back.emit()" type="button" tabindex="-1">
-        <mat-icon>arrow_back</mat-icon>
+      <button mat-icon-button (click)="back.emit()" type="button">
+        <mat-icon class="material-icons">arrow_back</mat-icon>
       </button>
     }
-    <div class="tb-install-wizard-toolbar-content">
-      <h2>{{ 'agent.app-update-wizard-title' | translate }}@if (existingApplication) {
-        :
-      }</h2>
-      @if (existingApplication) {
-        <span class="flex-1">
-          {{ 'agent.app-update-on-app' | translate: { name: existingApplication?.name } }}
-        </span>
-      }
-    </div>
+    <h2>{{ 'agent.app-update-wizard-title' | translate }}@if (existingApplication) {: {{ 'agent.app-update-on-app' | translate: { name: existingApplication?.name } }}}</h2>
+    <span class="flex-1"></span>
     <div tb-help="agentAppUpdate"></div>
-    <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
-      <mat-icon>close</mat-icon>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
 }
-
-<div mat-dialog-content class="tb-install-wizard-body" [class.tb-install-wizard-embedded]="embedded">
+<div mat-dialog-content>
 
   <mat-stepper linear #stepper
+    (selectionChange)="selectedIndex = $event.selectedIndex"
     [orientation]="(stepperOrientation | async)"
     [labelPosition]="(stepperLabelPosition | async)">
 
-    <mat-step [label]="'agent.app-install-step3' | translate">
+    <mat-step [label]="'agent.app-install-step3' | translate" [completed]="canSubmit()">
 
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>agent.app-install-name</mat-label>
@@ -124,13 +116,6 @@
         <tb-agent-compose-diff [left]="currentYaml" [right]="futureYaml" [readOnly]="readOnlyCompare" [syncScroll]="diffSyncScroll"></tb-agent-compose-diff>
         <p class="diff-hint" translate>agent.app-update-compare-hint</p>
       }
-
-      <div class="step-footer">
-        <button mat-raised-button color="primary" matStepperNext [disabled]="!canSubmit()">
-          {{ 'action.next' | translate }}
-          <mat-icon iconPositionEnd>chevron_right</mat-icon>
-        </button>
-      </div>
     </mat-step>
 
     <mat-step [label]="'agent.app-install-step4' | translate">
@@ -171,18 +156,33 @@
         <mat-icon>info_outline</mat-icon>
         <span translate>agent.app-install-confirm-info</span>
       </div>
-
-      <div class="step-footer">
-        <button mat-button matStepperPrevious [disabled]="submitting">
-          <mat-icon>chevron_left</mat-icon>
-          {{ 'action.back' | translate }}
-        </button>
-        <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit()">
-          <mat-icon>save</mat-icon>
-          <span>{{ 'agent.app-update-cta' | translate }}</span>
-        </button>
-      </div>
     </mat-step>
 
   </mat-stepper>
+</div>
+<div mat-dialog-actions>
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
+    @if (selectedIndex > 0) {
+      <button mat-stroked-button
+              [disabled]="submitting"
+              (click)="stepper.previous()">{{ 'action.back' | translate }}</button>
+    }
+    <span class="flex-1"></span>
+    @if (selectedIndex === 0) {
+      <button mat-stroked-button
+              color="primary"
+              [disabled]="!canSubmit()"
+              (click)="stepper.next()">{{ 'action.next-with-label' | translate: { label: ('agent.app-install-step4' | translate) } }}</button>
+    }
+  </div>
+  <mat-divider class="w-full"></mat-divider>
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
+    <button mat-button
+            [disabled]="submitting"
+            (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button
+            color="primary"
+            [disabled]="selectedIndex !== 1 || !canSubmit()"
+            (click)="submit()">{{ 'agent.app-update-cta' | translate }}</button>
+  </div>
 </div>
