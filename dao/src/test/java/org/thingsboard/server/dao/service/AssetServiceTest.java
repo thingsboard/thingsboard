@@ -3,6 +3,8 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.AfterClass;
@@ -15,7 +17,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -53,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -121,7 +123,7 @@ public class AssetServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testAssetLimitOnTenantProfileLevel() throws InterruptedException {
+    public void testAssetLimitOnTenantProfileLevel() throws Exception {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName("Test profile");
         tenantProfile.setDescription("Test");
@@ -134,22 +136,19 @@ public class AssetServiceTest extends AbstractServiceTest {
         tenantProfile = tenantProfileService.saveTenantProfile(anotherTenantId, tenantProfile);
         anotherTenantId = createTenant(tenantProfile.getId()).getId();
 
+        List<ListenableFuture<Asset>> futures = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
-            executor.submit(() -> {
+            futures.add(executor.submit(() -> {
                 Asset asset = new Asset();
                 asset.setTenantId(anotherTenantId);
                 asset.setName(RandomStringUtils.secure().nextAlphabetic(10));
                 asset.setType("default");
-                assetService.saveAsset(asset);
-            });
+                return assetService.saveAsset(asset);
+            }));
         }
+        List<Asset> savedAssets = Futures.successfulAsList(futures).get(30, TimeUnit.SECONDS);
 
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
-            long countByTenantId = assetService.countByTenantId(anotherTenantId);
-            return countByTenantId == 5;
-        });
-
-        Thread.sleep(2000);
+        assertThat(savedAssets.stream().filter(Objects::nonNull)).hasSize(5);
         assertThat(assetService.countByTenantId(anotherTenantId)).isEqualTo(5);
     }
 

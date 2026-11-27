@@ -150,13 +150,11 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return executor.submit(() -> findDeviceByTenantIdAndName(tenantId, name));
     }
 
-    @Transactional
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken) {
         return doSaveDevice(device, accessToken, true);
     }
 
-    @Transactional
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken, NameConflictStrategy nameConflictStrategy) {
         return doSaveDevice(device, accessToken, true, nameConflictStrategy);
@@ -167,19 +165,16 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return doSaveDevice(device, null, doValidate);
     }
 
-    @Transactional
     @Override
     public Device saveDevice(Device device) {
         return doSaveDevice(device, null, true);
     }
 
-    @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
         return saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.DEFAULT);
     }
 
-    @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, NameConflictStrategy nameConflictStrategy) {
         return saveEntity(device, () -> doSaveWithCredentials(device, deviceCredentials, nameConflictStrategy));
@@ -589,7 +584,6 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     @Override
-    @Transactional
     public Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         Device device = new Device();
         device.setName(provisionRequest.getDeviceName());
@@ -601,44 +595,57 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
             device.setAdditionalInfo(additionalInfoNode);
         }
         Device savedDevice = saveDevice(device);
-        if (!StringUtils.isEmpty(provisionRequest.getCredentialsData().getToken()) ||
-                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getX509CertHash()) ||
-                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
-                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword()) ||
-                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId())) {
-            DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
-            if (deviceCredentials == null) {
-                deviceCredentials = new DeviceCredentials();
-            }
-            deviceCredentials.setDeviceId(savedDevice.getId());
-            deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
-            switch (provisionRequest.getCredentialsType()) {
-                case ACCESS_TOKEN:
-                    deviceCredentials.setCredentialsId(provisionRequest.getCredentialsData().getToken());
-                    break;
-                case MQTT_BASIC:
-                    BasicMqttCredentials mqttCredentials = new BasicMqttCredentials();
-                    mqttCredentials.setClientId(provisionRequest.getCredentialsData().getClientId());
-                    mqttCredentials.setUserName(provisionRequest.getCredentialsData().getUsername());
-                    mqttCredentials.setPassword(provisionRequest.getCredentialsData().getPassword());
-                    deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
-                    break;
-                case X509_CERTIFICATE:
-                    deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getX509CertHash());
-                    break;
-                case LWM2M_CREDENTIALS:
-                    break;
-            }
-            try {
+        try {
+            if (!StringUtils.isEmpty(provisionRequest.getCredentialsData().getToken()) ||
+                    !StringUtils.isEmpty(provisionRequest.getCredentialsData().getX509CertHash()) ||
+                    !StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
+                    !StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword()) ||
+                    !StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId())) {
+                DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
+                if (deviceCredentials == null) {
+                    deviceCredentials = new DeviceCredentials();
+                }
+                deviceCredentials.setDeviceId(savedDevice.getId());
+                deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
+                switch (provisionRequest.getCredentialsType()) {
+                    case ACCESS_TOKEN:
+                        deviceCredentials.setCredentialsId(provisionRequest.getCredentialsData().getToken());
+                        break;
+                    case MQTT_BASIC:
+                        BasicMqttCredentials mqttCredentials = new BasicMqttCredentials();
+                        mqttCredentials.setClientId(provisionRequest.getCredentialsData().getClientId());
+                        mqttCredentials.setUserName(provisionRequest.getCredentialsData().getUsername());
+                        mqttCredentials.setPassword(provisionRequest.getCredentialsData().getPassword());
+                        deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
+                        break;
+                    case X509_CERTIFICATE:
+                        deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getX509CertHash());
+                        break;
+                    case LWM2M_CREDENTIALS:
+                        break;
+                }
                 deviceCredentialsService.updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
-            } catch (Exception e) {
-                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
             }
+        } catch (Exception e) {
+            log.error("[{}][{}] Failed to set up credentials for the provisioned device", savedDevice.getTenantId(), savedDevice.getId(), e);
+            deleteProvisionedDevice(savedDevice);
+            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
         }
 
         publishEvictEvent(new DeviceCacheEvictEvent(savedDevice.getTenantId(), savedDevice.getId(), provisionRequest.getDeviceName(), null));
         countService.publishCountEntityEvictEvent(savedDevice.getTenantId(), EntityType.DEVICE);
         return savedDevice;
+    }
+
+    // The device is already committed by saveDevice, so a failed provision request has to remove it explicitly.
+    private void deleteProvisionedDevice(Device device) {
+        try {
+            transactionTemplate.executeWithoutResult(status -> deleteDevice(device.getTenantId(), device));
+        } catch (Exception e) {
+            log.error("[{}][{}] Failed to delete the device created by a failed provision request. The device is left with an " +
+                            "auto-generated access token and occupies a slot in the tenant device limit until it is removed manually",
+                    device.getTenantId(), device.getId(), e);
+        }
     }
 
     @Override
