@@ -29,6 +29,21 @@
       }
     </mat-form-field>
   </div>
+  @if (isSetDownLink) {
+    <tb-secret-key-input formControlName="downlinkConnectionString" class="mat-block flex-1"
+                         required
+                         appearance="outline"
+                         label="{{ 'integration.downlink-connection-string' | translate }}"
+                         requiredText="{{ 'integration.downlink-connection-string-required' | translate }}">
+    </tb-secret-key-input>
+    <mat-form-field appearance="outline" class="mat-block">
+      <mat-label translate>integration.downlink-topic-name</mat-label>
+      <input matInput required formControlName="downlinkTopicName">
+      @if (azureServicesBusIntegrationConfigForm.get('downlinkTopicName').hasError('required')) {
+        <mat-error translate>integration.downlink-topic-name-required</mat-error>
+      }
+    </mat-form-field>
+  }
 
   <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
   </ng-container>
@@ -40,22 +55,6 @@
       </mat-panel-description>
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
-
-      <tb-secret-key-input formControlName="downlinkConnectionString" class="mat-block flex-1" appearance="outline"
-                           [required]="isSetDownLink"
-                           label="{{ 'integration.downlink-connection-string' | translate }}"
-                           requiredText="{{ 'integration.downlink-connection-string-required' | translate }}">
-      </tb-secret-key-input>
-      <mat-form-field appearance="outline" class="mat-block">
-        <mat-label translate>integration.downlink-topic-name</mat-label>
-        <input matInput [required]="isSetDownLink" formControlName="downlinkTopicName">
-        @if (azureServicesBusIntegrationConfigForm.get('downlinkTopicName').hasError('required')) {
-          <mat-error translate>
-            integration.downlink-topic-name-required
-          </mat-error>
-        }
-      </mat-form-field>
-
       <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
       </ng-container>
     </ng-template>

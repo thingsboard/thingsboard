@@ -5968,13 +5968,13 @@
         "region-eu": "Europe",
         "region-in": "India",
         "topic-name": "Topic name",
-        "topic-name-required": "Topic name is required",
+        "topic-name-required": "Topic name is required.",
         "sub-name": "Subscription name",
-        "sub-name-required": "Subscription name is required",
+        "sub-name-required": "Subscription name is required.",
         "downlink-connection-string": "Downlink connection string",
-        "downlink-connection-string-required": "Downlink connection string is required",
+        "downlink-connection-string-required": "Downlink connection string is required.",
         "downlink-topic-name": "Downlink topic name",
-        "downlink-topic-name-required": "Downlink topic name is required"
+        "downlink-topic-name-required": "Downlink topic name is required."
     },
     "scada": {
         "symbols": "SCADA symbols",
