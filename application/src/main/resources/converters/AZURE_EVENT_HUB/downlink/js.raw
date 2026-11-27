@@ -1,0 +1,22 @@
+/** Encoder **/
+
+// Send the ThingsBoard message as JSON to an Azure IoT Hub device as a cloud-to-device message.
+// metadata.deviceId is the Azure Device ID of the target device; the integration skips messages without it.
+// This template uses the ThingsBoard device name as the Azure Device ID. Add it to the message metadata
+// with the "originator fields" rule node (Name -> deviceName).
+// The integration sends the message only when IoT Hub name is set in its connection settings.
+var deviceId = typeof metadata.deviceName === "string" ? metadata.deviceName.trim() : "";
+if (!deviceId) {
+    throw new Error("Message metadata has no deviceName");
+}
+
+var result = {
+    // Payload content type: JSON, TEXT, or BINARY (Base64).
+    contentType: "JSON",
+    data: JSON.stringify(msg),
+    metadata: {
+        deviceId: deviceId
+    }
+};
+
+return result;

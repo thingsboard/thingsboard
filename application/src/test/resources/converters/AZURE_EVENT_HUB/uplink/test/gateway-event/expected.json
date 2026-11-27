@@ -1,0 +1,15 @@
+{
+  "deviceName": "pump-07",
+  "deviceType": "Pump",
+  "attributes": {},
+  "telemetry": {
+    "ts": 1794995570000,
+    "values": {
+      "temperature": 48.2,
+      "status": "RUNNING",
+      "env": {
+        "temperature": 30
+      }
+    }
+  }
+}

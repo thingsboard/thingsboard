@@ -1,0 +1,10 @@
+{
+  "deviceId": " pump-07 ",
+  "deviceType": "Pump",
+  "timestamp": "2026-11-18T09:52:50Z",
+  "temperature": 48.2,
+  "status": "RUNNING",
+  "env": {
+    "temperature": 30
+  }
+}

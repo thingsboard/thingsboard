@@ -34,6 +34,7 @@ export const IntegrationTbelDefaultDecodersUrl = new Map<IntegrationType, string
 export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>([
   [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/uplink/js.raw'],
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/uplink/js.raw'],
+  [IntegrationType.AZURE_EVENT_HUB, '/assets/converters/AZURE_EVENT_HUB/uplink/js.raw'],
   [IntegrationType.TTI,'/assets/converters/TTI/uplink/js.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/uplink/js.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/js.raw'],
@@ -47,6 +48,7 @@ export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string
   [IntegrationType.TTN, '/assets/converters/TTN/downlink/tbel.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/downlink/tbel.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/downlink/tbel.raw'],
+  [IntegrationType.AZURE_EVENT_HUB, '/assets/converters/AZURE_EVENT_HUB/downlink/tbel.raw'],
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/downlink/tbel.raw']
 ])
 
@@ -55,6 +57,7 @@ export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.TTN, '/assets/converters/TTN/downlink/js.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/downlink/js.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/downlink/js.raw'],
+  [IntegrationType.AZURE_EVENT_HUB, '/assets/converters/AZURE_EVENT_HUB/downlink/js.raw'],
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/downlink/js.raw']
 ])
 
