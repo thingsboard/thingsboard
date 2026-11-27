@@ -247,7 +247,14 @@ public class DefaultMailService implements MailService {
                         byte[] bytes = jakarta.xml.bind.DatatypeConverter.parseBase64Binary(value);
                         String contentType = helper.getFileTypeMap().getContentType(imgId);
                         InputStreamSource iss = () -> new ByteArrayInputStream(bytes);
-                        helper.addInline(imgId, iss, contentType);
+                        if (tbEmail.isHtml()) {
+                            if (tbEmail.isAddFileName()) {
+                                contentType += "; name=\"" + imgId + "\";";
+                            }
+                            helper.addInline(imgId, iss, contentType);
+                        } else {
+                            helper.addAttachment(imgId, iss, contentType);
+                        }
                     }
                 }
                 if (tbEmail.getReports() != null) {
