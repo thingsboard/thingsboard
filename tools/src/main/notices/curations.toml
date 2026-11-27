@@ -1,0 +1,392 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+# Per-package curations: source overrides, declared license fixes, file-scoped false-positive
+# ignores, and (only when unavoidable) version-ranged concluded licenses.
+#
+# Prefer file-scoped `ignore_findings` over whole-package `concluded_license`: ignoring only a
+# specific false-positive file keeps the rest of the package actively scanned across upgrades.
+# Every `concluded_license` MUST carry a version or range (e.g. @[1.0,2.0[) so newer versions
+# stop for human review. Sibling packages sharing a rule can use `ids = [...]`.
+
+[custom_licenses]
+"LicenseRef-thingsboard-beerware-googlemutant" = """\
+"THE BEER-WARE LICENSE":
+ivan@sanchezortega.es wrote this file. As long as you retain this notice you
+can do whatever you want with this stuff. If we meet some day, and you think
+this stuff is worth it, you can buy me a beer in return."""
+
+# ---------------------------------------------------------------------------
+# Sources & metadata-only packages (no -sources.jar / tarball / VCS in SBOM)
+# ---------------------------------------------------------------------------
+
+[[curations]]
+id = "pkg:maven/com.adobe.xmp/xmpcore@[6.0,7.0["
+metadata_only = true
+comment = "Adobe published no source for this version, so there is nothing to scan."
+
+[[curations]]
+id = "pkg:maven/com.google.guava/listenablefuture@9999.0-empty-to-avoid-conflict-with-guava"
+metadata_only = true
+comment = "An empty jar: there is nothing to scan."
+
+[[curations]]
+id = "pkg:maven/org.eclipse.californium/californium-legal@3.12.1"
+metadata_only = true
+comment = "The jar holds only the license texts and notice of Californium, and no code."
+
+[[curations]]
+id = "pkg:maven/org.thingsboard/springdoc-swagger-ui@2.8.8TB"
+vcs = { type = "Git", url = "https://github.com/thingsboard/springdoc-openapi.git", revision = "97f8eb7d785b2371f3d1b1326448694c66b5b514", path = "springdoc-swagger-ui" }
+comment = "Our fork. The pom gives an SSH address and tag v2.8.8TB does not exist; last commit of 2025-07-25."
+
+[[curations]]
+id = "pkg:maven/xml-apis/xml-apis-ext@1.3.04"
+vcs = { type = "Subversion", url = "https://svn.apache.org/repos/asf/xerces/xml-commons", revision = "tags/xml-commons-external-1_3_04", path = "java/external" }
+comment = "The Subversion address in the pom moved; the jar is built from java/external only."
+
+[[curations]]
+id = "pkg:maven/io.jsonwebtoken/jjwt@0.12.5"
+vcs = { type = "Git", url = "https://github.com/jwtk/jjwt.git", revision = "2399e2fdc5e20fad9d71d6bcbfd126cce6521638", path = "" }
+comment = "No sources jar: aggregator artifact. Tag 0.12.5 of the repository named in the pom."
+
+[[curations]]
+id = "pkg:maven/io.netty/netty-all@4.1.138.Final"
+vcs = { type = "Git", url = "https://github.com/netty/netty.git", revision = "26e68a2c3935e459b374891c87760f6d6c5e2550", path = "all" }
+comment = "No sources jar: aggregator artifact. Tag netty-4.1.138.Final of the repository named in the pom."
+
+[[curations]]
+id = "pkg:maven/com.sun.winsw/winsw@2.0.1"
+vcs = { type = "Git", url = "https://github.com/winsw/winsw.git", revision = "6ab6a546031dc3d1e507e7e8ccdf2404124769a2", path = "" }
+comment = "Windows service wrapper executable; no sources jar. Tag v2.0.1 of winsw/winsw."
+
+# ---------------------------------------------------------------------------
+# Declared license fixes (ambiguous or incorrect POM declarations)
+# ---------------------------------------------------------------------------
+
+[[curations]]
+id = "pkg:maven/org.hibernate.orm/hibernate-core@[6.0,7.0["
+declared_license_map = { "LGPL-2.1-only" = "LGPL-2.1-or-later" }
+comment = "The pom says 'GNU Library General Public License v2.1 or later'; the SBOM gives LGPL-2.1-only."
+
+[[curations]]
+ids = [
+  "pkg:maven/org.opensmpp/opensmpp-core@[3.0,4.0[",
+  "pkg:maven/org.opensmpp/opensmpp-charset@[3.0,4.0[",
+]
+declared_license_map = { "BSD-4-Clause" = "BSD-3-Clause" }
+comment = "The pom says 'BSD' and prints the three-clause text; the SBOM gives BSD-4-Clause."
+
+[[curations]]
+id = "pkg:maven/org.passay/passay"
+declared_license_map = { "GNU Lesser General Public License" = "LGPL-3.0-only" }
+comment = "The pom gives the URL of LGPL 3.0 for the unversioned license name."
+
+[[curations]]
+id = "pkg:maven/org.javadelight/delight-nashorn-sandbox"
+declared_license_map = { "LGPL" = "LGPL-3.0-only" }
+comment = "The pom gives the URL of LGPL 3.0 for 'LGPL'."
+
+[[curations]]
+id = "pkg:maven/org.jfree/jfreechart"
+declared_license_map = { "GNU Lesser General Public Licence" = "LGPL-2.1-or-later" }
+comment = "The pom omits the version; source file headers say LGPL 2.1 or later."
+
+[[curations]]
+id = "pkg:maven/xml-apis/xml-apis"
+declared_license = "Apache-2.0 AND SAX-PD AND W3C"
+ignore_findings = [
+  { path = "LICENSE.*", licenses = ["W3C-19980720", "LicenseRef-scancode-w3c-docs-20021231"], comment = "License folder lists other W3C variants; package is Apache-2.0 AND SAX-PD AND W3C." },
+  { path = "org/w3c/**", licenses = ["W3C-19980720", "LicenseRef-scancode-w3c-docs-20021231"], comment = "W3C license variant covered under W3C." },
+  { path = "org/xml/sax/helpers/ParserFactory.java", licenses = ["NOASSERTION WITH Classpath-exception-2.0"], comment = "False positive on '@exception ... (check your CLASSPATH)' Javadoc in SAX Public Domain file." },
+]
+comment = "Three parts under three licenses that all apply, not a choice: org.w3c.dom (W3C), org.xml.sax (SAX-PD), javax.xml (Apache-2.0)."
+
+# ---------------------------------------------------------------------------
+# Version-ranged concluded licenses (only where scanner cannot see the truth)
+# ---------------------------------------------------------------------------
+
+[[curations]]
+id = "pkg:maven/com.sun.mail/jakarta.mail@[2.0,3.0["
+concluded_license = "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0"
+comment = "The pom also declares EDL 1.0 (BSD-3-Clause), but 260 of 262 source files have only 'EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0'."
+
+[[curations]]
+ids = [
+  "pkg:npm/typeface-roboto@[1.0,2.0[",
+  "pkg:npm/typeface-roboto-mono@[1.0,2.0[",
+]
+concluded_license = "MIT AND Apache-2.0"
+comment = "Stylesheet is MIT; Google Roboto font binaries carry Apache-2.0 in font metadata (ScanCode does not read font files)."
+
+[[curations]]
+id = "pkg:npm/leaflet.gridlayer.googlemutant@[0.15,0.16["
+concluded_license = "MIT AND LicenseRef-thingsboard-beerware-googlemutant"
+comment = "Beerware notice names its author (Ivan Sanchez Ortega); custom text above. MIT is for code copied from js-lru."
+
+# ---------------------------------------------------------------------------
+# File-scoped false-positive ignores (keeps the rest of each package scanned!)
+# ---------------------------------------------------------------------------
+
+[[curations]]
+id = "pkg:maven/com.amazonaws/amazon-kinesis-producer"
+ignore_findings = [
+  { path = "META-INF/THIRD_PARTY_NOTICES", licenses = ["OpenSSL", "OpenSSL-standalone", "SSLeay-standalone", "BSL-1.0", "BSD-3-Clause", "MIT"], comment = "Third-party notices file already included verbatim in the NOTICE files section." },
+]
+
+[[curations]]
+id = "pkg:maven/jakarta.activation/jakarta.activation-api"
+ignore_findings = [
+  { path = "META-INF/NOTICE.md", licenses = ["GPL-2.0-only", "GPL-2.0-only WITH Classpath-exception-2.0", "NOASSERTION WITH Classpath-exception-2.0", "EPL-2.0", "EPL-1.0", "Apache-2.0", "MIT", "OFL-1.1", "W3C"], comment = "Eclipse legal NOTICE.md (already included verbatim in NOTICE files); jar code is BSD-3-Clause." },
+]
+
+[[curations]]
+id = "pkg:maven/org.glassfish.jaxb/jaxb-core"
+ignore_findings = [
+  { path = "META-INF/NOTICE.md", licenses = ["GPL-1.0-or-later", "xpp", "Apache-1.1", "Apache-2.0", "EPL-2.0", "MIT", "SAX-PD"], comment = "Eclipse legal NOTICE.md (already included verbatim in NOTICE files); jar code is BSD-3-Clause." },
+]
+
+[[curations]]
+ids = [
+  "pkg:maven/org.glassfish.jaxb/jaxb-runtime",
+  "pkg:maven/org.glassfish.jaxb/txw2",
+]
+ignore_findings = [
+  { path = "META-INF/NOTICE.md", licenses = ["GPL-1.0-or-later", "xpp", "Apache-1.1", "Apache-2.0", "EPL-2.0", "MIT"], comment = "Eclipse legal NOTICE.md (already included verbatim in NOTICE files); jar code is BSD-3-Clause." },
+]
+
+[[curations]]
+id = "pkg:maven/com.drewnoakes/metadata-extractor"
+ignore_findings = [
+  { path = "com/drew/metadata/*/QuickTimeDictionary.java", licenses = ["LicenseRef-scancode-proprietary-license"], comment = "False positive on 'patent pending' in video format table." },
+  { path = "com/drew/metadata/*/Mp4Dictionary.java", licenses = ["LicenseRef-scancode-proprietary-license"], comment = "False positive on 'patent pending' in video format table." },
+]
+
+[[curations]]
+id = "pkg:maven/com.google.genai/google-genai"
+ignore_findings = [
+  { path = "**/AutoValue_Citation.java", licenses = ["LicenseRef-scancode-proprietary-license"], comment = "False positive on Java field named 'license'." },
+]
+
+[[curations]]
+id = "pkg:maven/dev.langchain4j/langchain4j-ollama"
+ignore_findings = [
+  { path = "**/OllamaModelCard.java", licenses = ["LicenseRef-scancode-proprietary-license"], comment = "False positive on Java field named 'license' holding an Ollama model's license." },
+]
+
+[[curations]]
+id = "pkg:maven/io.swagger.core.v3/swagger-models-jakarta"
+ignore_findings = [
+  { path = "**/License.java", licenses = ["LicenseRef-scancode-proprietary-license"], comment = "False positive on Java class named 'License'." },
+]
+
+[[curations]]
+id = "pkg:maven/com.ibm.icu/icu4j"
+ignore_findings = [
+  { path = "LICENSE", licenses = ["GPL-2.0-or-later WITH Autoconf-exception-generic", "GPL-3.0-or-later WITH Autoconf-exception-generic-3.0"], comment = "Sections about aclocal.m4 and config.guess are '(only for ICU4C)', not in this Java jar." },
+]
+
+[[curations]]
+id = "pkg:maven/com.networknt/json-schema-validator"
+ignore_findings = [
+  { path = "**/SchemaValidatorsConfig.java", licenses = ["ECL-2.0"], comment = "False positive on Apache-2.0 header typo ('Apache LicenseBuilder')." },
+]
+
+[[curations]]
+id = "pkg:maven/com.github.jnr/jffi"
+ignore_findings = [
+  { path = "com/kenai/jffi/*.java", licenses = ["LGPL-3.0-or-later"], comment = "Headers offer 'Apache-2.0 ... Alternatively LGPL'; ScanCode splits the OR into a standalone LGPL finding." },
+]
+
+[[curations]]
+id = "pkg:maven/com.github.librepdf/openpdf"
+ignore_findings = [
+  { path = "META-INF/LGPL-2.1.md", licenses = ["LGPL-2.1-only"], comment = "Secondary option of declared 'LGPL-2.1-only OR MPL-2.0'." },
+  { path = "META-INF/LICENSES.md", licenses = ["LGPL-2.1-only"], comment = "Secondary option of declared 'LGPL-2.1-only OR MPL-2.0'." },
+  { path = "com/lowagie/text/pdf/IntHashtable.java", licenses = ["LGPL-2.1-only"], comment = "Dual-licensed LGPL-2.1-only OR MPL-2.0; ScanCode splits the OR." },
+  { path = "com/lowagie/text/ExceptionConverter.java", licenses = ["LGPL-2.0-or-later"], comment = "Dual-licensed MPL-1.1 OR LGPL; ScanCode splits the OR." },
+  { path = "com/lowagie/text/pdf/ArabicLigaturizer.java", licenses = ["LGPL-2.0-or-later"], comment = "Dual-licensed MPL-1.1 OR LGPL; ScanCode splits the OR." },
+  { path = "com/lowagie/text/pdf/fonts/cmap_info.txt", licenses = ["LicenseRef-scancode-adobe-acrobat-reader-eula"], comment = "Quotes Adobe terms only to explain why those fonts are not included." },
+]
+
+[[curations]]
+id = "pkg:maven/com.github.weisj/jsvg"
+ignore_findings = [
+  { path = "**/AbstractBlendComposite.java", licenses = ["LGPL-2.0-or-later"], comment = "Header offers BSD-3-Clause or LGPL; ScanCode splits them into separate findings." },
+]
+
+[[curations]]
+id = "pkg:maven/com.rabbitmq/amqp-client"
+ignore_findings = [
+  { path = "com/rabbitmq/tools/json/JSON*.java", licenses = ["LGPL-2.0-or-later"], comment = "Header notes original was APL/LGPL and explicitly states 'We've chosen APL'." },
+]
+
+[[curations]]
+id = "pkg:maven/org.openjdk.nashorn/nashorn-core"
+ignore_findings = [
+  { path = "LICENSE", licenses = ["GPL-2.0-only WITH LicenseRef-scancode-oracle-openjdk-exception-2.0"], comment = "OpenJDK LICENSE file with the Classpath exception; ScanCode tags the preamble separately from Classpath-exception-2.0." },
+]
+
+[[curations]]
+id = "pkg:maven/org.opensmpp/opensmpp-core"
+ignore_findings = [
+  { path = "org/smpp/**/*.java", licenses = ["LicenseRef-scancode-proprietary-license"], comment = "Stale Logica header; project relicensed to BSD-3-Clause (see LICENSE)." },
+]
+
+[[curations]]
+id = "pkg:maven/io.micrometer/micrometer-core"
+ignore_findings = [
+  { path = "**/PoolingHttpClientConnectionManagerMetricsBinder.java", licenses = ["LGPL-2.1-only"], comment = "ScanCode false positive on a file carrying only an Apache-2.0 header." },
+]
+
+[[curations]]
+id = "pkg:maven/org.springframework.boot/spring-boot-autoconfigure"
+ignore_findings = [
+  { path = "**/TomcatReactiveWebServerFactoryCustomizer.java", licenses = ["LGPL-2.1-only"], comment = "ScanCode false positive on a file carrying only an Apache-2.0 header." },
+]
+
+[[curations]]
+id = "pkg:maven/org.springframework/spring-test"
+ignore_findings = [
+  { path = "**/MockRequestDispatcher.java", licenses = ["LGPL-2.1-only"], comment = "ScanCode false positive on a file carrying only an Apache-2.0 header." },
+]
+
+[[curations]]
+id = "pkg:maven/org.springframework/spring-web"
+ignore_findings = [
+  { path = "**/ReactorNetty2HttpHandlerAdapter.java", licenses = ["LGPL-2.1-only"], comment = "ScanCode false positive on a file carrying only an Apache-2.0 header." },
+]
+
+[[curations]]
+id = "pkg:maven/org.springframework/spring-webflux"
+ignore_findings = [
+  { path = "**/ReactorNetty2WebSocketClient.java", licenses = ["LGPL-2.1-only"], comment = "ScanCode false positive on a file carrying only an Apache-2.0 header." },
+]
+
+[[curations]]
+ids = [
+  "pkg:maven/org.xhtmlrenderer/flying-saucer-core",
+  "pkg:maven/org.xhtmlrenderer/flying-saucer-pdf",
+]
+ignore_findings = [
+  { path = "META-INF/LICENSE*", licenses = ["CPL-1.0", "EPL-1.0", "GPL-1.0-or-later", "GPL-3.0-only", "LGPL-2.0-only", "LGPL-2.0-or-later", "LGPL-2.1-only", "LGPL-3.0-only", "LGPL-3.0-or-later", "MPL-1.1", "MPL-2.0", "LicenseRef-scancode-w3c-docs-20021231"], comment = "Flying Saucer is LGPL-2.1-or-later; META-INF/LICENSE mentions later versions and unbundled deps." },
+]
+
+[[curations]]
+id = "pkg:maven/org.xhtmlrenderer/flying-saucer-core"
+ignore_findings = [
+  { path = "org/xhtmlrenderer/**/FS*.java", licenses = ["GPL-2.0-or-later", "LGPL-2.0-only"], comment = "Damaged LGPL-2.1-or-later header misread by ScanCode." },
+  { path = "org/xhtmlrenderer/**/DefaultFSMouseListener.java", licenses = ["GPL-2.0-or-later", "LGPL-2.0-only"], comment = "Damaged LGPL-2.1-or-later header misread by ScanCode." },
+]
+
+[[curations]]
+id = "pkg:maven/xml-apis/xml-apis-ext"
+ignore_findings = [
+  { path = "KEYS", licenses = ["LicenseRef-scancode-proprietary-license"], comment = "False positive on PGP key block in KEYS file." },
+  { path = "**/org/xml/sax/helpers/ParserFactory.java", licenses = ["NOASSERTION WITH Classpath-exception-2.0"], comment = "False positive on '@exception ... (check your CLASSPATH)' Javadoc in SAX Public Domain file." },
+]
+
+[[curations]]
+id = "pkg:npm/@mdi/svg"
+ignore_findings = [
+  { path = "**/LICENSE", licenses = ["GPL-1.0-or-later"], comment = "False positive on the phrase 'GPL friendly' in the introduction of LICENSE." },
+]
+
+[[curations]]
+id = "pkg:npm/ace-builds"
+ignore_findings = [
+  { path = "**/worker-xquery.js", licenses = ["MS-PL"], comment = "Weak ScanCode false positive (score 80) on 1.6 MB minified line; source has no MS-PL." },
+]
+
+[[curations]]
+id = "pkg:npm/ace-linters"
+ignore_findings = [
+  { path = "**/typescript-service.js", licenses = ["mplus"], comment = "ScanCode misreads 'ieee754. BSD-3-Clause License.' as M+ fonts license." },
+  { path = "**/build/ace-language-client.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
+  { path = "**/build/ace-linters.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
+]
+
+[[curations]]
+id = "pkg:npm/hugerte"
+ignore_findings = [
+  { path = "**/hugerte*.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
+  { path = "**/themes/silver/theme*.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
+]
+
+[[curations]]
+ids = [
+  "pkg:maven/ch.qos.logback/logback-classic@[1.5,2.0[",
+  "pkg:maven/ch.qos.logback/logback-core@[1.5,2.0[",
+]
+ignore_findings = [
+  { path = "ch/qos/logback/**", licenses = ["EPL-1.0", "LGPL-2.1-only"], comment = "Headers offer EPL v2.0 OR LGPL 2.1; ScanCode misreads EPL-2.0 as EPL-1.0." },
+]
+
+[[curations]]
+ids = [
+  "pkg:maven/com.upokecenter/cbor@[4.5,5.0[",
+  "pkg:maven/com.github.peteroupc/numbers@[1.8,2.0[",
+]
+ignore_findings = [
+  { path = "**/*.java", licenses = ["Apache-2.0"], comment = "Headers say Public Domain / CC0-1.0; ScanCode misreads Apache-2.0." },
+]
+
+[[curations]]
+id = "pkg:maven/io.netty/netty-resolver-dns-native-macos"
+ignore_findings = [
+  { path = "dnsinfo.h", licenses = ["APSL-1.0"], comment = "Header says 'Apple Public Source License Version 2.0'; ScanCode also matches 1.0 across line wrap." },
+]
+
+[[curations]]
+id = "pkg:maven/org.apache.kafka/kafka-clients"
+ignore_findings = [
+  { path = "NOTICE", licenses = ["CDDL-1.0", "EPL-2.0"], comment = "Mentions unbundled binary/test dependencies (jersey, jqwik) not present in this jar." },
+]
+
+[[curations]]
+id = "pkg:maven/org.eclipse.californium/californium-core"
+ignore_findings = [
+  { path = "org/eclipse/californium/core/coap/option/*.java", licenses = ["Apache-2.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0." },
+]
+
+[[curations]]
+id = "pkg:maven/org.eclipse.californium/element-connector"
+ignore_findings = [
+  { path = "org/eclipse/californium/elements/util/CheckedExecutor.java", licenses = ["Apache-2.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0." },
+  { path = "org/eclipse/californium/elements/util/Filter.java", licenses = ["Apache-2.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0." },
+  { path = "org/eclipse/californium/elements/util/SystemResourceMonitors.java", licenses = ["Apache-2.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0." },
+  { path = "org/eclipse/californium/elements/util/LeastRecentlyUsedCache.java", licenses = ["EPL-1.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode splits EPL lines and misreads EPL-2.0 as EPL-1.0." },
+]
+
+[[curations]]
+id = "pkg:npm/exceljs-hardened"
+ignore_findings = [
+  { path = "**/exceljs*.js", licenses = ["mplus"], comment = "ScanCode misreads 'ieee754. BSD-3-Clause License.' as M+ fonts license." },
+]
+
+[[curations]]
+id = "pkg:npm/leaflet"
+ignore_findings = [
+  { path = "**/dist/leaflet-src*.js", licenses = ["ODbL-1.0"], comment = "OpenStreetMap tile attribution string in code example (about map data, not the library)." },
+  { path = "**/src/layer/tile/TileLayer.js", licenses = ["ODbL-1.0"], comment = "OpenStreetMap tile attribution string in code example (about map data, not the library)." },
+]
+
+[[curations]]
+id = "pkg:npm/leaflet-providers"
+ignore_findings = [
+  { path = "**/leaflet-providers.js", licenses = ["ODbL-1.0", "CC-BY-NC-4.0", "CC-BY-SA-2.0", "CC-BY-SA-3.0", "LicenseRef-scancode-proprietary-license"], comment = "Map tile provider attribution strings (about external map data, not the library)." },
+]
+
+[[curations]]
+id = "pkg:npm/@yao-pkg/pkg-fetch"
+ignore_findings = [
+  { path = "**/lib-es5/build.js", licenses = ["GPL-1.0-or-later", "NOASSERTION WITH GCC-exception-3.1"], comment = "Code comment describing Alpine GCC runtime exception; pkg-fetch is MIT." },
+]
+
+[[curations]]
+id = "pkg:maven/com.sun.winsw/winsw"
+ignore_findings = [
+  { path = "MANIFEST.md", licenses = ["GPL-1.0-or-later"], comment = "Sentence about another project ('Java Service Wrapper project is in GPL'); WinSW is MIT." },
+]

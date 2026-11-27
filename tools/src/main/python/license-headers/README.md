@@ -128,3 +128,11 @@ For files the check cannot decide ("Needs a decision"), record the decision in
 
 A curation whose file changed since the review is stale and fails the check
 until someone reviews the file again and updates `contentHash`.
+
+## Test
+
+From the repository root:
+
+```sh
+python3 -m unittest discover -s tools/src/main/python/license-headers
+```

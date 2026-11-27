@@ -32,13 +32,20 @@
         <!-- Prefix shared by every image name; downstream builds override it as a whole (e.g. tb-paas). -->
         <tb.docker.id>tb</tb.docker.id>
         <blackBoxTests.skip>true</blackBoxTests.skip>
-        <exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
+        <docker.resources.phase>${pkg.process-resources.phase}</docker.resources.phase>
         <docker.push-arm-amd-image.phase>none</docker.push-arm-amd-image.phase>
         <sbom.image.repository>${docker.repo}/${docker.name}</sbom.image.repository>
         <!-- Set by the profiles that push the multi-architecture images -->
         <sbom.image.phase>none</sbom.image.phase>
         <sbom.image.latestTag>latest</sbom.image.latestTag>
         <sbom.image.scanExclude>${pkg.installFolder}/**</sbom.image.scanExclude>
+        <!-- Set to package by the modules whose image installs npm packages itself: see the notices-image execution -->
+        <notices.image.phase>none</notices.image.phase>
+        <!-- Image notices follow notices.skip (not notices.run.skip) so partial Docker builds with -Dpkg.skip=true
+             still generate THIRD-PARTY-NOTICES. Skipped only when the module's yarn/UI SBOM itself is skipped. -->
+        <notices.yarn.skip>${notices.skip}</notices.yarn.skip>
+        <notices.ui.skip>${notices.yarn.skip}</notices.ui.skip>
+        <notices.image.skip>${notices.ui.skip}</notices.image.skip>
     </properties>
 
     <modules>
@@ -47,7 +54,7 @@
             (web-ui, js-executor, web-report) are serialized via reactor-only
             <dependency> entries in their own poms, forming the chain
             ui-ngx -> web-ui -> js-executor -> web-report. This prevents
-            concurrent yarn install / yarn run pkg invocations under `mvn -T<n>`,
+            concurrent yarn install / yarn build / yarn pkg invocations under `mvn -T<n>`,
             which previously caused intermittent `tsc: not found` failures
             (incomplete typescript extraction in node_modules from racing
             yarn 1.x processes against the shared ~/.cache/yarn).
@@ -108,6 +115,7 @@
             </activation>
             <properties>
                 <pkg.deb.phase>none</pkg.deb.phase>
+                <notices.yarn.skip>true</notices.yarn.skip>
             </properties>
         </profile>
         <profile>
@@ -120,6 +128,7 @@
             </activation>
             <properties>
                 <pkg.deb.phase>none</pkg.deb.phase>
+                <notices.ui.skip>true</notices.ui.skip>
             </properties>
         </profile>
         <!-- Activated by -Ddocker.skip.latest.tag=true, which stops the LTS profiles pushing the latest tag:
@@ -307,9 +316,82 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <executions>
+                        <!-- Docker-only JS services (web-ui, js-executor) opt in via docker.resources.phase=process-resources,
+                             outside the root packaging profile so -Dpkg.skip=true still stages Docker build inputs. -->
+                        <execution>
+                            <id>copy-linux-conf</id>
+                            <phase>${docker.resources.phase}</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${pkg.linux.dist}/conf</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>config</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                                <filters>
+                                    <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                </filters>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>copy-docker-config</id>
+                            <phase>${docker.resources.phase}</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>docker</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                    <resource>
+                                        <directory>${main.dir}</directory>
+                                        <includes>
+                                            <include>LICENSE</include>
+                                        </includes>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>${exec-maven-plugin.version}</version>
+                    <executions>
+                        <!-- The third-party notices of an image that installs no package of ours, which would bring them:
+                             made from the SBOM that the image-sbom execution checks the image against, and copied by
+                             the Dockerfile. Off by default like the notices of the packages. -->
+                        <execution>
+                            <id>notices-image</id>
+                            <phase>${notices.image.phase}</phase>
+                            <goals>
+                                <goal>exec</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${notices.image.skip}</skip>
+                                <executable>python3</executable>
+                                <arguments>
+                                    <argument>${main.dir}/tools/src/main/notices</argument>
+                                    <argument>render</argument>
+                                    <argument>--project-version</argument>
+                                    <argument>${project.version}</argument>
+                                    <argument>--out</argument>
+                                    <argument>${project.build.directory}/notices/image/THIRD-PARTY-NOTICES</argument>
+                                    <argument>${project.build.directory}/sbom/${pkg.name}.cdx.json</argument>
+                                </arguments>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.thingsboard</groupId>

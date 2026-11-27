@@ -27,7 +27,7 @@
         <pkg.type>java</pkg.type>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
-        <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
+        <sbom.bundled.phase>prepare-package</sbom.bundled.phase>
         <pkg.name>thingsboard</pkg.name>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.copyInstallScripts>true</pkg.copyInstallScripts>
@@ -585,16 +585,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-winsw-service</id>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.cyclonedx</groupId>
-                <artifactId>cyclonedx-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -643,17 +633,18 @@
                 <artifactId>sbom-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>merge-ui-sbom</id>
-                        <goals>
-                            <goal>merge</goal>
-                        </goals>
+                        <id>jar-sbom</id>
                         <configuration>
-                            <host>org.thingsboard:ui-ngx</host>
-                            <skip>${skip.ui.build}</skip>
+                            <nestedSboms>
+                                <nestedSbom>
+                                    <library>org.thingsboard:ui-ngx</library>
+                                    <skip>${skip.ui.build}</skip>
+                                </nestedSbom>
+                            </nestedSboms>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>package-sbom</id>
+                        <id>bundled-sbom</id>
                         <configuration>
                             <components combine.children="append">
                                 <component>
@@ -663,7 +654,8 @@
                                 <component>
                                     <type>data</type>
                                     <name>lwm2m-registry</name>
-                                    <description>LwM2M object model XML files from the OMNA LwM2M Registry. Licenses vary per file, mostly BSD-3-Clause.</description>
+                                    <description>LwM2M object model XML files from the OMNA LwM2M Registry. Each file declares its license in its header.</description>
+                                    <license>BSD-3-Clause AND Apache-2.0 AND MIT AND BSD-2-Clause</license>
                                     <supplier>
                                         <name>Open Mobile Alliance</name>
                                         <urls>
@@ -713,6 +705,7 @@
                 <pkg.disabled>true</pkg.disabled>
                 <pkg.package.phase>none</pkg.package.phase>
                 <pkg.process-resources.phase>none</pkg.process-resources.phase>
+                <sbom.bundled.phase>none</sbom.bundled.phase>
             </properties>
             <build>
                 <plugins>

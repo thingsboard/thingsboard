@@ -145,6 +145,20 @@
                 </includes>
             </resource>
         </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>fonts-sbom</id>
+                        <goals>
+                            <goal>fonts</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 
 </project>

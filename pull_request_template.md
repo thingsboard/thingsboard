@@ -13,6 +13,7 @@ Put your PR description here instead of this sentence.
 - [ ] Description contains brief notes about what needs to be added to the documentation.
 - [ ] No merge conflicts, commented blocks of code, code formatting issues.
 - [ ] Changes are backward compatible or upgrade script is provided.
+- [ ] If any dependency or bundled third-party file changed: the third-party notices check passes.
   
 ## Front-End feature checklist
 

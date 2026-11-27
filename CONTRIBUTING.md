@@ -57,7 +57,7 @@ for day-to-day development. It's a shorthand for four finer-grained flags:
 | Flag                       | Skips                                        | Safe for the unit and integration tests?                      |
 |-----------------------------|-----------------------------------------------|-----------------------------------------------------------------|
 | `-Dpkg.skip=true`           | All of the below (boot jar + deb + rpm + zip) | Yes                                                              |
-| `-Dpkg.skip.bootjar=true`   | `spring-boot:repackage` (`*-boot.jar`)        | Yes — but the boot jar is Gradle `buildDeb`'s input, so this drops the `.deb` too |
+| `-Dpkg.skip.bootjar=true`   | `spring-boot:repackage` (`*-boot.jar`) and the SBOM of the jar | Yes — but the boot jar is Gradle `buildDeb`'s input, so this drops the `.deb` too |
 | `-Dpkg.skip.deb=true`       | Gradle `buildDeb` + Maven `attach-artifact`   | Yes — the `msa/*` copy of the DEB is bound to the same phase and is skipped with it |
 | `-Dpkg.skip.rpm=true`       | Gradle `buildRpm`                             | Yes — no test depends on the RPM                                 |
 | `-Dpkg.skip.zip=true`       | `maven-assembly-plugin` Windows ZIP           | Yes — no test depends on the ZIP                                 |
@@ -70,6 +70,9 @@ Each source file needs the project's license header. Apply it automatically befo
 ```bash
 mvn license:format
 ```
+
+Which header a file needs depends on where it comes from, and a changed file may need another one: see
+[docs/licensing-guide.md](docs/licensing-guide.md#file-headers).
 
 Building the UI on its own, from `ui-ngx`:
 
@@ -147,13 +150,27 @@ recreated on the next run:
 rm ~/.testcontainers.properties
 ```
 
+## Dependencies, SBOMs and licensing
+
+Every service jar carries an embedded software bill of materials (SBOM), and every OS package (`.deb`, `.rpm`, Windows
+`.zip`), Docker image, and UI bundle ThingsBoard ships carries both an SBOM and build-generated third-party notices. CI
+verifies all shipped dependencies against our license policy whenever a PR adds, updates, or removes a Maven or npm
+dependency.
+
+- [docs/sbom.md](docs/sbom.md): which artifacts get an SBOM, how to build with SBOMs, and what to do for each kind of
+  dependency change.
+- [docs/licensing-guide.md](docs/licensing-guide.md): the project's license, the file headers, the third-party notices,
+  how to run the notices check locally, and what to do when the generator stops.
+
 ## Submitting changes
 
 Open a pull request against `master`. Fill out the pull request template, and make sure:
 
 - New or changed behavior has test coverage.
-- `mvn license:format` has been run, so new files carry the correct license header. Do not add
-  your own copyright or author lines to file headers.
+- `mvn license:format` has been run, and `./check-license-headers.sh --since origin/master` passes (see
+  [File headers](docs/licensing-guide.md#file-headers)). Do not add your own copyright or author lines to file headers.
+- If a dependency was added or updated, the notices check passes (with any needed license decision recorded in
+  `tools/src/main/notices/`): see [Checking the notices locally](docs/licensing-guide.md#checking-the-notices-locally).
 - The change builds cleanly: `mvn -pl <module> -am -DskipTests -Dpkg.skip=true test-compile` at minimum for the modules you touched.
 - You have signed the Contributor License Agreement (see below).
 

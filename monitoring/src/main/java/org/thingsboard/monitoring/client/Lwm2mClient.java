@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.monitoring.client;
 
 import lombok.Getter;
@@ -41,10 +42,12 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.monitoring.util.ResourceUtils;
 
 import javax.security.auth.Destroyable;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -59,7 +62,8 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
     @Setter
     private LeshanClient leshanClient;
 
-    private static final List<Integer> supportedResources = List.of(0, 16);
+    // The Device object of the client, which the monitoring also uploads to ThingsBoard
+    public static final String MODEL_PATH = "lwm2m/test-model.xml";
 
     private String data = "";
 
@@ -75,11 +79,10 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
     }
 
     public void initClient() throws InvalidDDFFileException, IOException {
-        String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "test-model.xml"};
-        List<ObjectModel> models = new ArrayList<>();
-        for (String resourceName : resources) {
-            models.addAll(ObjectLoader.loadDdfFile(ResourceUtils.getResourceAsStream("lwm2m/models/" + resourceName), resourceName));
-        }
+        // The standard objects come with Leshan, and the Device object is the monitoring's own
+        List<ObjectModel> models = Stream.concat(
+                ObjectLoader.loadDefault().stream().filter(model -> model.id == SECURITY || model.id == SERVER || model.id == ACCESS_CONTROL),
+                ObjectLoader.loadDdfFile(new ByteArrayInputStream(ResourceUtils.getResourceBytes(MODEL_PATH)), MODEL_PATH).stream()).toList();
 
         Security security = noSec(serverUri, 123);
         Configuration coapConfig = new Configuration();
@@ -223,11 +226,6 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         setLeshanClient(leshanClient);
 
         leshanClient.start();
-    }
-
-    @Override
-    public List<Integer> getAvailableResourceIds(ObjectModel model) {
-        return supportedResources;
     }
 
     @Override
