@@ -1,14 +1,15 @@
 {
-  "deviceName":"Device A",
-  "deviceType":"thermostat",
-  "customerName":"customer",
-  "groupName":"thermostat devices",
-  "attributes": {
-    "model":"Model A",
-    "serialNumber":"SN111"
-  },
-  "telemetry": {
-    "temperature":42,
-    "humidity":80
-  }
+    "deviceName": "urn:dev:DVNUUID:6776c443-8b0a-42fe-b8ca-d8a1cf880492:",
+    "deviceType": "KPN Device",
+    "attributes": {
+        "model": "Model A",
+        "serialNumber": "SN111"
+    },
+    "telemetry": {
+        "battery": "87",
+        "temperature": 42,
+        "orientation": "0,0,0,0",
+        "latitude": 51.9067285,
+        "longitude": 4.490617
+    }
 }

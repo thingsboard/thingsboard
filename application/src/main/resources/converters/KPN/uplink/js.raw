@@ -1,0 +1,4 @@
+/** Decoder **/
+
+// The KPN Things body is already in the converter output format.
+return JSON.parse(String.fromCharCode.apply(String, payload));

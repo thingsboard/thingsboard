@@ -1,0 +1,7 @@
+{
+  "contentType": "JSON",
+  "data": "[{\"bn\":\"urn:dev:DVNUUID:6776c443-8b0a-42fe-b8ca-d8a1cf880492:\",\"n\":\"uploadFrequency\",\"v\":60},{\"bn\":\"urn:dev:DVNUUID:6776c443-8b0a-42fe-b8ca-d8a1cf880492:\",\"n\":\"enabled\",\"vb\":true},{\"bn\":\"urn:dev:DVNUUID:6776c443-8b0a-42fe-b8ca-d8a1cf880492:\",\"n\":\"mode\",\"vs\":\"eco\"}]",
+  "metadata": {
+    "FPort": 1
+  }
+}
