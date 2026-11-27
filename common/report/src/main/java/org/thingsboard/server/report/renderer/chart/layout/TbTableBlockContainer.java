@@ -25,6 +25,7 @@ public class TbTableBlockContainer extends AbstractBlock implements Block {
     private final Map<Integer, Double> columnWidths;
     private double headerHeight = 0;
     private double rowHeight = 0;
+    private boolean fitColumnsToContent = false;
 
     public TbTableBlockContainer(double horizontalGap, double verticalGap) {
         this.horizontalGap = horizontalGap;
@@ -39,6 +40,10 @@ public class TbTableBlockContainer extends AbstractBlock implements Block {
         int index = this.columns.size() - 1;
         this.columnWidths.put(index, 0.0);
         return index;
+    }
+
+    public void setFitColumnsToContent(boolean fitColumnsToContent) {
+        this.fitColumnsToContent = fitColumnsToContent;
     }
 
     public void setColumnHeader(Block header, int column) {
@@ -97,7 +102,9 @@ public class TbTableBlockContainer extends AbstractBlock implements Block {
                 double fitWidthColumnWidth = (availableColumnsWidth - fitWidthColumnsCount * horizontalGap) / fitWidthColumnsCount;
                 this.columns.stream().filter(c -> !c.fixedWidth()).forEach(column -> {
                     int index = this.columns.indexOf(column);
-                    this.columnWidths.put(index, fitWidthColumnWidth);
+                    double width = this.fitColumnsToContent ?
+                            Math.min(fitWidthColumnWidth, maxCellSizes.get(index).getWidth()) : fitWidthColumnWidth;
+                    this.columnWidths.put(index, width);
                 });
             }
         }
@@ -246,6 +253,9 @@ public class TbTableBlockContainer extends AbstractBlock implements Block {
         public void setCellBounds(Graphics2D g2, Rectangle2D bounds, int row) {
             BlockContainer cell = this.cells.get(row);
             cell.arrange(g2, new RectangleConstraint(bounds.getWidth(), bounds.getHeight()));
+            if (this.fitWidth) {
+                TbColumnArrangement.arrangeTitleWidth(g2, cell, bounds.getWidth());
+            }
             cell.setBounds(bounds);
         }
 

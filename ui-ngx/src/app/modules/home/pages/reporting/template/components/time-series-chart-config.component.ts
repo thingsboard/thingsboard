@@ -22,6 +22,8 @@ import {
 import {
   DataKey,
   Datasource,
+  LegendDirection,
+  legendDirectionTranslationMap,
   WidgetConfig,
   WidgetConfigMode,
   widgetType,
@@ -38,6 +40,12 @@ import { merge } from 'rxjs';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import { WidgetInfo, WidgetWithInfo } from '@home/models/widget-component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import {
+  legendItemsDirectionApplicable,
+  LegendView,
+  legendViews,
+  legendViewTranslationMap
+} from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 
 @Component({
     selector: 'tb-time-series-chart-config',
@@ -98,6 +106,14 @@ export class TimeSeriesChartConfigComponent extends AbstractReportComponentConfi
 
   seriesMode = 'series';
 
+  legendDirection = LegendDirection;
+  legendDirections = Object.keys(LegendDirection);
+  legendDirectionTranslationMap = legendDirectionTranslationMap;
+
+  legendView = LegendView;
+  legendViews = legendViews;
+  legendViewTranslationMap = legendViewTranslationMap;
+
   protected buildForm(reportComponentConfig: TimeseriesChartReportComponentConfig): FormGroup {
 
     let timeSeriesChartSettings: ReportTimeSeriesChartSettings | ReportBarChartWithLabelSettings;
@@ -137,7 +153,9 @@ export class TimeSeriesChartConfigComponent extends AbstractReportComponentConfi
       showLegend: [timeSeriesChartSettings.showLegend, []],
       legendLabelFont: [timeSeriesChartSettings.legendLabelFont, []],
       legendLabelColor: [timeSeriesChartSettings.legendLabelColor, []],
-      legendConfig: [timeSeriesChartSettings.legendConfig, []]
+      legendConfig: [timeSeriesChartSettings.legendConfig, []],
+      legendItemsDirection: [timeSeriesChartSettings.legendItemsDirection ?? null, []],
+      legendView: [timeSeriesChartSettings.legendView ?? LegendView.table, []]
 
     });
 
@@ -231,7 +249,8 @@ export class TimeSeriesChartConfigComponent extends AbstractReportComponentConfi
     }
 
     merge(form.get('showTitle').valueChanges,
-          form.get('showLegend').valueChanges).pipe(
+          form.get('showLegend').valueChanges,
+          form.get('legendView').valueChanges).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateValidators(form);
@@ -285,6 +304,11 @@ export class TimeSeriesChartConfigComponent extends AbstractReportComponentConfi
 
     timeSeriesChartSettings.legendConfig = config.legendConfig;
     delete config.legendConfig;
+
+    timeSeriesChartSettings.legendItemsDirection = config.legendItemsDirection;
+    delete config.legendItemsDirection;
+    timeSeriesChartSettings.legendView = config.legendView;
+    delete config.legendView;
 
     if (this.barChartWithLabels) {
 
@@ -536,6 +560,12 @@ export class TimeSeriesChartConfigComponent extends AbstractReportComponentConfi
       form.get('legendLabelFont').enable({emitEvent: false});
       form.get('legendLabelColor').enable({emitEvent: false});
       form.get('legendConfig').enable({emitEvent: false});
+      form.get('legendView').enable({emitEvent: false});
+      if (legendItemsDirectionApplicable(form.get('legendView').value)) {
+        form.get('legendItemsDirection').enable({emitEvent: false});
+      } else {
+        form.get('legendItemsDirection').disable({emitEvent: false});
+      }
       if (!this.barChartWithLabels && !this.rangeChart) {
         form.get('legendColumnTitleFont').enable({emitEvent: false});
         form.get('legendColumnTitleColor').enable({emitEvent: false});
@@ -546,6 +576,8 @@ export class TimeSeriesChartConfigComponent extends AbstractReportComponentConfi
       form.get('legendLabelFont').disable({emitEvent: false});
       form.get('legendLabelColor').disable({emitEvent: false});
       form.get('legendConfig').disable({emitEvent: false});
+      form.get('legendView').disable({emitEvent: false});
+      form.get('legendItemsDirection').disable({emitEvent: false});
       if (!this.barChartWithLabels && !this.rangeChart) {
         form.get('legendColumnTitleFont').disable({emitEvent: false});
         form.get('legendColumnTitleColor').disable({emitEvent: false});

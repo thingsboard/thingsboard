@@ -19,15 +19,27 @@ import java.util.List;
 
 public class TbColumnArrangement extends ColumnArrangement {
 
+    private final double verticalGap;
+
     private double maxRelativeWidth = 0;
+    private double maxRelativeHeight = 0;
 
     public TbColumnArrangement(HorizontalAlignment hAlign, VerticalAlignment vAlign,
                                double hGap, double vGap) {
         super(hAlign, vAlign, hGap, vGap);
+        this.verticalGap = vGap;
     }
 
     public void setMaxRelativeWidth(double maxRelativeWidth) {
         this.maxRelativeWidth = maxRelativeWidth;
+    }
+
+    /**
+     * Limits the height to the given fraction of the available height.
+     * The height shrinks to a single column of items when it fits, so a new column starts only when the limit is reached.
+     */
+    public void setMaxRelativeHeight(double maxRelativeHeight) {
+        this.maxRelativeHeight = maxRelativeHeight;
     }
 
     @Override
@@ -36,6 +48,10 @@ public class TbColumnArrangement extends ColumnArrangement {
         if (this.maxRelativeWidth > 0) {
             double maxWidth = constraint.getWidth() * this.maxRelativeWidth;
             constraint = constraint.toFixedWidth(maxWidth);
+        }
+        if (this.maxRelativeHeight > 0) {
+            double maxHeight = constraint.getHeight() * this.maxRelativeHeight;
+            constraint = new RectangleConstraint(constraint.getWidth(), Math.min(singleColumnHeight(container, g2), maxHeight));
         }
         LengthConstraintType w = constraint.getWidthConstraintType();
         LengthConstraintType h = constraint.getHeightConstraintType();
@@ -82,7 +98,22 @@ public class TbColumnArrangement extends ColumnArrangement {
         return s;
     }
 
-    private double arrangeTitleWidth(Graphics2D g2, Block block, double maxWidth) {
+    private double singleColumnHeight(BlockContainer container, Graphics2D g2) {
+        List<Block> blocks = (List<Block>) container.getBlocks();
+        double height = 0.0;
+        for (Block block : blocks) {
+            height += block.arrange(g2, RectangleConstraint.NONE).height;
+        }
+        if (blocks.size() > 1) {
+            height += this.verticalGap * (blocks.size() - 1);
+        }
+        return height;
+    }
+
+    /**
+     * Re-arranges the text titles inside the block so that the block fits into the given width (text is truncated).
+     */
+    static double arrangeTitleWidth(Graphics2D g2, Block block, double maxWidth) {
         if (block instanceof BlockContainer container) {
             List<Block> blocks = (List<Block>) container.getBlocks();
             for (Block b : blocks) {
