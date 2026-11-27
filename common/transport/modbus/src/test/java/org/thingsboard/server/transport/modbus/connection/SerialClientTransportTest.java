@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,8 +88,9 @@ class SerialClientTransportTest {
                 .hasCauseInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("0 of 8 bytes written, error code 5");
 
+        // the request fails first and the port is closed right after it, on the thread that did the write
+        verify(port.mock, timeout(5000).times(1)).closePort();
         assertThat(transport.isConnected()).isFalse();
-        verify(port.mock, times(1)).closePort();
     }
 
     @Test
