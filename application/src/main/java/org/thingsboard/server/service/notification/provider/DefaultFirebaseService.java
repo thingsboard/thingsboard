@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification.provider;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -52,8 +53,11 @@ public class DefaultFirebaseService implements FirebaseService {
             }
         });
 
+        // mutable-content lets the iOS app's notification service extension
+        // add the template icon to the push before iOS shows it
         Aps.Builder apsConfig = Aps.builder()
-                .setSound("default");
+                .setSound("default")
+                .setMutableContent(true);
         if (badge != null) {
             apsConfig.setBadge(badge);
         }
