@@ -60,13 +60,16 @@ export class DashboardService {
   }
 
   public getUserDashboards(userId: string, operation: Operation,
-                           pageLink: PageLink, config?: RequestConfig): Observable<PageData<DashboardInfo>> {
+                           pageLink: PageLink, config?: RequestConfig, mobile = false): Observable<PageData<DashboardInfo>> {
     let url = `/api/user/dashboards${pageLink.toQuery()}`;
     if (userId) {
       url += `&userId=${userId}`;
     }
     if (operation) {
       url += `&operation=${operation}`;
+    }
+    if (mobile) {
+      url += `&mobile=true`;
     }
     return this.http.get<PageData<DashboardInfo>>(url,
       defaultHttpOptionsFromConfig(config));

@@ -37,6 +37,7 @@ import {
 } from './dashboard-select-panel.component';
 import { Operation } from '@shared/models/security.models';
 import { UtilsService } from '@core/services/utils.service';
+import { MobileService } from '@core/services/mobile.service';
 
 // @dynamic
 @Component({
@@ -87,6 +88,7 @@ export class DashboardSelectComponent implements ControlValueAccessor, OnInit {
   constructor(private store: Store<AppState>,
               private dashboardService: DashboardService,
               private utils: UtilsService,
+              private mobileService: MobileService,
               private overlay: Overlay,
               private breakpointObserver: BreakpointObserver,
               private viewContainerRef: ViewContainerRef,
@@ -185,7 +187,8 @@ export class DashboardSelectComponent implements ControlValueAccessor, OnInit {
       if (this.customerId) {
         dashboardsObservable = this.dashboardService.getCustomerDashboards(true, this.customerId, pageLink, {ignoreLoading: true});
       } else {
-        dashboardsObservable = this.dashboardService.getUserDashboards(null, this.operation, pageLink, {ignoreLoading: true});
+        dashboardsObservable = this.dashboardService.getUserDashboards(null, this.operation, pageLink, {ignoreLoading: true},
+          this.mobileService.isMobileApp());
       }
     }
     return dashboardsObservable;
