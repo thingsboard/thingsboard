@@ -36,6 +36,7 @@ import {
   UnreadCountSubCmd,
   UnreadSubCmd,
   UnsubscribeCmd,
+  WebsocketCmd,
   WebsocketDataMsg
 } from '@app/shared/models/telemetry/telemetry.models';
 import { Store } from '@ngrx/store';
@@ -66,6 +67,12 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
         const cmdId = this.nextCmdId();
         if (!(subscriptionCommand instanceof MarkAsReadCmd) && !(subscriptionCommand instanceof MarkAllAsReadCmd)) {
           this.subscribersMap.set(cmdId, subscriber);
+          let cmdIds = this.subscriberCmdIds.get(subscriber);
+          if (!cmdIds) {
+            cmdIds = new Set<number>();
+            this.subscriberCmdIds.set(subscriber, cmdIds);
+          }
+          cmdIds.add(cmdId);
         }
         subscriptionCommand.cmdId = cmdId;
         this.cmdWrapper.cmds.push(subscriptionCommand);
@@ -80,11 +87,14 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
       subscriber.subscriptionCommands.forEach(
         (subscriptionCommand) => {
           if (subscriptionCommand.cmdId && (subscriptionCommand instanceof EntityDataCmd || subscriptionCommand instanceof UnreadSubCmd)) {
+            this.syncCommandId(subscriptionCommand, subscriber);
             this.cmdWrapper.cmds.push(subscriptionCommand);
           }
         }
       );
       this.publishCommands();
+    } else {
+      this.pendingUpdates.add(subscriber);
     }
   }
 
@@ -123,6 +133,13 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
           const cmdId = subscriptionCommand.cmdId;
           if (cmdId) {
             this.subscribersMap.delete(cmdId);
+            const cmdIds = this.subscriberCmdIds.get(subscriber);
+            if (cmdIds) {
+              cmdIds.delete(cmdId);
+              if (cmdIds.size === 0) {
+                this.subscriberCmdIds.delete(subscriber);
+              }
+            }
           }
         }
       );
@@ -159,6 +176,15 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
       subscriber = this.subscribersMap.get(message.subscriptionId) as TelemetrySubscriber;
       if (subscriber) {
         subscriber.onData(new SubscriptionUpdate(message));
+      }
+    }
+  }
+
+  private syncCommandId(subscriptionCommand: WebsocketCmd, subscriber: TelemetrySubscriber) {
+    if (this.subscribersMap.get(subscriptionCommand.cmdId) !== subscriber) {
+      const cmdIds = this.subscriberCmdIds.get(subscriber);
+      if (cmdIds?.size) {
+        subscriptionCommand.cmdId = cmdIds.values().next().value;
       }
     }
   }
