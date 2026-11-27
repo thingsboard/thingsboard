@@ -5,25 +5,18 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="mat-padding tb-entity-table tb-absolute-fill">
-  <div class="tb-entity-table-content tb-outlined-border flex flex-1 flex-col">
+<div class="tb-entity-table tb-absolute-fill">
+  <div class="tb-entity-table-content flex flex-1 flex-col">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
-        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center pt-1">
-          <span class="tb-entity-table-title">
-            {{(direction == directions.FROM ? 'relation.from-relations' : 'relation.to-relations') | translate}}
-          </span>
-          <mat-form-field class="mat-block tb-relation-direction" appearance="outline" subscriptSizing="dynamic">
-            <mat-label translate>relation.direction</mat-label>
-            <mat-select [ngModel]="direction"
-              (ngModelChange)="directionChanged($event)">
-              @for (type of directionTypes; track type) {
-                <mat-option [value]="type">
-                  {{ directionTypeTranslations.get(directions[type]) | translate }}
-                </mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+        <div class="title-container flex flex-row items-center justify-start">
+          <tb-toggle-select [disabled]="isLoading$ | async"
+                            [ngModel]="direction"
+                            (ngModelChange)="directionChanged($event)">
+            @for (type of directionTypes; track type) {
+              <tb-toggle-option [value]="type">{{ directionTypeTranslations.get(type) | translate }}</tb-toggle-option>
+            }
+          </tb-toggle-select>
         </div>
         <span class="flex-1"></span>
         @if (!readonly) {
@@ -114,50 +107,30 @@
             </div>
           </mat-cell>
         </ng-container>
-        @if (direction === directions.FROM) {
-          <ng-container matColumnDef="toEntityTypeName">
-            <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.to-entity-type' | translate }} </mat-header-cell>
-            <mat-cell *matCellDef="let relation">
-              {{ relation.toEntityTypeName }}
-            </mat-cell>
-          </ng-container>
-        }
-        @if (direction === directions.FROM) {
-          <ng-container matColumnDef="toName">
-            <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.to-entity-name' | translate }} </mat-header-cell>
-            <mat-cell *matCellDef="let relation">
-              @if(relation.entityURL){
-                <a class="link" [routerLink]="relation.entityURL">
-                  {{ relation.toName | customTranslate }}
-                </a>
-              } @else {
-                {{ relation.toName | customTranslate }}
-              }
-            </mat-cell>
-          </ng-container>
-        }
-        @if (direction === directions.TO) {
-          <ng-container matColumnDef="fromEntityTypeName">
-            <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.from-entity-type' | translate }} </mat-header-cell>
-            <mat-cell *matCellDef="let relation">
-              {{ relation.fromEntityTypeName }}
-            </mat-cell>
-          </ng-container>
-        }
-        @if (direction === directions.TO) {
-          <ng-container matColumnDef="fromName">
-            <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.from-entity-name' | translate }} </mat-header-cell>
-            <mat-cell *matCellDef="let relation">
-              @if(relation.entityURL){
-                <a class="link" [routerLink]="relation.entityURL">
-                  {{ relation.fromName | customTranslate }}
-                </a>
-              } @else {
-                {{ relation.fromName | customTranslate }}
-              }
-            </mat-cell>
-          </ng-container>
-        }
+        <ng-container matColumnDef="directionName">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 120px; max-width: 120px; width: 120px"> {{ 'relation.direction' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let relation">
+            {{ relation.directionName }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="entityTypeName">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ entityTypeHeaderTranslations.get(direction) | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let relation">
+            {{ relation.entityTypeName }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="entityName">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ entityNameHeaderTranslations.get(direction) | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let relation">
+            @if(relation.entityURL){
+              <a class="link" [routerLink]="relation.entityURL">
+                {{ relation.entityName | customTranslate }}
+              </a>
+            } @else {
+              {{ relation.entityName | customTranslate }}
+            }
+          </mat-cell>
+        </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
           <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
           </mat-header-cell>

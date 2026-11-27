@@ -27,8 +27,8 @@
     </mat-drawer>
   }
   <mat-drawer-content>
-    <div class="mat-padding tb-entity-table tb-absolute-fill">
-      <div class="tb-entity-table-content tb-outlined-border flex flex-col">
+    <div class="tb-entity-table tb-absolute-fill" [class.mat-padding]="entitiesTableConfig.outlinedBorder">
+      <div class="tb-entity-table-content flex flex-col" [class.tb-outlined-border]="entitiesTableConfig.outlinedBorder">
         <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
             <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">

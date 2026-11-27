@@ -52,6 +52,7 @@ export class EntityGroupsTableConfig extends EntityTableConfig<EntityGroupInfo> 
 
     if (params.hierarchyView) {
       this.pageMode = false;
+      this.outlinedBorder = true;
     }
     this.edgeId = params.edgeId;
     if ((this.customerId || this.edgeId) && params.edgeEntitiesType) {

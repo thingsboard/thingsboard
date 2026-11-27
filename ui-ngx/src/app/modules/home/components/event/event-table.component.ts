@@ -3,9 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
+  booleanAttribute,
   ChangeDetectorRef,
   Component,
   EventEmitter,
+  input,
   Input,
   OnDestroy,
   OnInit,
@@ -53,6 +55,8 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input()
   hideClearEventAction: boolean = false;
+
+  outlinedBorder = input(false, {transform: booleanAttribute});
 
   private disableDebugEventActionValue = false;
 
@@ -161,7 +165,8 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.functionTestButtonLabel,
       this.debugEventSelected,
       this.hideClearEventAction,
-      this.disableDebugEventAction
+      this.disableDebugEventAction,
+      this.outlinedBorder()
     );
   }
 

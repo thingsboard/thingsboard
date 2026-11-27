@@ -14,7 +14,7 @@ import { AuthUser } from '@shared/models/user.model';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AuditLogMode } from '@shared/models/audit-log.models';
 import { DebugEventType, EventType } from '@shared/models/event.models';
-import { AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
+import { ALL_ATTRIBUTE_SCOPES, AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { UntypedFormGroup } from '@angular/forms';
 import { PageLink } from '@shared/models/page/page-link';
@@ -28,6 +28,7 @@ export abstract class EntityTabsComponent<T extends BaseData<HasId>,
   extends PageComponent implements OnInit, AfterViewInit {
 
   attributeScopes = AttributeScope;
+  allAttributeScopes = ALL_ATTRIBUTE_SCOPES;
   latestTelemetryTypes = LatestTelemetry;
 
   authorities = Authority;

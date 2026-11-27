@@ -26,10 +26,14 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, merge, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import {
+  ALL_RELATIONS_DIRECTION,
   EntityRelation,
   EntityRelationInfo,
   EntitySearchDirection,
-  entitySearchDirectionTranslations,
+  RelationsTableDirection,
+  relationsTableDirectionTranslations,
+  relationsTableEntityNameHeaderTranslations,
+  relationsTableEntityTypeHeaderTranslations,
   RelationTypeGroup
 } from '@shared/models/relation.models';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -51,14 +55,15 @@ import { FormBuilder } from '@angular/forms';
 })
 export class RelationTableComponent extends PageComponent implements AfterViewInit, OnInit, OnDestroy {
 
-  directions = EntitySearchDirection;
 
-  directionTypes = Object.keys(EntitySearchDirection);
+  directionTypes: RelationsTableDirection[] = [ALL_RELATIONS_DIRECTION, EntitySearchDirection.FROM, EntitySearchDirection.TO];
 
-  directionTypeTranslations = entitySearchDirectionTranslations;
+  directionTypeTranslations = relationsTableDirectionTranslations;
+  entityTypeHeaderTranslations = relationsTableEntityTypeHeaderTranslations;
+  entityNameHeaderTranslations = relationsTableEntityNameHeaderTranslations;
 
   displayedColumns: string[];
-  direction: EntitySearchDirection;
+  direction: RelationsTableDirection;
   pageLink: PageLink;
   hidePageSize = false;
   textSearchMode = false;
@@ -129,7 +134,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'type', direction: Direction.ASC };
-    this.direction = EntitySearchDirection.FROM;
+    this.direction = ALL_RELATIONS_DIRECTION;
     this.pageLink = new PageLink(10, 0, null, sortOrder);
     this.dataSource = new RelationsDatasource(this.entityRelationService, this.translate);
   }
@@ -157,19 +162,22 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   }
 
   updateColumns() {
-    if (this.direction === EntitySearchDirection.FROM) {
-      this.displayedColumns = ['type', 'toEntityTypeName', 'toName', 'actions'];
-    } else {
-      this.displayedColumns = ['type', 'fromEntityTypeName', 'fromName', 'actions'];
+    this.displayedColumns = ['type', 'entityTypeName', 'entityName', 'actions'];
+    if (this.direction === ALL_RELATIONS_DIRECTION) {
+      this.displayedColumns.unshift('directionName');
     }
     if (!this.readonly) {
       this.displayedColumns.unshift('select');
     }
   }
 
-  directionChanged(direction: EntitySearchDirection) {
+  directionChanged(direction: RelationsTableDirection) {
     this.direction = direction;
     this.updateColumns();
+    if (this.sort.active === 'directionName' && direction !== ALL_RELATIONS_DIRECTION) {
+      this.sort.active = 'type';
+      this.sort.direction = 'asc';
+    }
     this.paginator.pageIndex = 0;
     this.updateData(true);
   }
@@ -219,7 +227,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   }
 
   resetSortAndFilter(update: boolean = true) {
-    this.direction = EntitySearchDirection.FROM;
+    this.direction = ALL_RELATIONS_DIRECTION;
     this.updateColumns();
     this.pageLink.textSearch = null;
     this.textSearch.reset('', {emitEvent: false});
@@ -251,7 +259,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     if (this.readonly) {
       return false;
     }
-    const entityType = this.direction === EntitySearchDirection.FROM ? relation.to.entityType : relation.from.entityType;
+    const entityType = relation.direction === EntitySearchDirection.FROM ? relation.to.entityType : relation.from.entityType;
     const resource = resourceByEntityType.get(entityType as EntityType);
     return this.userPermissionsService.hasGenericPermission(resource, Operation.WRITE);
   }
@@ -271,7 +279,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     }
     let title;
     let content;
-    if (this.direction === EntitySearchDirection.FROM) {
+    if (relation.direction === EntitySearchDirection.FROM) {
       title = this.translate.instant('relation.delete-to-relation-title', {entityName: relation.toName});
       content = this.translate.instant('relation.delete-to-relation-text', {entityName: relation.toName});
     } else {
@@ -307,12 +315,17 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     if (this.dataSource.selection.selected.length > 0) {
       let title;
       let content;
+      const count = this.dataSource.selection.selected.length;
+      const directions = new Set(this.dataSource.selection.selected.map(relation => relation.direction));
 
-      if (this.direction === EntitySearchDirection.FROM) {
-        title = this.translate.instant('relation.delete-to-relations-title', {count: this.dataSource.selection.selected.length});
+      if (directions.size > 1) {
+        title = this.translate.instant('relation.delete-relations-title', {count});
+        content = this.translate.instant('relation.delete-relations-text');
+      } else if (directions.has(EntitySearchDirection.FROM)) {
+        title = this.translate.instant('relation.delete-to-relations-title', {count});
         content = this.translate.instant('relation.delete-to-relations-text');
       } else {
-        title = this.translate.instant('relation.delete-from-relations-title', {count: this.dataSource.selection.selected.length});
+        title = this.translate.instant('relation.delete-from-relations-title', {count});
         content = this.translate.instant('relation.delete-from-relations-text');
       }
 
@@ -342,25 +355,31 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     }
   }
 
-  openRelationDialog($event: Event, relation: EntityRelation = null, readonly: boolean = false) {
+  openRelationDialog($event: Event, relation: EntityRelationInfo = null, readonly: boolean = false) {
     if ($event) {
       $event.stopPropagation();
     }
 
     let isAdd = false;
+    let direction: EntitySearchDirection;
+    let dialogRelation: EntityRelation;
     if (!relation) {
       isAdd = true;
-      relation = {
+      direction = this.direction === EntitySearchDirection.TO ? EntitySearchDirection.TO : EntitySearchDirection.FROM;
+      dialogRelation = {
         from: null,
         to: null,
         type: null,
         typeGroup: RelationTypeGroup.COMMON
       };
-      if (this.direction === EntitySearchDirection.FROM) {
-        relation.from = this.entityIdValue;
+      if (direction === EntitySearchDirection.FROM) {
+        dialogRelation.from = this.entityIdValue;
       } else {
-        relation.to = this.entityIdValue;
+        dialogRelation.to = this.entityIdValue;
       }
+    } else {
+      direction = relation.direction;
+      dialogRelation = {...relation};
     }
 
     this.dialog.open<RelationDialogComponent, RelationDialogData, boolean>(RelationDialogComponent, {
@@ -368,9 +387,10 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd,
-        direction: this.direction,
-        relation: {...relation},
-        readonly
+        direction,
+        relation: dialogRelation,
+        readonly,
+        directionSelectable: this.direction === ALL_RELATIONS_DIRECTION
       }
     }).afterClosed().subscribe(
       (res) => {

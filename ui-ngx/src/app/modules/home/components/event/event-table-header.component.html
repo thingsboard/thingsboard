@@ -1,17 +1,13 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
-  <mat-label translate>event.event-type</mat-label>
-  <mat-select [ngModel]="eventTableConfig.eventType"
-              (ngModelChange)="eventTypeChanged($event)">
-    @for (type of eventTableConfig.eventTypes; track type) {
-      <mat-option [value]="type">
-        {{ eventTypeTranslationsMap.get(type) | translate }}
-      </mat-option>
-    }
-  </mat-select>
-</mat-form-field>
+<tb-toggle-select [ngModel]="eventTableConfig.eventType"
+                  (ngModelChange)="eventTypeChanged($event)">
+  @for (type of eventTableConfig.eventTypes; track type) {
+    <tb-toggle-option [value]="type">{{ eventTypeTranslationsMap.get(type) | translate }}</tb-toggle-option>
+  }
+</tb-toggle-select>

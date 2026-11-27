@@ -11,6 +11,7 @@ import {
   CONTAINS_TYPE,
   EntityRelation,
   EntitySearchDirection,
+  relationDirectionTranslations,
   RelationTypeGroup
 } from '@shared/models/relation.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
@@ -31,6 +32,7 @@ export interface RelationDialogData {
   direction: EntitySearchDirection;
   relation: EntityRelation;
   readonly: boolean;
+  directionSelectable?: boolean;
 }
 
 @Component({
@@ -47,9 +49,11 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
   additionEntityTypes: {[key in string]: string} = {};
 
   isAdd: boolean;
-  direction: EntitySearchDirection;
   entitySearchDirection = EntitySearchDirection;
+  directions = [EntitySearchDirection.FROM, EntitySearchDirection.TO];
+  directionTranslations = relationDirectionTranslations;
   readonly: boolean;
+  directionSelectable: boolean;
 
   additionalInfo: FormControl;
 
@@ -70,8 +74,8 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
               private userPermissionService: UserPermissionsService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
-    this.direction = data.direction;
     this.readonly = data.readonly;
+    this.directionSelectable = data.isAdd && !!data.directionSelectable;
   }
 
   ngOnInit(): void {
@@ -82,9 +86,10 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
     }
 
     this.relationFormGroup = this.fb.group({
+      direction: [this.data.direction],
       type: [this.isAdd ? CONTAINS_TYPE : this.data.relation.type, [Validators.required]],
       targetEntityIds: [this.isAdd ? null :
-        [this.direction === EntitySearchDirection.FROM ? this.data.relation.to : this.data.relation.from],
+        [this.data.direction === EntitySearchDirection.FROM ? this.data.relation.to : this.data.relation.from],
         [Validators.required]]
     });
     this.additionalInfo = new FormControl(this.data.relation.additionalInfo ? {...this.data.relation.additionalInfo} : null);
@@ -120,6 +125,7 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
     if (!this.relationFormGroup.invalid && !this.additionalInfo.invalid) {
       if (this.isAdd) {
         const tasks: Observable<EntityRelation>[] = [];
+        const direction: EntitySearchDirection = this.relationFormGroup.get('direction').value;
         const type: string = this.relationFormGroup.get('type').value;
         const entityIds: Array<EntityId> = this.relationFormGroup.get('targetEntityIds').value;
         entityIds.forEach(entityId => {
@@ -128,12 +134,13 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
             additionalInfo: this.additionalInfo.value,
             typeGroup: RelationTypeGroup.COMMON
           } as EntityRelation;
-          if (this.direction === EntitySearchDirection.FROM) {
-            relation.from = this.data.relation.from;
+          const currentEntityId = this.data.relation.from ?? this.data.relation.to;
+          if (direction === EntitySearchDirection.FROM) {
+            relation.from = currentEntityId;
             relation.to = entityId;
           } else {
             relation.from = entityId;
-            relation.to = this.data.relation.to;
+            relation.to = currentEntityId;
           }
           tasks.push(this.entityRelationService.saveRelation(relation));
         });
