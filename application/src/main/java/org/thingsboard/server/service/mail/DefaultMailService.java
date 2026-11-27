@@ -186,8 +186,9 @@ public class DefaultMailService implements MailService {
 
     private void sendMail(TenantId tenantId, String email,
                           String subject, String message) throws ThingsboardException {
-        JsonNode jsonConfig = getConfig(tenantId);
-        TbMailSender mailSender = new TbMailSender(ctx, tenantId, jsonConfig);
+        ConfigEntry configEntry = getConfig(tenantId, true);
+        JsonNode jsonConfig = configEntry.jsonConfig;
+        TbMailSender mailSender = new TbMailSender(ctx, effectiveTenantId(tenantId, configEntry), jsonConfig);
         String mailFrom = getStringValue(jsonConfig, "mailFrom");
         sendMail(mailSender, mailFrom, email, subject, message, getTimeout(jsonConfig));
     }
@@ -196,7 +197,7 @@ public class DefaultMailService implements MailService {
     public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException {
         ConfigEntry configEntry = getConfig(tenantId, allowSystemMailService);
         JsonNode jsonConfig = configEntry.jsonConfig;
-        TbMailSender mailSender = new TbMailSender(ctx, configEntry.isSystem ? TenantId.SYS_TENANT_ID : tenantId, jsonConfig);
+        TbMailSender mailSender = new TbMailSender(ctx, effectiveTenantId(tenantId, configEntry), jsonConfig);
         sendMail(tenantId, customerId, tbEmail, mailSender, false, getTimeout(jsonConfig));
     }
 
@@ -328,8 +329,8 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void testConnection(TenantId tenantId) throws Exception {
-        JsonNode jsonConfig = getConfig(tenantId);
-        TbMailSender mailSender = new TbMailSender(ctx, tenantId, jsonConfig);
+        ConfigEntry configEntry = getConfig(tenantId, true);
+        TbMailSender mailSender = new TbMailSender(ctx, effectiveTenantId(tenantId, configEntry), configEntry.jsonConfig);
         mailSender.testConnection();
     }
 
@@ -338,7 +339,7 @@ public class DefaultMailService implements MailService {
         try {
             ConfigEntry configEntry = getConfig(tenantId, allowSystemMailService);
             JsonNode jsonConfig = configEntry.jsonConfig;
-            new TbMailSender(ctx, tenantId, jsonConfig);
+            new TbMailSender(ctx, effectiveTenantId(tenantId, configEntry), jsonConfig);
             return true;
         } catch (Exception e) {
             return false;
@@ -451,10 +452,6 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    private JsonNode getConfig(TenantId tenantId) throws ThingsboardException {
-        return getConfig(tenantId, true).jsonConfig;
-    }
-
     private ConfigEntry getConfig(TenantId tenantId, boolean allowSystemMailService) throws ThingsboardException {
         try {
             JsonNode jsonConfig = null;
@@ -487,6 +484,10 @@ public class DefaultMailService implements MailService {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private static TenantId effectiveTenantId(TenantId tenantId, ConfigEntry entry) {
+        return entry.isSystem ? TenantId.SYS_TENANT_ID : tenantId;
     }
 
     private static class ConfigEntry {

@@ -68,7 +68,8 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
         log.trace("Executing saveAdminSettings [{}]", adminSettings);
         AdminSettings oldAdminSettings = adminSettingsValidator.validate(adminSettings, data -> tenantId);
         if (adminSettings.getKey().equals("mail")) {
-            AdminSettings mailSettings = findAdminSettingsByTenantIdAndKey(tenantId, "mail");
+            TenantId ownerId = resolveOwnerId(tenantId, adminSettings);
+            AdminSettings mailSettings = findAdminSettingsByTenantIdAndKey(ownerId, "mail");
             if (mailSettings != null) {
                 JsonNode newJsonValue = adminSettings.getJsonValue();
                 JsonNode oldJsonValue = mailSettings.getJsonValue();
@@ -121,6 +122,19 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     @Override
     public EntityType getEntityType() {
         return EntityType.ADMIN_SETTINGS;
+    }
+
+    private TenantId resolveOwnerId(TenantId tenantId, AdminSettings settings) {
+        if (settings.getTenantId() != null) {
+            return settings.getTenantId();
+        }
+        if (settings.getId() != null) {
+            AdminSettings stored = adminSettingsDao.findById(tenantId, settings.getId().getId());
+            if (stored != null && stored.getTenantId() != null) {
+                return stored.getTenantId();
+            }
+        }
+        return tenantId;
     }
 
     private void dropTokenIfProviderInfoChanged(JsonNode newJsonValue, JsonNode oldJsonValue) {
