@@ -132,6 +132,11 @@ public class BaseSchedulerEventService extends AbstractEntityService implements 
     }
 
     @Override
+    protected boolean isUpdateTransactional() {
+        return false; // entry points had no @Transactional before the fix, update stays without an ambient transaction
+    }
+
+    @Override
     public SchedulerEvent saveSchedulerEvent(SchedulerEvent schedulerEvent) {
         return saveSchedulerEvent(schedulerEvent, true);
     }
@@ -150,7 +155,7 @@ public class BaseSchedulerEventService extends AbstractEntityService implements 
             oldSchedulerEvent = findSchedulerEventById(schedulerEvent.getTenantId(), schedulerEvent.getId());
         }
         try {
-            SchedulerEvent savedSchedulerEvent = schedulerEventDao.save(schedulerEvent.getTenantId(), schedulerEvent);
+            SchedulerEvent savedSchedulerEvent = schedulerEventDao.saveAndFlush(schedulerEvent.getTenantId(), schedulerEvent);
             if (schedulerEvent.getId() == null) {
                 entityCountService.publishCountEntityEvictEvent(schedulerEvent.getTenantId(), EntityType.SCHEDULER_EVENT);
             }

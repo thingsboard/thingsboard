@@ -4,6 +4,8 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.awaitility.Awaitility;
@@ -40,6 +42,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
+import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -57,6 +60,8 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
+import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
@@ -72,6 +77,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +95,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
     @Autowired
     CustomerService customerService;
-    @Autowired
+    @MockitoSpyBean
     DeviceCredentialsService deviceCredentialsService;
     @Autowired
     DeviceProfileService deviceProfileService;
@@ -158,28 +164,62 @@ public class DeviceServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testDeviceLimitOnTenantProfileLevel() throws InterruptedException {
+    public void testDeviceLimitOnTenantProfileLevel() throws Exception {
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
         defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(5l).build());
         tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
 
+        List<ListenableFuture<Device>> futures = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
-            executor.submit(() -> {
+            futures.add(executor.submit(() -> {
                 Device device = new Device();
                 device.setTenantId(tenantId);
                 device.setName(StringUtils.randomAlphabetic(10));
                 device.setType("default");
-                deviceService.saveDevice(device);
-            });
+                return deviceService.saveDevice(device);
+            }));
         }
+        List<Device> savedDevices = Futures.successfulAsList(futures).get(30, TimeUnit.SECONDS);
 
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
-            long countByTenantId = deviceService.countByTenantId(tenantId);
-            return countByTenantId == 5;
-        });
-
-        Thread.sleep(2000);
+        assertThat(savedDevices.stream().filter(Objects::nonNull)).hasSize(5);
         assertThat(deviceService.countByTenantId(tenantId)).isEqualTo(5);
+    }
+
+    @Test
+    public void testProvisionedDeviceIsDeletedWhenCredentialsUpdateFails() {
+        String takenToken = "TAKEN_ACCESS_TOKEN";
+        Device existingDevice = new Device();
+        existingDevice.setTenantId(tenantId);
+        existingDevice.setName("Existing device");
+        existingDevice.setType("default");
+        deviceService.saveDeviceWithAccessToken(existingDevice, takenToken);
+
+        DeviceProfile deviceProfile = deviceProfileService.findOrCreateDeviceProfile(tenantId, "default");
+        ProvisionRequest provisionRequest = new ProvisionRequest("Provisioned device", DeviceCredentialsType.ACCESS_TOKEN,
+                new ProvisionDeviceCredentialsData(takenToken, null, null, null, null), null, null);
+
+        assertThatThrownBy(() -> deviceService.saveDevice(provisionRequest, deviceProfile))
+                .isInstanceOf(ProvisionFailedException.class);
+
+        assertThat(deviceService.findDeviceByTenantIdAndName(tenantId, "Provisioned device")).isNull();
+        assertThat(deviceService.countByTenantId(tenantId)).isEqualTo(1);
+    }
+
+    @Test
+    public void testProvisionedDeviceIsDeletedWhenCredentialsLookupFails() {
+        Mockito.doThrow(new RuntimeException("mock message"))
+                .doCallRealMethod()
+                .when(deviceCredentialsService).findDeviceCredentialsByDeviceId(any(), any());
+
+        DeviceProfile deviceProfile = deviceProfileService.findOrCreateDeviceProfile(tenantId, "default");
+        ProvisionRequest provisionRequest = new ProvisionRequest("Provisioned device", DeviceCredentialsType.ACCESS_TOKEN,
+                new ProvisionDeviceCredentialsData("PROVISION_ACCESS_TOKEN", null, null, null, null), null, null);
+
+        assertThatThrownBy(() -> deviceService.saveDevice(provisionRequest, deviceProfile))
+                .isInstanceOf(ProvisionFailedException.class);
+
+        assertThat(deviceService.findDeviceByTenantIdAndName(tenantId, "Provisioned device")).isNull();
+        assertThat(deviceService.countByTenantId(tenantId)).isZero();
     }
 
     @Test
