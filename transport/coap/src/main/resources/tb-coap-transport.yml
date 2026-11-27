@@ -47,6 +47,11 @@ cache:
   entityLimits:
     timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_LIMITS_TTL:5}" # Entity limits cache TTL
     maxSize: "${CACHE_SPECS_ENTITY_LIMITS_MAX_SIZE:100000}" # 0 means the cache is disabled
+  specs:
+    # Firmware blocks of OTA packages kept in this transport's memory, so device chunk requests don't all read the single Redis key that holds the package
+    otaPackagesDataBlocks:
+      timeToLiveInMinutes: "${CACHE_SPECS_OTA_PACKAGES_DATA_BLOCKS_TTL:60}" # OTA package data blocks cache TTL, counted from when a block was loaded from Redis
+      maxSize: "${CACHE_SPECS_OTA_PACKAGES_DATA_BLOCKS_MAX_SIZE:0}" # Number of 1 MiB blocks kept in memory, i.e. the budget in MiB; fit the packages rolled out at the same time. 0 means the cache is disabled
 
 # Redis/Valkey configuration parameters
 # Defines connection mode, authentication, SSL, and connection pool settings for Redis or Valkey.
