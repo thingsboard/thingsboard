@@ -30,6 +30,8 @@ public interface OwnerService {
 
     void clearOwners(EntityId entityId);
 
+    void clearAllOwners();
+
     PageData<EntityInfo> findTenantOwnerByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<EntityInfo> findCustomerOwnersByTenantIdIncludingTenant(TenantId tenantId, PageLink pageLink);

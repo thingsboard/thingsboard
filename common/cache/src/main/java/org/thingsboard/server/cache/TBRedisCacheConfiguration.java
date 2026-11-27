@@ -43,7 +43,9 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
@@ -119,7 +121,7 @@ public abstract class TBRedisCacheConfiguration {
      * Enable RedisCaches to synchronize cache put/evict operations with ongoing Spring-managed transactions.
      */
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory cf) {
+    public CacheManager cacheManager(RedisConnectionFactory cf, CacheSpecsMap cacheSpecsMap) {
         DefaultFormattingConversionService redisConversionService = new DefaultFormattingConversionService();
         RedisCacheConfiguration.registerDefaultConverters(redisConversionService);
         registerDefaultConverters(redisConversionService);
@@ -129,8 +131,24 @@ public abstract class TBRedisCacheConfiguration {
                 // default this yields exactly the standard 'cacheName::key' layout.
                 .prefixCacheNameWith(keyPrefix);
         return RedisCacheManager.builder(cf).cacheDefaults(configuration)
+                .withInitialCacheConfigurations(buildCacheConfigurations(configuration, cacheSpecsMap))
                 .transactionAware()
                 .build();
+    }
+
+    private static Map<String, RedisCacheConfiguration> buildCacheConfigurations(RedisCacheConfiguration defaults, CacheSpecsMap cacheSpecsMap) {
+        Map<String, CacheSpecs> specs = cacheSpecsMap.getSpecs();
+        if (specs == null) {
+            return Collections.emptyMap();
+        }
+        Map<String, RedisCacheConfiguration> configurations = new HashMap<>();
+        specs.forEach((cacheName, cacheSpecs) -> {
+            Integer timeToLiveInMinutes = cacheSpecs.getTimeToLiveInMinutes();
+            if (timeToLiveInMinutes != null && timeToLiveInMinutes > 0) {
+                configurations.put(cacheName, defaults.entryTtl(Duration.ofMinutes(timeToLiveInMinutes)));
+            }
+        });
+        return configurations;
     }
 
     @Bean

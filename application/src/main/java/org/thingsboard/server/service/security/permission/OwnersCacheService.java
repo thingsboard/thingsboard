@@ -43,6 +43,8 @@ public interface OwnersCacheService {
 
     void clearOwners(EntityId entityId);
 
+    void clearOwnersOnOwnerChange(EntityId entityId);
+
     Set<EntityId> getChildOwners(TenantId tenantId, EntityId parentOwnerId);
 
     void changeDashboardOwner(TenantId tenantId, EntityId targetOwnerId, Dashboard dashboard) throws ThingsboardException;

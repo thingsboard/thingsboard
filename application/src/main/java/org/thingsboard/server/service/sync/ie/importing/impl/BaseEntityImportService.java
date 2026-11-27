@@ -144,6 +144,9 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             }
             E savedEntity = saveOrUpdate(ctx, prepared, exportData, idProvider, compareResult);
             if (changeOwner) {
+                // changeEntityOwner above evicted the owners cache before the new owner was persisted, so a concurrent
+                // read could have re-cached the previous hierarchy; evicting once more after the save drops it.
+                ownersCacheService.clearOwnersOnOwnerChange(savedEntity.getId());
                 importResult.addSendEventsCallback(() ->
                         logEntityActionService.logEntityAction(ctx.getTenantId(), savedEntity.getId(), entity, ActionType.CHANGE_OWNER, ctx.getUser(), ((HasOwnerId) savedEntity).getOwnerId()));
             }
