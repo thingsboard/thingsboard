@@ -32,6 +32,7 @@ import {
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { MatChipSelectionChange } from "@angular/material/chips";
 import { coerceBoolean } from "@shared/decorators/coercion";
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 
 @Component({
     selector: 'tb-cf-alarm-schedule',
@@ -92,7 +93,8 @@ export class CfAlarmScheduleComponent implements ControlValueAccessor, Validator
   private propagateChange = (v: any) => { };
 
   constructor(private fb: FormBuilder,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private dateTimeFormatService: DateTimeFormatService) {
   }
 
   ngOnInit(): void {
@@ -303,7 +305,8 @@ export class CfAlarmScheduleComponent implements ControlValueAccessor, Validator
   }
 
   getSchedulerRangeText(control: FormGroup | AbstractControl): string {
-    return getAlarmScheduleRangeText(control.get('startsOn').value, control.get('endsOn').value);
+    return getAlarmScheduleRangeText(control.get('startsOn').value, control.get('endsOn').value,
+      this.dateTimeFormatService.getMomentTimeFormatWithoutSeconds());
   }
 
   get itemsSchedulerForm(): FormArray {

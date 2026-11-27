@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
   AlarmSchedule,
   AlarmScheduleType,
-  AlarmScheduleTypeTranslationMap, dayOfWeekTranslations,
+  dayOfWeekTranslations,
   getAlarmScheduleRangeText, utcTimestampToTimeOfDay
 } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
@@ -15,6 +16,7 @@ import {
 } from '@home/components/profile/alarm/alarm-schedule-dialog.component';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 
 @Component({
     selector: 'tb-alarm-schedule-info',
@@ -40,7 +42,8 @@ export class AlarmScheduleInfoComponent implements ControlValueAccessor, OnInit 
 
   constructor(private dialog: MatDialog,
               private translate: TranslateService,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private dateTimeFormatService: DateTimeFormatService) {
   }
 
   ngOnInit(): void {
@@ -82,7 +85,8 @@ export class AlarmScheduleInfoComponent implements ControlValueAccessor, OnInit 
           this.scheduleText += this.translate.instant(dayOfWeekTranslations[day - 1]);
         }
         this.scheduleText += ' <b>' + getAlarmScheduleRangeText(utcTimestampToTimeOfDay(schedule.startsOn),
-          utcTimestampToTimeOfDay(schedule.endsOn)) + '</b>';
+          utcTimestampToTimeOfDay(schedule.endsOn),
+          this.dateTimeFormatService.getMomentTimeFormatWithoutSeconds()) + '</b>';
         break;
       case AlarmScheduleType.CUSTOM:
         for (const item of schedule.items) {
@@ -92,7 +96,8 @@ export class AlarmScheduleInfoComponent implements ControlValueAccessor, OnInit 
             }
             this.scheduleText += this.translate.instant(dayOfWeekTranslations[item.dayOfWeek  - 1]);
             this.scheduleText += ' <b>' + getAlarmScheduleRangeText(utcTimestampToTimeOfDay(item.startsOn),
-              utcTimestampToTimeOfDay(item.endsOn)) + '</b>';
+              utcTimestampToTimeOfDay(item.endsOn),
+              this.dateTimeFormatService.getMomentTimeFormatWithoutSeconds()) + '</b>';
           }
         }
         break;

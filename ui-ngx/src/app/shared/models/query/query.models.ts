@@ -511,7 +511,7 @@ function simpleKeyFilterPredicateToText(translate: TranslateService,
       operation = translate.instant(numericOperationTranslationMap.get(keyFilterPredicate.operation));
       if (!dynamicValue) {
         if (keyFilter.valueType === EntityKeyValueType.DATE_TIME) {
-          value = datePipe.transform(keyFilterPredicate.value.defaultValue, 'yyyy-MM-dd HH:mm');
+          value = datePipe.transform(keyFilterPredicate.value.defaultValue, 'tbDateTimeNoSeconds');
         } else {
           value = keyFilterPredicate.value.defaultValue + '';
         }

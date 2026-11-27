@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -32,7 +33,6 @@ import {
   JsonObjectEditDialogData
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 type FieldAlignment = 'row' | 'column';
@@ -163,7 +163,6 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               private fb: UntypedFormBuilder,
               private attributeService: AttributeService,
               private translate: TranslateService,
-              private sanitizer: DomSanitizer,
               private dialog: MatDialog) {
     super(store);
   }

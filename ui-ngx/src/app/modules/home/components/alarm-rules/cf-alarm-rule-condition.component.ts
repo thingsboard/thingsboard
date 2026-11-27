@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   AbstractControl,
@@ -39,6 +40,7 @@ import {
 } from "@home/components/alarm-rules/cf-alarm-schedule-dialog.component";
 import { coerceBoolean } from "@shared/decorators/coercion";
 import { Observable } from "rxjs";
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 
 @Component({
     selector: 'tb-cf-alarm-rule-condition',
@@ -98,7 +100,8 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   constructor(private dialog: MatDialog,
               private fb: FormBuilder,
               private cd: ChangeDetectorRef,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private dateTimeFormatService: DateTimeFormatService) {
   }
 
   registerOnChange(fn: any): void {
@@ -275,7 +278,8 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
               this.scheduleText += this.translate.instant(dayOfWeekTranslations[day - 1]);
             }
             this.scheduleText += ' <b>' + getAlarmScheduleRangeText(utcTimestampToTimeOfDay(schedule.staticValue.startsOn),
-              utcTimestampToTimeOfDay(schedule.staticValue.endsOn)) + '</b>';
+              utcTimestampToTimeOfDay(schedule.staticValue.endsOn),
+              this.dateTimeFormatService.getMomentTimeFormatWithoutSeconds()) + '</b>';
             break;
           case AlarmRuleScheduleType.CUSTOM:
             for (const item of schedule.staticValue.items) {
@@ -285,7 +289,8 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
                 }
                 this.scheduleText += this.translate.instant(dayOfWeekTranslations[item.dayOfWeek  - 1]);
                 this.scheduleText += ' <b>' + getAlarmScheduleRangeText(utcTimestampToTimeOfDay(item.startsOn),
-                  utcTimestampToTimeOfDay(item.endsOn)) + '</b>';
+                  utcTimestampToTimeOfDay(item.endsOn),
+                  this.dateTimeFormatService.getMomentTimeFormatWithoutSeconds()) + '</b>';
               }
             }
             break;

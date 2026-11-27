@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input } from '@angular/core';
 import {
   ComplexOperation,
@@ -156,7 +157,7 @@ export class AlarmRuleFilterTextComponent {
             operation = translate.instant(alarmRuleNumericOperationTranslationMap.get(keyFilterPredicate.operation));
             if (!dynamicValue) {
               if (keyFilter.valueType === EntityKeyValueType.DATE_TIME) {
-                value = datePipe.transform(keyFilterPredicate.value.staticValue, 'yyyy-MM-dd HH:mm');
+                value = datePipe.transform(keyFilterPredicate.value.staticValue, 'tbDateTimeNoSeconds');
               } else {
                 value = keyFilterPredicate.value.staticValue + '';
               }

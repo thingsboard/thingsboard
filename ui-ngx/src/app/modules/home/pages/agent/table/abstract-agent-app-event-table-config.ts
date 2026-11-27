@@ -144,10 +144,8 @@ export abstract class AbstractAgentAppEventTableConfig<E extends AgentAppEvent> 
           return label;
         },
         () => ({}), true),
-      new DateEntityTableColumn<E>('createdTime',
-        'agent.app-event-created', this.datePipe, '180px', 'yyyy-MM-dd HH:mm:ss'),
-      new DateEntityTableColumn<E>('updatedTime',
-        'agent.app-event-updated', this.datePipe, '180px', 'yyyy-MM-dd HH:mm:ss')
+      new DateEntityTableColumn<E>('createdTime', 'agent.app-event-created', this.datePipe, '180px'),
+      new DateEntityTableColumn<E>('updatedTime', 'agent.app-event-updated', this.datePipe, '180px')
     ];
   }
 

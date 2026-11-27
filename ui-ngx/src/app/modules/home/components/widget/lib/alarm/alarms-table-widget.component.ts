@@ -109,6 +109,7 @@ import {
   getUserInitials
 } from '@shared/models/alarm.models';
 import { DatePipe } from '@angular/common';
+import { exportDateFormat } from '@shared/models/date-time-format.models';
 import {
   AlarmDetailsDialogComponent,
   AlarmDetailsDialogData
@@ -867,7 +868,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               content = this.applyCellContentFunction(alarm, contentFunction, value);
             } else {
               content = contentFunction.useCellContentFunctionOnExport ? this.applyCellContentFunction(alarm, contentFunction, value)
-                : this.defaultContent(key, contentInfo, value);
+                : this.defaultContent(key, contentInfo, value, isExport);
             }
             if (isDefined(content)) {
               if (typeof content === 'object') {
@@ -1160,16 +1161,17 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
-  private defaultContent(key: EntityColumn, contentInfo: CellContentInfo, value: any): any {
+  private defaultContent(key: EntityColumn, contentInfo: CellContentInfo, value: any, isExport = false): any {
     if (isDefined(value)) {
+      const dateFormat = isExport ? exportDateFormat : undefined;
       const alarmField = alarmFields[key.name];
       if (alarmField) {
-        return this.utils.defaultAlarmFieldContent(key, value);
+        return this.utils.defaultAlarmFieldContent(key, value, dateFormat);
       }
       const entityField = entityFields[key.name];
       if (entityField) {
         if (entityField.time) {
-          return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
+          return this.datePipe.transform(value, dateFormat);
         }
       }
       return contentInfo.valueFormat.format(value);

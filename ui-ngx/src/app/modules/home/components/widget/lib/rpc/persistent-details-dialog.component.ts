@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
@@ -73,8 +74,8 @@ export class PersistentDetailsDialogComponent extends DialogComponent<Persistent
   loadPersistentFields(request: PersistentRpc) {
     this.persistentFormGroup.patchValue({
       rpcId: this.translate.instant('widgets.persistent-table.details-title') + request.id.id,
-      createdTime: this.datePipe.transform(request.createdTime, 'yyyy-MM-dd HH:mm:ss'),
-      expirationTime: this.datePipe.transform(request.expirationTime, 'yyyy-MM-dd HH:mm:ss'),
+      createdTime: this.datePipe.transform(request.createdTime),
+      expirationTime: this.datePipe.transform(request.expirationTime),
       messageType: this.translate.instant('widgets.persistent-table.message-types.' + request.request.oneway),
       status: this.translate.instant(rpcStatusTranslation.get(request.status)),
       method: request.request.body.method,
