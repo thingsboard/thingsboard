@@ -126,6 +126,9 @@ export class AiActionLineComponent {
       return null;
     }
     const time = new Date(action.startedAt + (action.durationMs ?? 0)).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hourCycle: 'h23'});
+    if (check.gateway) {
+      return {text: this.translate.instant('ai-assistant.hand-over.gateway-connected', {name: check.name, time}), readings: []};
+    }
     return {
       text: this.translate.instant('ai-assistant.hand-over.' + (!check.keyCount ? 'arrived-message' : check.keyCount === 1 ? 'arrived-key' : 'arrived-keys')
         + (check.name ? '-from' : ''), {name: check.name, time, count: check.keyCount}),

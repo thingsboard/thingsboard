@@ -54,6 +54,7 @@
         }
       </div>
     </div>
+  } @else if (msg.from === 'ACTION' && files[$index] && inCard.has(files[$index].name)) {
   } @else if (msg.from === 'ACTION' && files[$index]; as file) {
     <div class="ai art-cards">
       <button type="button" class="art-card" [class.on]="shownFile === file.executionId" [attr.aria-pressed]="shownFile === file.executionId"
@@ -85,8 +86,16 @@
     </div>
   } @else if (msg.from === 'ACTION' && handOvers[$index]; as card) {
     <div class="ai hand">
-      <tb-ai-hand-over [handOver]="card.handOver" [wait]="card.wait" [time]="msg.data.startedAt" (prompt)="prompt.emit($event)" (stop)="stopRun.emit()"></tb-ai-hand-over>
+      <tb-ai-hand-over [handOver]="card.handOver" [wait]="card.wait" [time]="msg.data.startedAt" (prompt)="prompt.emit($event)" (stop)="stopRun.emit()" (compose)="compose.emit($event)"
+                       [files]="latestFiles" (openFile)="openFile.emit($event)"></tb-ai-hand-over>
     </div>
+    @if (waitAfterCard[$index] !== undefined && messages[waitAfterCard[$index]]; as moved) {
+      @if (moved.from === 'ACTION' && !waitsInCards.has(waitAfterCard[$index])) {
+        <div class="ai action">
+          <tb-ai-action-line [action]="moved.data" [names]="detailNames" [more]="0"></tb-ai-action-line>
+        </div>
+      }
+    }
   } @else if (msg.from === 'ACTION' && asking?.index === $index) {
     <div class="ai ask">
       <tb-ai-question [questions]="asking.questions" [time]="msg.data.startedAt" (done)="answerQuestions($event)" (skip)="answerQuestions($event)"></tb-ai-question>

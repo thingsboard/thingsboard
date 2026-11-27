@@ -314,6 +314,7 @@ export interface AiHandOverStep {
   detail?: string;
   markdown?: string;
   values: AiHandOverValue[];
+  file?: string;
   done: boolean;
 }
 
@@ -334,6 +335,7 @@ export interface AiHandOver {
   intervalSeconds?: number;
   quiet?: string;
   test?: AiHandOverTest;
+  paste?: {label: string; icon: string; intro: string};
 }
 
 export interface AiHandOverTest {
@@ -395,7 +397,13 @@ export function aiHandOverOf(args: unknown): AiHandOver | null {
   const interval = Number(values.intervalSeconds);
   return {title, text: text(values.text), choice, steps, waitFor,
     intervalSeconds: Number.isFinite(interval) && interval > 0 ? interval : undefined, quiet: text(values.quiet),
-    test: handOverTestOf(values.test)};
+    test: handOverTestOf(values.test), paste: handOverPasteOf(values.paste)};
+}
+
+function handOverPasteOf(value: any): AiHandOver['paste'] {
+  const label = text(value?.label);
+  const intro = text(value?.intro);
+  return label && intro ? {label, intro, icon: iconOf(value.icon, 'terminal')} : undefined;
 }
 
 function handOverStepsOf(list: unknown): AiHandOverStep[] {
@@ -406,6 +414,7 @@ function handOverStepsOf(list: unknown): AiHandOverStep[] {
       title: text(step.title),
       detail: text(step.detail),
       markdown: text(step.markdown),
+      file: text(step.file),
       done: step.done === true,
       values: (Array.isArray(step.values) ? step.values : [])
         .filter(value => text(value?.label) && typeof value?.value === 'string' && value.value)
@@ -422,6 +431,7 @@ export interface AiConnectionCheck {
   note?: string;
   readings: {key: string; value: string}[];
   keyCount: number;
+  gateway: boolean;
 }
 
 export function aiConnectionCheckOf(result: unknown): AiConnectionCheck | null {
@@ -438,11 +448,16 @@ export function aiConnectionCheckOf(result: unknown): AiConnectionCheck | null {
   }
   const readings: {key: string; value: string}[] = [];
   const add = (telemetry: unknown) => Object.entries(telemetry && typeof telemetry === 'object' ? telemetry : {})
-    .forEach(([key, item]) => readings.push({key, value: String((item as any)?.value ?? '')}));
-  add(values.telemetry);
+    .map(([key, item]) => ({key, value: String((item as any)?.value ?? '')}))
+    .filter(reading => !/^\s*[{[]/.test(reading.value))
+    .forEach(reading => readings.push(reading));
+  const gateway = values.gateway === true;
+  if (!gateway) {
+    add(values.telemetry);
+  }
   (Array.isArray(values.devices) ? values.devices : []).forEach(device => add(device?.telemetry));
   return {dataArriving: values.steps.dataArriving === true, failedStep: text(values.failedStep), name: text(values.name),
-    note: text(values.note), readings: readings.slice(0, 6), keyCount: new Set(readings.map(reading => reading.key)).size};
+    note: text(values.note), readings: readings.slice(0, 6), keyCount: new Set(readings.map(reading => reading.key)).size, gateway};
 }
 
 export const isKitCardTool = (tool: string): boolean => KIT_CARD_TOOLS.has(tool);

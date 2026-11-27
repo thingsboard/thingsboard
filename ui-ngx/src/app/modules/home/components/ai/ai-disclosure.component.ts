@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, signal } from '@angular/core';
 
 const STORE = 'tb-ai-disclosure';
 
@@ -27,6 +27,38 @@ export function aiDisclosureRemember(key: string, open: boolean): void {
   }
 }
 
+const REVEAL_GAP = 12;
+
+function scrollerOf(element: HTMLElement): HTMLElement | null {
+  for (let node = element.parentElement; node; node = node.parentElement) {
+    const overflow = getComputedStyle(node).overflowY;
+    if ((overflow === 'auto' || overflow === 'scroll') && node.scrollHeight > node.clientHeight) {
+      return node;
+    }
+  }
+  return null;
+}
+
+export function aiRevealOpened(element: HTMLElement): void {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const scroller = scrollerOf(element);
+    if (!scroller) {
+      return;
+    }
+    const box = element.getBoundingClientRect();
+    const view = scroller.getBoundingClientRect();
+    const composer = scroller.querySelector<HTMLElement>('.ai-chat-composer') ?? element.closest('.ai-chat')?.querySelector<HTMLElement>('.ai-chat-composer');
+    const composerTop = composer?.getBoundingClientRect().top ?? view.bottom;
+    const bottom = Math.min(view.bottom, composerTop) - REVEAL_GAP;
+    const overflow = box.bottom - bottom;
+    if (overflow <= 0) {
+      return;
+    }
+    const room = box.top - view.top - REVEAL_GAP;
+    scroller.scrollBy({top: Math.min(overflow, Math.max(room, 0)), behavior: 'smooth'});
+  }));
+}
+
 @Component({
   selector: 'tb-ai-disclosure',
   template: `
@@ -51,6 +83,8 @@ export class AiDisclosureComponent {
 
   key = input<string>('');
 
+  private host = inject(ElementRef<HTMLElement>);
+
   private toggledOpen = signal<boolean | null>(null);
 
   open = computed(() => this.toggledOpen() ?? aiDisclosureRemembered(this.key()));
@@ -62,6 +96,9 @@ export class AiDisclosureComponent {
     if (open !== this.open()) {
       this.toggledOpen.set(open);
       aiDisclosureRemember(this.key(), open);
+      if (open) {
+        aiRevealOpened(this.host.nativeElement);
+      }
     }
   }
 }

@@ -13,6 +13,7 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
+import { aiRevealOpened } from '@home/components/ai/ai-disclosure.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ClipboardService } from 'ngx-clipboard';
 import { IntegrationType, integrationTypeInfoMap } from '@shared/models/integration.models';
@@ -366,6 +367,13 @@ export class AiApprovalCardComponent implements OnChanges, AfterViewChecked {
 
   get recordClosed(): boolean {
     return this.state === 'pending' || this.state === 'denied' || this.state === 'expired';
+  }
+
+  toggleUnchanged(): void {
+    this.showUnchanged = !this.showUnchanged;
+    if (this.showUnchanged) {
+      aiRevealOpened(this.host.nativeElement);
+    }
   }
 
   approve(): void {

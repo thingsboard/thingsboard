@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { aiCreditsLimitOf, AiCreditsLimitType } from '@home/components/ai/ai-credits.models';
-import { aiPageView, isAiTitledView } from '@shared/models/ai-chat.models';
+import { aiClientOs, aiPageView, isAiTitledView } from '@shared/models/ai-chat.models';
+import { getDefaultTimezone } from '@shared/models/time/time.models';
 import {
   Component,
   computed,
@@ -562,6 +563,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   composeText(text: string): void {
     this.promptInput?.setValue(text);
+    setTimeout(() => this.focus());
   }
 
   ask(message: string, secrets?: Record<string, string>): void {
@@ -945,9 +947,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
     if (prompt.resources.length) {
       request.resources = prompt.resources.map(resource => resource.id);
     }
-    if (this.clientContext()) {
-      request.clientContext = this.clientContext();
-    }
+    const context = this.clientContext();
+    request.clientContext = context ? {...context, os: context.os ?? aiClientOs()}
+      : {timeZone: getDefaultTimezone(), os: aiClientOs()} as AiChatClientContext;
     if (prompt.secrets) {
       request.secrets = prompt.secrets;
     }
@@ -1199,7 +1201,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
       tool: started.tool,
       arguments: started.arguments,
       status: isKitCardTool(started.tool) ? 'SUCCESS' : 'RUNNING',
-      startedAt: Date.now()
+      startedAt: started.startedAt ?? Date.now()
     };
     this.messages.update(list => [...list, {from: 'ACTION', data: action}]);
   }

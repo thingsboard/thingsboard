@@ -5,7 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, map, startWith } from 'rxjs/operators';
-import { aiPageView, AiChatClientContext } from '@shared/models/ai-chat.models';
+import { aiClientOs, aiPageView, AiChatClientContext } from '@shared/models/ai-chat.models';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
 import { BreadCrumb } from '@shared/components/breadcrumb';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
@@ -41,7 +41,7 @@ export class AiAssistantContextService {
     const title = this.pageTitle();
     const path = this.pagePath();
     const type = aiPageView(path);
-    return title || path !== '/' ? {view: {type, title, path}, timeZone: getDefaultTimezone()} : undefined;
+    return title || path !== '/' ? {view: {type, title, path}, timeZone: getDefaultTimezone(), os: aiClientOs()} : undefined;
   });
 
   readonly welcome = computed(() => aiWelcome(this.clientContext()?.view, this.panelService.viewName(), this.panelService.config(),

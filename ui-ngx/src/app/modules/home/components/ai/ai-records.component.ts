@@ -3,7 +3,8 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
+import { Subscription, timer } from 'rxjs';
+import { concatMap, take, takeWhile } from 'rxjs/operators';
 import { aiEntityKind } from '@home/components/ai/ai-action.models';
 import { aiRecordKey, AiRecordView, AiShownRecords } from '@home/components/ai/ai-record.models';
 import { AiRecordLoaderService } from '@home/components/ai/ai-record-loader.service';
@@ -15,6 +16,9 @@ import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 const LIST_SHOWN = 8;
 
 const TARGETED_HUB_TYPES = new Set<string>([ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE]);
+
+const WAIT_RECHECK_MS = 10000;
+const WAIT_RECHECKS = 90;
 
 @Component({
   selector: 'tb-ai-records',
@@ -125,9 +129,12 @@ export class AiRecordsComponent {
       this.key();
       const shown = untracked(() => this.shown());
       this.loading?.unsubscribe();
-      this.loading = this.loader.loadAll(shown.refs, {image: shown.refs.length === 1})
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(views => this.views.set(views));
+      this.loading = timer(0, WAIT_RECHECK_MS).pipe(
+        take(WAIT_RECHECKS),
+        concatMap(() => this.loader.loadAll(shown.refs, {image: shown.refs.length === 1})),
+        takeWhile(views => views.some(view => view.state?.tone === 'wait'), true),
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(views => this.views.set(views));
     });
   }
 

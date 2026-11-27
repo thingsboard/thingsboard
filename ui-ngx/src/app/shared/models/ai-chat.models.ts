@@ -187,6 +187,7 @@ export interface TurnStoppedEvent extends BaseChatEvent {
 export interface ToolStarted extends BaseChatToolEventData {
   tool: string;
   arguments?: unknown;
+  startedAt?: number;
 }
 
 export interface ToolStartedEvent extends BaseChatEvent {
@@ -461,6 +462,14 @@ export interface AiChatView {
 export interface AiChatClientContext {
   view: AiChatView;
   timeZone?: string;
+  os?: string;
+}
+
+export function aiClientOs(): string | undefined {
+  const nav = navigator as Navigator & {userAgentData?: {platform?: string}};
+  const agent = `${nav.userAgentData?.platform ?? ''} ${navigator.userAgent}`;
+  return /Android/i.test(agent) ? 'android' : /iPhone|iPad|iPod/i.test(agent) ? 'ios' : /CrOS|Chrome OS/i.test(agent) ? 'chromeos'
+    : /Win/i.test(agent) ? 'windows' : /Mac/i.test(agent) ? 'macos' : /Linux|X11/i.test(agent) ? 'linux' : undefined;
 }
 
 export interface SendChatMessageRequest {

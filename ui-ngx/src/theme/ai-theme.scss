@@ -2282,9 +2282,12 @@ code.k-ent[data-pal="solution"] .k-ent-ic { color: var(--entity-solution-fg); }
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+      min-width: 0;
     }
 
     .ob-chip[aria-pressed="true"] {
+      max-width: 100%;
+      overflow-wrap: anywhere;
       height: auto;
       min-height: 0;
       padding: 0;
@@ -6830,6 +6833,13 @@ tb-ai-action-detail.k-detail .tb-codeblock pre.tb-code {
       color: var(--tb-text-secondary);
       text-decoration: line-through;
       text-decoration-color: var(--tb-ink-38);
+    }
+
+    .k-step-file {
+      display: flex;
+      width: auto;
+      max-width: calc(100% - 28px);
+      margin: 8px 0 2px 28px;
     }
 
     .k-step-x {

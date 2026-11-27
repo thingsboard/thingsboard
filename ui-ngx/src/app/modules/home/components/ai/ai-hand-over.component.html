@@ -10,7 +10,7 @@
       <mat-icon class="tb-mat-16" aria-hidden="true">person</mat-icon><span class="k-who">{{ 'ai-assistant.hand-over.needs-you' | translate }}</span>
       <span class="k-sub">{{ handOver().title }}</span>
     </div>
-    <button mat-icon-button type="button" class="k-hand-close" (click)="open.set(true)" [attr.aria-expanded]="false"
+    <button mat-icon-button type="button" class="k-hand-close" (click)="unfold()" [attr.aria-expanded]="false"
             [attr.aria-label]="'ai-assistant.hand-over.unfold' | translate"><mat-icon>expand_more</mat-icon></button>
     <div class="k-body"><p>{{ arrivedLine() }}</p></div>
   } @else {
@@ -60,6 +60,14 @@
                   <span class="k-step-d">{{ step.detail }}</span>
                 }
               </label>
+              @if (step.file && files().get(step.file); as file) {
+                <button type="button" class="art-card k-step-file" (click)="openFile.emit(file)">
+                  <span class="art-card-ic"><mat-icon class="tb-mat-20" aria-hidden="true">{{ fileMark(file) }}</mat-icon></span>
+                  <span class="art-card-t"><b><span class="art-name">{{ fileName(file.name).base }}<span class="art-ext">{{ fileName(file.name).ext }}</span></span></b>
+                    <small>{{ 'ai-assistant.file.lines' | translate: {count: file.lines} }} · {{ file.size }}</small></span>
+                  <mat-icon class="tb-mat-18 art-card-chev" aria-hidden="true">chevron_right</mat-icon>
+                </button>
+              }
               @if (step.values.length || step.markdown) {
                 <div class="k-step-x">
                   @for (value of step.values; track $index; let v = $index) {
@@ -132,9 +140,15 @@
             <button type="button" class="ob-chip" (click)="say('ai-assistant.hand-over.keep-waiting-prompt')">
               <mat-icon aria-hidden="true">check</mat-icon>{{ 'ai-assistant.hand-over.keep-waiting' | translate }}
             </button>
-            <button type="button" class="ob-chip" (click)="say('ai-assistant.hand-over.what-wrong-prompt')">
-              <mat-icon aria-hidden="true">help_outline</mat-icon>{{ 'ai-assistant.hand-over.what-wrong' | translate }}
-            </button>
+            @if (handOver().paste; as paste) {
+              <button type="button" class="ob-chip" (click)="startPaste(paste.intro)">
+                <mat-icon aria-hidden="true">{{ paste.icon }}</mat-icon>{{ paste.label }}
+              </button>
+            } @else {
+              <button type="button" class="ob-chip" (click)="say('ai-assistant.hand-over.what-wrong-prompt')">
+                <mat-icon aria-hidden="true">help_outline</mat-icon>{{ 'ai-assistant.hand-over.what-wrong' | translate }}
+              </button>
+            }
           </div>
         </div>
       } @else if (waiting()) {

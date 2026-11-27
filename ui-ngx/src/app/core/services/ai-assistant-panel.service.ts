@@ -5,7 +5,7 @@ import { defer, Observable, Subject } from 'rxjs';
 import { distinctUntilChanged, filter, finalize, map } from 'rxjs/operators';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AiAssistantPanelConfig, AiAssistantViewType, AiChatClientContext, AiChatView, ChatInfo, AiPromptMessage } from '@shared/models/ai-chat.models';
+import { AiAssistantPanelConfig, AiAssistantViewType, AiChatClientContext, aiClientOs, AiChatView, ChatInfo, AiPromptMessage } from '@shared/models/ai-chat.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
 import { LocalStorageService } from '@core/local-storage/local-storage.service';
@@ -397,7 +397,7 @@ export class AiAssistantPanelService implements OnDestroy {
   }
 
   setClientContextForView(view: AiChatView): void {
-    this.setClientContext({view, timeZone: getDefaultTimezone()});
+    this.setClientContext({view, timeZone: getDefaultTimezone(), os: aiClientOs()});
   }
 
   focusWhile<T>(view: AiChatView, name: string | null | undefined, until: Observable<T>): Observable<T> {
@@ -406,7 +406,7 @@ export class AiAssistantPanelService implements OnDestroy {
       if (!previous || !view.entityId?.id) {
         return until;
       }
-      const focus = {context: {view, timeZone: getDefaultTimezone()}, previous, previousName: this._viewName()};
+      const focus = {context: {view, timeZone: getDefaultTimezone(), os: aiClientOs()}, previous, previousName: this._viewName()};
       this._focus = focus;
       this._clientContext.set(focus.context);
       this._viewName.set(name?.trim() || null);

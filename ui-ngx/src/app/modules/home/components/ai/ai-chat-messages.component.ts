@@ -33,6 +33,7 @@ import {
   HAND_OVER_TOOL,
   CHECK_CONNECTION_TOOL,
   AiHandOver,
+  AiHandOverStep,
   aiHandOverOf,
   aiConnectionCheckOf,
   SUGGEST_PROMPTS_TOOL,
@@ -140,6 +141,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   streaming = false;
   files: Record<number, AiFile> = {};
   madeFiles: Record<number, AiMadeFile> = {};
+  inCard = new Set<string>();
   private handledMadeFiles = new Set<string>();
   quotes: Record<number, {name: string; icon: string; from: number; to: number; message: string}> = {};
   sources: Record<number, AiSource[]> = {};
@@ -149,7 +151,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   made: Record<number, string[]> = {};
   plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
   handOvers: Record<number, {handOver: AiHandOver; wait: AiHandOverWait | null}> = {};
-  private waitsInCards = new Set<number>();
+  waitsInCards = new Set<number>();
+  private movedWaits = new Set<number>();
+  waitAfterCard: Record<number, number> = {};
 
   private keptAsking = new Set<number>();
 
@@ -419,6 +423,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.files = this.findFiles();
       this.latestFiles = new Map(Object.values(this.files).map(file => [file.name, file]));
       this.madeFiles = this.findMadeFiles();
+      this.inCard = this.placeFiles();
       this.downloadRequestedFiles();
       this.quotes = this.findQuotes();
       this.sources = this.findSources();
@@ -627,7 +632,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   isListedAction(message: ChatMessage, index = -1): boolean {
     return message.from === 'ACTION' && !isKitCardTool(message.data.tool) && !isHiddenAiAction(message.data.tool)
-      && !(index >= 0 && this.waitsInCards.has(index));
+      && !(index >= 0 && (this.waitsInCards.has(index) || this.movedWaits.has(index)));
   }
 
   answerQuestions(answers: AiQuestionAnswer[]): void {
@@ -800,6 +805,26 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     return files;
   }
 
+  private placeFiles(): Set<string> {
+    const placed = new Set<string>();
+    const names = [...this.latestFiles.keys()];
+    const mentions = (step: AiHandOverStep, name: string) => [step.title, step.detail, step.markdown].some(part => part?.includes(name));
+    Object.values(this.handOvers).forEach(card => {
+      const groups = [card.handOver.steps, ...(card.handOver.choice?.options.map(option => option.steps ?? []) ?? [])];
+      groups.forEach(steps => {
+        steps.filter(step => step.file && !this.latestFiles.has(step.file)).forEach(step => step.file = undefined);
+        names.filter(name => !steps.some(step => step.file === name)).forEach(name => {
+          const last = [...steps].reverse().find(step => !step.file && mentions(step, name));
+          if (last) {
+            last.file = name;
+          }
+        });
+        steps.filter(step => step.file).forEach(step => placed.add(step.file));
+      });
+    });
+    return placed;
+  }
+
   private findMadeFiles(): Record<number, AiMadeFile> {
     const files: Record<number, AiMadeFile> = {};
     this.messages.forEach((message, index) => {
@@ -818,6 +843,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     const waits = new Set<number>();
     let current = -1;
     let early = -1;
+    const moved = new Set<number>();
+    const after: Record<number, number> = {};
     const waitOf = (message: ActionChatMessage, index: number): AiHandOverWait => {
       const running = message.data.status === 'RUNNING' && this.loading;
       if (running) {
@@ -843,6 +870,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
           current = index;
           if (early >= 0 && handOver.waitFor) {
             cards[index].wait = waitOf(this.messages[early] as ActionChatMessage, early);
+            moved.add(early);
+            after[index] = early;
             early = -1;
           }
         }
@@ -856,6 +885,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       }
     });
     this.waitsInCards = waits;
+    this.movedWaits = moved;
+    this.waitAfterCard = after;
     return cards;
   }
 

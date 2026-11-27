@@ -2191,6 +2191,7 @@
             "needs-you": "Needs you",
             "fold": "Fold",
             "unfold": "Show the steps",
+            "gateway-connected": "{{name}} connected at {{time}}.",
             "arrived-message": "The first message arrived at {{time}}.",
             "arrived-message-from": "The first message from {{name}} arrived at {{time}}.",
             "arrived-uplink": "The first uplink arrived at {{time}}.",
@@ -2208,7 +2209,7 @@
             "wait-uplink": "listening for the first uplink",
             "wait-gateway": "listening for the gateway",
             "nothing-heard": "nothing heard for {{minutes}} min",
-            "keep-waiting": "It is on, keep waiting",
+            "keep-waiting": "It is on now, keep waiting",
             "keep-waiting-prompt": "It is on. Keep waiting for the data.",
             "what-wrong": "What could be wrong?",
             "what-wrong-prompt": "Nothing arrived. What could be wrong?"

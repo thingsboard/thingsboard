@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { AfterViewChecked, Component, computed, DestroyRef, effect, ElementRef, EventEmitter, inject, input, Output, signal } from '@angular/core';
+import { AiFile, aiFileMark, aiFileName } from '@home/components/ai/ai-file.models';
+import { aiRevealOpened } from '@home/components/ai/ai-disclosure.component';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { TranslateService } from '@ngx-translate/core';
 import { AiConnectionCheck, AiHandOver } from '@home/components/ai/ai-action.models';
@@ -15,6 +17,7 @@ export interface AiHandOverWait {
 }
 
 const MIN_SILENCE_MS = 120000;
+const MAX_SILENCE_MS = 300000;
 const TEST_MARKER = 'aiTestValue';
 const OS_LABELS: Record<string, string> = {macos: 'macOS', windows: 'Windows', linux: 'Linux'};
 
@@ -34,10 +37,16 @@ export class AiHandOverComponent implements AfterViewChecked {
   handOver = input.required<AiHandOver>();
   wait = input<AiHandOverWait | null>(null);
   time = input<number>(0);
+  files = input<ReadonlyMap<string, AiFile>>(new Map());
 
   @Output() prompt = new EventEmitter<string>();
 
   @Output() stop = new EventEmitter<void>();
+  @Output() compose = new EventEmitter<string>();
+  @Output() openFile = new EventEmitter<AiFile>();
+
+  readonly fileMark = aiFileMark;
+  readonly fileName = aiFileName;
 
   private host = inject(ElementRef<HTMLElement>);
   private translate = inject(TranslateService);
@@ -86,7 +95,8 @@ export class AiHandOverComponent implements AfterViewChecked {
     const seconds = Math.floor(this.elapsed() / 1000);
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   });
-  readonly silenceMs = computed(() => Math.max(MIN_SILENCE_MS, 2 * 1000 * (this.handOver().waitFor === 'gateway' ? 0 : this.handOver().intervalSeconds ?? 0)));
+  readonly silenceMs = computed(() => Math.min(MAX_SILENCE_MS,
+    Math.max(MIN_SILENCE_MS, 2 * 1000 * (this.handOver().waitFor === 'gateway' ? 0 : this.handOver().intervalSeconds ?? 0))));
   readonly quiet = computed(() => this.waiting() && this.elapsed() >= this.silenceMs());
   readonly quietMinutes = computed(() => Math.max(2, Math.floor(this.elapsed() / 60000)));
   readonly stoppedQuiet = computed(() => {
@@ -204,6 +214,15 @@ export class AiHandOverComponent implements AfterViewChecked {
       this.testError.set(error instanceof Error ? error.message : String(error));
       this.testState.set('failed');
     }
+  }
+
+  unfold(): void {
+    this.open.set(true);
+    aiRevealOpened(this.host.nativeElement);
+  }
+
+  startPaste(intro: string): void {
+    this.compose.emit(intro + '\n');
   }
 
   say(key: string): void {

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { TranslateService } from '@ngx-translate/core';
+import { aiRevealOpened } from '@home/components/ai/ai-disclosure.component';
 
 export interface CodeLanguage {
   lang: string;
@@ -237,6 +238,9 @@ function decorate(pre: HTMLElement, translate: TranslateService, copy: (text: st
       toggle.addEventListener('click', () => {
         const open = block.classList.toggle('folded') === false;
         toggle.setAttribute('aria-expanded', String(open));
+        if (open) {
+          aiRevealOpened(block);
+        }
       });
       head.append(toggle);
     } else {

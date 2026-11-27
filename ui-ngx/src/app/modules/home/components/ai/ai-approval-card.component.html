@@ -79,7 +79,7 @@
           }
         </table>
         @if (unchanged.length) {
-          <button type="button" class="tb-more" [attr.aria-expanded]="showUnchanged" (click)="showUnchanged = !showUnchanged">
+          <button type="button" class="tb-more" [attr.aria-expanded]="showUnchanged" (click)="toggleUnchanged()">
             <mat-icon aria-hidden="true">{{ showUnchanged ? 'expand_less' : 'expand_more' }}</mat-icon>
             {{ (showUnchanged ? 'ai-assistant.review.hide-unchanged' : 'ai-assistant.review.unchanged') | translate: {count: unchanged.length} }}
           </button>
