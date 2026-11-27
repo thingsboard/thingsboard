@@ -271,7 +271,9 @@ public class CalculatedFieldDataValidatorTest {
     private void givenBelongsToTenant(EntityId entityId) {
         Dao<HasTenantId> dao = mock(Dao.class);
         given(entityDaoRegistry.<HasTenantId>getDao(entityId.getEntityType())).willReturn(dao);
-        given(dao.findById(TENANT_ID, entityId.getId())).willReturn(() -> TENANT_ID);
+        HasTenantId entity = mock(HasTenantId.class);
+        given(entity.getTenantId()).willReturn(TENANT_ID);
+        given(dao.findById(TENANT_ID, entityId.getId())).willReturn(entity);
     }
 
 }
