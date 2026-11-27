@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -655,6 +656,88 @@ public class ConverterControllerTest extends AbstractControllerTest {
             }
         }
         softly.assertAll();
+    }
+
+    @Test
+    public void testMqttDefaultDecoder() throws Exception {
+        String uplinkDir = "converters/MQTT/uplink/";
+        String payload = readResource(uplinkDir + "payload.json").orElseThrow();
+        String topic = JacksonUtil.toJsonNode(readResource(uplinkDir + "metadata.json").orElseThrow()).get("topic").asText();
+        // The default payload has no time, so the expected output is compared without ts.
+        ObjectNode expected = (ObjectNode) JacksonUtil.toJsonNode(readResource(uplinkDir + "test/topic/expected.json").orElseThrow());
+        ((ObjectNode) expected.get("telemetry")).remove("ts");
+        String expectedName = expected.get("deviceName").asText();
+        String expectedType = expected.get("deviceType").asText();
+
+        List<String> validTopics = List.of(
+                "tb/devices/" + expectedType + "/" + expectedName,
+                "tb/sensors/" + expectedType + "/" + expectedName,
+                "tb/sensors/" + expectedType + "/" + expectedName + "/telemetry"
+        );
+        List<String> invalidTopics = Arrays.asList(
+                null,
+                "tb/devices/" + expectedType + "/" + expectedName + "/commands",
+                "factory/devices/" + expectedType + "/" + expectedName,
+                "tb/devices/" + expectedType + "/" + expectedName + "/telemetry/",
+                "tb/devices/" + expectedType + "/",
+                "tb/devices//" + expectedName
+        );
+        String missingName = "Device name is missing. Provide deviceName in the payload or use a supported MQTT topic format.";
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String decoder = readResource(uplinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // The default payload and topic: the device comes from the topic, the time is the current time.
+            long before = System.currentTimeMillis();
+            JsonNode response = decodeMqttUplink(decoder, scriptLang, payload, topic);
+            long after = System.currentTimeMillis();
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": defaults").isEmpty();
+            ObjectNode output = (ObjectNode) JacksonUtil.toJsonNode(response.get("output").asText());
+            softly.assertThat(output.get("telemetry").get("ts").asLong()).as(scriptLang + ": defaults ts").isBetween(before, after);
+            ((ObjectNode) output.get("telemetry")).remove("ts");
+            softly.assertThat(output).as(scriptLang + ": defaults").isEqualTo(expected);
+
+            for (String validTopic : validTopics) {
+                response = decodeMqttUplink(decoder, scriptLang, payload, validTopic);
+                softly.assertThat(response.get("error").asText()).as(scriptLang + ": " + validTopic).isEmpty();
+                output = (ObjectNode) JacksonUtil.toJsonNode(response.get("output").asText());
+                softly.assertThat(output.get("deviceName").asText()).as(scriptLang + ": " + validTopic).isEqualTo(expectedName);
+                softly.assertThat(output.get("deviceType").asText()).as(scriptLang + ": " + validTopic).isEqualTo(expectedType);
+            }
+
+            for (String invalidTopic : invalidTopics) {
+                // Without deviceName in the payload, the message is rejected.
+                response = decodeMqttUplink(decoder, scriptLang, payload, invalidTopic);
+                softly.assertThat(response.get("output").asText()).as(scriptLang + ": " + invalidTopic).isEmpty();
+                softly.assertThat(response.get("error").asText()).as(scriptLang + ": " + invalidTopic).contains(missingName);
+
+                // With deviceName in the payload, the topic is not used and the device type is "default".
+                response = decodeMqttUplink(decoder, scriptLang, "{\"deviceName\":\"Pump-01\",\"temperature\":25.5}", invalidTopic);
+                softly.assertThat(response.get("error").asText()).as(scriptLang + ": deviceName in payload, " + invalidTopic).isEmpty();
+                output = (ObjectNode) JacksonUtil.toJsonNode(response.get("output").asText());
+                softly.assertThat(output.get("deviceName").asText()).as(scriptLang + ": deviceName in payload, " + invalidTopic).isEqualTo("Pump-01");
+                softly.assertThat(output.get("deviceType").asText()).as(scriptLang + ": deviceName in payload, " + invalidTopic).isEqualTo("default");
+            }
+
+            // A blank deviceName in the payload is not a device name.
+            response = decodeMqttUplink(decoder, scriptLang, "{\"deviceName\":\"  \",\"temperature\":25.5}", null);
+            softly.assertThat(response.get("output").asText()).as(scriptLang + ": blank deviceName").isEmpty();
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": blank deviceName").contains(missingName);
+        }
+        softly.assertAll();
+    }
+
+    private JsonNode decodeMqttUplink(String decoder, ScriptLanguage scriptLang, String payload, String topic) {
+        ObjectNode metadata = JacksonUtil.newObjectNode();
+        if (topic != null) {
+            metadata.put("topic", topic);
+        }
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("decoder", decoder);
+        inputParams.set("metadata", metadata);
+        inputParams.put("payload", Base64.getEncoder().encodeToString(payload.getBytes(StandardCharsets.UTF_8)));
+        return doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
     }
 
     @Test

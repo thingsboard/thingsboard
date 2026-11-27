@@ -1,0 +1,15 @@
+{
+  "deviceName": "Thermostat-01",
+  "deviceType": "thermostat",
+  "attributes": {
+    "serialNumber": "SN-001"
+  },
+  "telemetry": {
+    "ts": 1791901200000,
+    "values": {
+      "temperature": 25.5,
+      "humidity": 60,
+      "battery": 95
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "deviceName": "Thermostat-02",
+  "deviceType": "boiler",
+  "telemetry": {
+    "ts": 1791901200000,
+    "values": {
+      "temperature": 70.5
+    }
+  }
+}
