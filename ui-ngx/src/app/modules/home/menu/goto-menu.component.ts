@@ -116,10 +116,10 @@ export class GotoMenuComponent implements OnInit, OnDestroy {
     this.router.navigate([link.path], { queryParams: link.queryParams }).then();
   }
 
-  private fetchLinks(searchText?: string): Observable<GotoMenuResult> {
-    this.searchText = searchText;
+  private fetchLinks(searchText: string): Observable<GotoMenuResult> {
+    const query = (searchText ?? '').trim().toLowerCase();
     return this.allLinks().pipe(
-      map((links) => this.filterLinks(links))
+      map((links) => this.filterLinks(links, query))
     );
   }
 
@@ -140,8 +140,7 @@ export class GotoMenuComponent implements OnInit, OnDestroy {
     return this.allLinksObservable$;
   }
 
-  private filterLinks(links: GotoMenuLink[]): GotoMenuResult {
-    const query = this.searchText.trim().toLowerCase();
+  private filterLinks(links: GotoMenuLink[], query: string): GotoMenuResult {
     const nameMatches: GotoMenuLink[] = [];
     let crumbMatches: GotoMenuLink[] = [];
     for (const link of links) {
