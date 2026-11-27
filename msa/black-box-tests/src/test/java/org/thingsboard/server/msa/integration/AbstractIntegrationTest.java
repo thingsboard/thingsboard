@@ -5,6 +5,7 @@ package org.thingsboard.server.msa.integration;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -39,6 +40,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.msa.prototypes.ConverterPrototypes.downlinkConverterPrototype;
 import static org.thingsboard.server.msa.prototypes.ConverterPrototypes.uplinkConverterPrototype;
@@ -49,6 +52,7 @@ public abstract class AbstractIntegrationTest extends AbstractContainerTest {
 
     public static final String LOGIN = "tenant@thingsboard.org";
     public static final String PASSWORD = "tenant";
+    protected static final String DOWNLINK_DEBUG_EVENT_TYPE = "Downlink";
     protected Device device;
     private RuleChainId defaultRuleChainId;
     protected Integration integration;
@@ -286,6 +290,52 @@ public abstract class AbstractIntegrationTest extends AbstractContainerTest {
                     return event != null
                             && msgType.equals(event.getBody().get("msgType").asText());
                 });
+    }
+
+    /**
+     * Waits until the integration reports that it processed a downlink. The integration persists a
+     * {@code Downlink} debug event after it ran the downlink converter and handed the result to its
+     * transport, so this separates "the downlink never reached the integration" from "the integration
+     * sent it but the external side did not receive it". Requires debug mode on the integration.
+     */
+    protected EventInfo waitForIntegrationDownlinkDebugEvent(Integration integration) {
+        AtomicReference<List<EventInfo>> lastEvents = new AtomicReference<>(List.of());
+        try {
+            return Awaitility
+                    .await()
+                    .alias("Get integration downlink debug event")
+                    .pollInterval(500, TimeUnit.MILLISECONDS)
+                    .atMost(TIMEOUT, TimeUnit.SECONDS)
+                    .until(() -> {
+                        List<EventInfo> events = testRestClient.getEvents(integration.getId(), EventType.DEBUG_INTEGRATION,
+                                integration.getTenantId(), new TimePageLink(1024)).getData();
+                        lastEvents.set(events);
+                        return events.stream()
+                                .filter(event -> DOWNLINK_DEBUG_EVENT_TYPE.equals(bodyText(event, "type")))
+                                .findFirst();
+                    }, Optional::isPresent)
+                    .get();
+        } catch (ConditionTimeoutException e) {
+            throw new AssertionError("Integration " + integration.getId() + " did not report a '" + DOWNLINK_DEBUG_EVENT_TYPE
+                    + "' debug event within " + TIMEOUT + " seconds, so the downlink did not reach the integration's transport. "
+                    + "Integration debug events: " + describeDebugEvents(lastEvents.get()), e);
+        }
+    }
+
+    protected static String describeDebugEvents(List<EventInfo> events) {
+        if (events == null || events.isEmpty()) {
+            return "[]";
+        }
+        return events.stream()
+                .sorted(Comparator.comparingLong(EventInfo::getCreatedTime))
+                .map(event -> "{type=" + bodyText(event, "type") + ", status=" + bodyText(event, "status")
+                        + ", error=" + bodyText(event, "error") + ", message=" + bodyText(event, "message") + "}")
+                .collect(Collectors.joining(", ", "[", "]"));
+    }
+
+    private static String bodyText(EventInfo event, String field) {
+        JsonNode body = event.getBody();
+        return body != null && body.hasNonNull(field) ? body.get(field).asText() : null;
     }
 
     protected Secret createSecret(SecretId secretId, String name, String value) {

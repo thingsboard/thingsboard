@@ -14,6 +14,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -23,13 +24,16 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.msa.WsClient;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
@@ -73,6 +77,7 @@ public class TTNIntegrationTest extends AbstractIntegrationTest {
 
     private static final String INTEGRATION_DOWNLINK_NODE_TYPE = "org.thingsboard.rule.engine.integration.TbIntegrationDownlinkNode";
     private static final int DOWNLINK_F_PORT = 1;
+    private static final int TTN_QUEUE_TIMEOUT_SECONDS = 60;
 
     // Downlink converter: turns the shared-attribute body ({devId, downlinkData}) into the JSON
     // The Things Stack expects on the v3 'down/push' MQTT topic, and exposes devId as metadata so
@@ -189,15 +194,25 @@ public class TTNIntegrationTest extends AbstractIntegrationTest {
                 .orElseThrow(() -> new AssertionError("TbIntegrationDownlinkNode not found in rule chain"));
         waitTillRuleNodeReceiveMsg(integrationNode.getId(), EventType.DEBUG_RULE_NODE, integration.getTenantId(), "ATTRIBUTES_UPDATED");
 
-        // Verify The Things Stack actually accepted the downlink into the device's queue.
+        // The integration persists the 'Downlink' debug event after it published to The Things Stack MQTT broker.
+        // Waiting for it first tells a downlink lost inside ThingsBoard apart from one The Things Stack did not queue.
+        EventInfo downlinkEvent = waitForIntegrationDownlinkDebugEvent(integration);
+
+        // Verify The Things Stack actually accepted the downlink into the device's queue. The queue lives in an
+        // external SaaS, so the poll is longer than for local brokers and the last response is kept for the failure message.
+        AtomicReference<String> lastQueueResponse = new AtomicReference<>();
         Awaitility
                 .await()
+                .alias("The Things Stack downlink queue after integration debug event " + describeDebugEvents(List.of(downlinkEvent)))
                 .pollInterval(1, TimeUnit.SECONDS)
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .atMost(TTN_QUEUE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     JsonNode queue = getDownlinkQueue(region, password, appId, deviceId);
+                    lastQueueResponse.set(String.valueOf(queue));
                     JsonNode downlinks = queue.get("downlinks");
-                    assertThat(downlinks).as("The Things Stack downlink queue response should contain 'downlinks'").isNotNull();
+                    assertThat(downlinks)
+                            .as("The Things Stack downlink queue response should contain 'downlinks', last response: %s", lastQueueResponse.get())
+                            .isNotNull();
                     boolean matched = false;
                     for (JsonNode item : downlinks) {
                         JsonNode frmPayload = item.get("frm_payload");
@@ -209,7 +224,8 @@ public class TTNIntegrationTest extends AbstractIntegrationTest {
                         }
                     }
                     assertThat(matched)
-                            .as("The Things Stack downlink queue should contain enqueued item with frm_payload=%s f_port=%d", downlinkPayloadBase64, DOWNLINK_F_PORT)
+                            .as("The Things Stack downlink queue should contain enqueued item with frm_payload=%s f_port=%d, last response: %s",
+                                    downlinkPayloadBase64, DOWNLINK_F_PORT, lastQueueResponse.get())
                             .isTrue();
                 });
     }
@@ -292,7 +308,16 @@ public class TTNIntegrationTest extends AbstractIntegrationTest {
     }
 
     private HttpResponse<String> sendTtnRequest(HttpRequest request) throws Exception {
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response;
+        try {
+            response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            throw new SkipException("The Things Stack is unreachable (" + request.method() + " " + request.uri() + "): " + e);
+        }
+        if (response.statusCode() == 429 || response.statusCode() / 100 == 5) {
+            throw new SkipException("The Things Stack is unavailable: " + request.method() + " " + request.uri()
+                    + " -> " + response.statusCode() + " - " + response.body());
+        }
         if (response.statusCode() / 100 != 2) {
             throw new RuntimeException("TTN API call failed: " + request.method() + " " + request.uri()
                     + " -> " + response.statusCode() + " - " + response.body());
