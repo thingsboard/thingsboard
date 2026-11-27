@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.extension.Extension;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -93,6 +94,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.extension.ExtensionService;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.integration.IntegrationService;
@@ -230,6 +232,8 @@ public class TenantIdLoaderTest {
     private AgentProfileService agentProfileService;
     @Mock
     private AgentBulkActionService agentBulkActionService;
+    @Mock
+    private ExtensionService extensionService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -565,6 +569,12 @@ public class TenantIdLoaderTest {
                 agentBulkAction.setTenantId(tenantId);
                 when(tbPeContext.getAgentBulkActionService()).thenReturn(agentBulkActionService);
                 doReturn(agentBulkAction).when(agentBulkActionService).findById(eq(tenantId), any());
+                break;
+            case EXTENSION:
+                Extension extension = new Extension();
+                extension.setTenantId(tenantId);
+                when(tbPeContext.getExtensionService()).thenReturn(extensionService);
+                doReturn(extension).when(extensionService).findExtensionById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

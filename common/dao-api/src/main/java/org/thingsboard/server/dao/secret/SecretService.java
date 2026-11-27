@@ -38,4 +38,10 @@ public interface SecretService extends EntityDaoService {
 
     Map<EntityType, List<EntityInfo>> findEntitiesBySecret(TenantId tenantId, SecretInfo secretInfo);
 
+    /**
+     * The entities of one type that reference the secret. It runs one usage search, not one per entity
+     * type, so use it when the caller acts on one type only. Empty when the type holds no secrets.
+     */
+    List<EntityInfo> findEntitiesBySecret(TenantId tenantId, SecretInfo secretInfo, EntityType entityType);
+
 }

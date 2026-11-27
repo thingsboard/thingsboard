@@ -26,6 +26,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>data</artifactId>
         </dependency>

@@ -1,0 +1,35 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: grid;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  // toolbar / progress bar / content / actions — the content row takes the free space,
+  // so only the <pre> scrolls and the dialog itself never gets a second scrollbar
+  grid-template-rows: min-content min-content minmax(auto, 1fr) min-content;
+
+  .mat-mdc-dialog-content {
+    display: flex;
+    flex-direction: column;
+    max-height: none;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .tb-extension-logs {
+    flex: 1;
+    min-height: 200px;
+    min-width: 600px;
+    margin-top: 12px;
+    overflow: auto;
+    background-color: #263238;
+    color: #eceff1;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+}

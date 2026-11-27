@@ -93,6 +93,7 @@ public class EntityIdFactory {
             case AGENT_APP_PROFILE -> new AgentAppProfileId(uuid);
             case AGENT_PROFILE -> new AgentProfileId(uuid);
             case AGENT_BULK_ACTION -> new AgentBulkActionId(uuid);
+            case EXTENSION -> new ExtensionId(uuid);
         };
     }
 

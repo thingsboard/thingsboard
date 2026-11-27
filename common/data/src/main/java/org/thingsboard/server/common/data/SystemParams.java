@@ -50,5 +50,8 @@ public class SystemParams {
     boolean integrationsEnabled;
     boolean schedulerEnabled;
     boolean reportingEnabled;
+    // Whether the Extensions feature is on (extensions.mode != disabled). The whole REST surface is
+    // @ConditionalOnExpression'd on it, so the UI must hide the menu entry and the route when it is false.
+    boolean extensionsEnabled;
     boolean isCommunityGrantLicense;
 }

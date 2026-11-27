@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.ExtensionId;
 import org.thingsboard.server.common.data.id.GroupPermissionId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.JobId;
@@ -240,6 +241,9 @@ public class TenantIdLoader {
                 break;
             case AGENT_BULK_ACTION:
                 tenantEntity = ctx.getPeContext().getAgentBulkActionService().findById(ctxTenantId, new AgentBulkActionId(id));
+                break;
+            case EXTENSION:
+                tenantEntity = ctx.getPeContext().getExtensionService().findExtensionById(ctxTenantId, new ExtensionId(id));
                 break;
             default:
                 throw new RuntimeException("Unexpected entity type: " + entityId.getEntityType());

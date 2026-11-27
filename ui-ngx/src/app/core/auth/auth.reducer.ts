@@ -36,6 +36,7 @@ const emptyUserAuthState: AuthPayload = {
   allowKeyFiltersOrConditions: true,
   nullsOrderStrategy: 'default',
   edqsEnabled: false,
+  extensionsEnabled: false,
   iotHubBaseUrl: '',
   licenseVersion: 0,
   edgeEnabled: false,

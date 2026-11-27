@@ -1,0 +1,46 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="primary">
+  <h2>{{ 'extension.api-docs-title' | translate }}</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button
+          (click)="close()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="loading">
+</mat-progress-bar>
+<div style="height: 4px;" *ngIf="!loading"></div>
+<div mat-dialog-content class="flex flex-col">
+  <div class="flex flex-row items-center gap-4">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-extension-select">
+      <mat-label translate>extension.extension</mat-label>
+      <mat-select [(ngModel)]="selectedExtensionId" (selectionChange)="loadSpec()">
+        <ng-container *ngIf="extensions.length; else currentOnly">
+          <mat-option *ngFor="let extension of extensions" [value]="extension.id.id">{{ extension.name }}</mat-option>
+        </ng-container>
+        <ng-template #currentOnly>
+          <mat-option [value]="data.extensionId">{{ data.extensionName }}</mat-option>
+        </ng-template>
+      </mat-select>
+    </mat-form-field>
+    <button mat-stroked-button color="primary" type="button" [disabled]="loading" (click)="loadSpec()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'action.refresh' | translate }}
+    </button>
+  </div>
+  <div *ngIf="error" class="tb-api-docs-error">{{ error }}</div>
+  <div #swaggerContainer class="tb-swagger-container"></div>
+</div>
+<div mat-dialog-actions class="flex justify-end">
+  <button mat-button color="primary"
+          type="button"
+          (click)="close()">
+    {{ 'action.close' | translate }}
+  </button>
+</div>

@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.audit;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -14,9 +16,13 @@ import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.extension.Extension;
+import org.thingsboard.server.common.data.extension.ExtensionContainerSpec;
+import org.thingsboard.server.common.data.extension.RegistryAuth;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.ExtensionId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.audit.sink.AuditLogSink;
@@ -24,6 +30,7 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.service.validator.AuditLogDataValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -117,14 +124,95 @@ public class AuditLogServiceImplTest {
         verifyEntityName("Test alarm");
     }
 
-    private void verifyEntityName(String entityName) throws Exception {
-        then(auditLogDataValidator).should().validate(any(AuditLog.class), any());
+    // R4-6: containerSpec.env values are secret material (rendered into a k8s Secret); the audit
+    // entry must keep the rest of the entity but never the env values.
+    @Test
+    public void givenExtensionWithEnvSecrets_whenLogEntityAction_thenEnvIsScrubbed() throws Exception {
+        // GIVEN
+        given(auditLogLevelFilter.logEnabled(any(), any())).willReturn(true);
+        Extension extension = new Extension(new ExtensionId(UUID.fromString("3aedbf45-8d4e-4f0c-87a3-4c8b35e0ef07")));
+        extension.setTenantId(TENANT_ID);
+        extension.setName("Whoami Test");
+        extension.setSlug("whoami-1d61");
+        ExtensionContainerSpec spec = new ExtensionContainerSpec();
+        spec.setImage("registry.example.com/whoami");
+        spec.setEnv(Map.of("DB_PASSWORD", "hunter2"));
+        extension.setContainerSpec(spec);
+
+        // WHEN
+        auditLogService.logEntityAction(TENANT_ID, CUSTOMER_ID, USER_ID, USER_NAME, extension.getId(), extension, ActionType.ADDED, null);
+
+        // THEN
+        AuditLog logged = captureSavedAuditLog();
+        JsonNode entity = logged.getActionData().get("entity");
+        assertThat(entity).isNotNull();
+        assertThat(entity.get("name").asText()).isEqualTo("Whoami Test");
+        assertThat(entity.path("containerSpec").path("image").asText()).isEqualTo("registry.example.com/whoami");
+        assertThat(entity.path("containerSpec").path("env").asText()).isEmpty();
+        assertThat(logged.getActionData().toString()).doesNotContain("hunter2").doesNotContain("DB_PASSWORD");
+    }
+
+    // registryAuth.password is a ${secret:...} reference; the audit entry must keep the registry/
+    // username hints but never the secret-reference string.
+    @Test
+    public void givenExtensionWithRegistryAuth_whenLogEntityAction_thenPasswordReferenceIsScrubbed() throws Exception {
+        // GIVEN
+        given(auditLogLevelFilter.logEnabled(any(), any())).willReturn(true);
+        Extension extension = new Extension(new ExtensionId(UUID.fromString("3aedbf45-8d4e-4f0c-87a3-4c8b35e0ef07")));
+        extension.setTenantId(TENANT_ID);
+        extension.setName("Whoami Test");
+        extension.setSlug("whoami-1d61");
+        ExtensionContainerSpec spec = new ExtensionContainerSpec();
+        spec.setImage("registry.example.com/whoami");
+        RegistryAuth auth = new RegistryAuth();
+        auth.setRegistry("registry.example.com");
+        auth.setUsername("robot");
+        auth.setPassword("${secret:acme-registry;type:TEXT}");
+        spec.setRegistryAuth(auth);
+        extension.setContainerSpec(spec);
+
+        // WHEN
+        auditLogService.logEntityAction(TENANT_ID, CUSTOMER_ID, USER_ID, USER_NAME, extension.getId(), extension, ActionType.ADDED, null);
+
+        // THEN
+        AuditLog logged = captureSavedAuditLog();
+        JsonNode entity = logged.getActionData().get("entity");
+        assertThat(entity.path("containerSpec").path("registryAuth").path("username").asText()).isEqualTo("robot");
+        assertThat(entity.path("containerSpec").path("registryAuth").path("password").asText()).isEmpty();
+        assertThat(logged.getActionData().toString()).doesNotContain("acme-registry");
+    }
+
+    @Test
+    public void givenExtensionWithoutEnv_whenLogEntityAction_thenEntityIsLoggedAsIs() throws Exception {
+        // GIVEN
+        given(auditLogLevelFilter.logEnabled(any(), any())).willReturn(true);
+        Extension extension = new Extension(new ExtensionId(UUID.fromString("3aedbf45-8d4e-4f0c-87a3-4c8b35e0ef07")));
+        extension.setTenantId(TENANT_ID);
+        extension.setName("Whoami Test");
+        extension.setSlug("whoami-1d61");
+
+        // WHEN
+        auditLogService.logEntityAction(TENANT_ID, CUSTOMER_ID, USER_ID, USER_NAME, extension.getId(), extension, ActionType.UPDATED, null);
+
+        // THEN
+        JsonNode entity = captureSavedAuditLog().getActionData().get("entity");
+        assertThat(entity).isNotNull();
+        assertThat(entity.get("name").asText()).isEqualTo("Whoami Test");
+    }
+
+    private AuditLog captureSavedAuditLog() throws Exception {
         ArgumentCaptor<Callable> submitTask = ArgumentCaptor.forClass(Callable.class);
         then(executor).should().submit(submitTask.capture());
         submitTask.getValue().call();
         ArgumentCaptor<AuditLog> auditLogEntry = ArgumentCaptor.forClass(AuditLog.class);
         then(auditLogDao).should().save(eq(TENANT_ID), auditLogEntry.capture());
-        assertThat(auditLogEntry.getValue().getEntityName()).isEqualTo(entityName);
+        return auditLogEntry.getValue();
+    }
+
+    private void verifyEntityName(String entityName) throws Exception {
+        then(auditLogDataValidator).should().validate(any(AuditLog.class), any());
+        AuditLog logged = captureSavedAuditLog();
+        assertThat(logged.getEntityName()).isEqualTo(entityName);
         then(auditLogSink).should().logAction(any());
     }
 

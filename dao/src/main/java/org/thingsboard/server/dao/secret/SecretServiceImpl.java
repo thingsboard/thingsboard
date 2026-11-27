@@ -179,7 +179,7 @@ public class SecretServiceImpl extends AbstractCachedEntityService<SecretCacheKe
     @Override
     public Map<EntityType, List<EntityInfo>> findEntitiesBySecret(TenantId tenantId, SecretInfo secretInfo) {
         Map<EntityType, List<EntityInfo>> affectedEntities = new HashMap<>();
-        String placeholder = String.format("${secret:%s;type:%s}", secretInfo.getName(), secretInfo.getType());
+        String placeholder = toPlaceholder(secretInfo);
         hasSecretsEntityDaos.forEach((entityType, hasSecretsEntityDao) -> {
             var entities = hasSecretsEntityDao.findByTenantIdAndSecretPlaceholder(tenantId, placeholder);
             if (!entities.isEmpty()) {
@@ -187,6 +187,29 @@ public class SecretServiceImpl extends AbstractCachedEntityService<SecretCacheKe
             }
         });
         return affectedEntities;
+    }
+
+    @Override
+    public List<EntityInfo> findEntitiesBySecret(TenantId tenantId, SecretInfo secretInfo, EntityType entityType) {
+        HasSecretsEntityDao hasSecretsEntityDao = hasSecretsEntityDaos.get(entityType);
+        if (hasSecretsEntityDao == null) {
+            return List.of();
+        }
+        return hasSecretsEntityDao.findByTenantIdAndSecretPlaceholder(tenantId, toPlaceholder(secretInfo));
+    }
+
+    // The usage search binds this into an ILIKE pattern (CONCAT('%', :placeholder, '%')); a secret
+    // name containing '%' or '_' would otherwise act as a wildcard and match unrelated entities (or
+    // fail to match), corrupting deletion-protection. Escape the LIKE metacharacters so the match is
+    // literal — PostgreSQL LIKE/ILIKE treats backslash as the default escape character.
+    private static String toPlaceholder(SecretInfo secretInfo) {
+        return escapeLike(String.format("${secret:%s;type:%s}", secretInfo.getName(), secretInfo.getType()));
+    }
+
+    // Escapes LIKE/ILIKE metacharacters so a value bound into a CONCAT('%', ?, '%') pattern matches
+    // literally. Backslash is escaped first (it is the default ILIKE escape char), then '%' and '_'.
+    private static String escapeLike(String value) {
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     @Override

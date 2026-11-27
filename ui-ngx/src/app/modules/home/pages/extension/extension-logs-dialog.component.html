@@ -1,0 +1,43 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="primary">
+  <h2>{{ 'extension.logs-title' | translate: {extensionName: data.extensionName} }}</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button
+          (click)="close()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="loading">
+</mat-progress-bar>
+<div style="height: 4px;" *ngIf="!loading"></div>
+<div mat-dialog-content class="flex flex-col">
+  <div class="flex flex-row items-center gap-4">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>extension.log-lines</mat-label>
+      <mat-select [(ngModel)]="lines" (selectionChange)="loadLogs()">
+        <mat-option *ngFor="let option of linesOptions" [value]="option">{{ option }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-stroked-button color="primary" type="button" [disabled]="loading" (click)="loadLogs()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'action.refresh' | translate }}
+    </button>
+    <mat-slide-toggle [(ngModel)]="autoRefresh">
+      {{ 'extension.auto-refresh' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <pre class="tb-extension-logs">{{ logs }}</pre>
+</div>
+<div mat-dialog-actions class="flex justify-end">
+  <button mat-button color="primary"
+          type="button"
+          (click)="close()">
+    {{ 'action.close' | translate }}
+  </button>
+</div>

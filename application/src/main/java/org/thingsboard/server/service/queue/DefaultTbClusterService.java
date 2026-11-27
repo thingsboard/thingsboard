@@ -782,7 +782,8 @@ public class DefaultTbClusterService implements TbClusterService {
                 EntityType.CALCULATED_FIELD,
                 EntityType.TB_RESOURCE,
                 EntityType.CUSTOMER,
-                EntityType.USER)
+                EntityType.USER,
+                EntityType.EXTENSION)
                 || (entityType == EntityType.ASSET && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
                 || (entityType == EntityType.DEVICE && msg.getEvent() == ComponentLifecycleEvent.UPDATED);
 
