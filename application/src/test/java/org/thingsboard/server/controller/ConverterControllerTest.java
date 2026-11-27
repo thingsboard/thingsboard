@@ -752,6 +752,44 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testTuyaDefaultEncoder() throws Exception {
+        String downlinkDir = "converters/TUYA/downlink/";
+        String rpc = readResource(downlinkDir + "payload.json").orElseThrow();
+        String rpcMsgType = readResource(downlinkDir + "msgType.txt").orElseThrow().trim();
+        String metadata = readResource(downlinkDir + "metadata.json").orElseThrow();
+        JsonNode expected = JacksonUtil.toJsonNode(readResource(downlinkDir + "test/default/expected.json").orElseThrow());
+        String deviceName = JacksonUtil.toJsonNode(metadata).get("deviceName").asText();
+
+        // message, message type, metadata -> expected error
+        List<List<String>> errorCases = List.of(
+                List.of(rpc, rpcMsgType, "{}", "Message metadata has no deviceName"),
+                List.of(rpc, rpcMsgType, "{\"deviceName\":\"  \"}", "Message metadata has no deviceName"),
+                List.of(rpc, "ATTRIBUTES_UPDATED", metadata, "Message is not an RPC request"),
+                List.of("{\"params\":\"true\"}", rpcMsgType, metadata, "RPC request has no method"),
+                List.of("{\"method\":\"  \",\"params\":\"true\"}", rpcMsgType, metadata, "RPC request has no method"),
+                List.of("{\"method\":\"switch_1\"}", rpcMsgType, metadata, "RPC request has no params"),
+                List.of("{\"method\":\"switch_1\",\"params\":\"null\"}", rpcMsgType, metadata, "RPC request has no params")
+        );
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String encoder = readResource(downlinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            JsonNode response = encodeDownlink(encoder, scriptLang, rpc, rpcMsgType, "{\"deviceName\":\" " + deviceName + " \"}");
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": device name with spaces").isEmpty();
+            softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(scriptLang + ": device name with spaces").isEqualTo(expected);
+
+            for (List<String> errorCase : errorCases) {
+                String description = scriptLang + ": " + errorCase.get(0) + ", " + errorCase.get(1) + ", " + errorCase.get(2);
+                response = encodeDownlink(encoder, scriptLang, errorCase.get(0), errorCase.get(1), errorCase.get(2));
+                softly.assertThat(response.get("output").asText()).as(description).isEqualTo("null");
+                softly.assertThat(response.get("error").asText()).as(description).contains(errorCase.get(3));
+            }
+        }
+        softly.assertAll();
+    }
+
+    @Test
     public void testDefaultDownlinkConverters() throws Exception {
         Resource[] expectedFiles = new PathMatchingResourcePatternResolver().getResources("classpath*:converters/*/downlink/test/*/expected.json");
         assertThat(expectedFiles).isNotEmpty();
