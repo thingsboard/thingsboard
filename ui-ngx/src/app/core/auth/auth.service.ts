@@ -175,9 +175,7 @@ export class AuthService {
   }
 
   public logout(captureLastUrl: boolean = false, ignoreRequest = false) {
-    if (captureLastUrl) {
-      this.redirectUrl = this.router.url;
-    }
+    this.redirectUrl = captureLastUrl ? this.router.url : null;
     if (!ignoreRequest) {
       this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
         .subscribe(() => {
@@ -256,7 +254,7 @@ export class AuthService {
       } else if (!path || path === 'login' || this.forceDefaultPlace(authState, path, params)) {
         const redirectUrl = this.redirectUrl;
         this.redirectUrl = null;
-        if (redirectUrl && this.isDeepLink(redirectUrl)) {
+        if (redirectUrl && !authState.authUser.isPublic && this.isDeepLink(redirectUrl)) {
           result = this.router.parseUrl(redirectUrl);
         } else {
           result = this.defaultPlaceUrl(authState);
