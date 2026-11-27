@@ -26,6 +26,7 @@ export const IntegrationTbelDefaultDecodersUrl = new Map<IntegrationType, string
   [IntegrationType.AZURE_SERVICE_BUS, '/assets/converters/AZURE_SERVICE_BUS/uplink/tbel.raw'],
   [IntegrationType.AWS_IOT, '/assets/converters/AWS_IOT/uplink/tbel.raw'],
   [IntegrationType.KPN, '/assets/converters/KPN/uplink/tbel.raw'],
+  [IntegrationType.TMOBILE_IOT_CDP, '/assets/converters/TMOBILE_IOT_CDP/uplink/tbel.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/tbel.raw'],
   [IntegrationType.TPE, '/assets/converters/TPE/uplink/tbel.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/uplink/tbel.raw']
@@ -36,6 +37,7 @@ export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/uplink/js.raw'],
   [IntegrationType.TTI,'/assets/converters/TTI/uplink/js.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/uplink/js.raw'],
+  [IntegrationType.TMOBILE_IOT_CDP, '/assets/converters/TMOBILE_IOT_CDP/uplink/js.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/js.raw'],
   [IntegrationType.TPE, '/assets/converters/TPE/uplink/js.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/uplink/js.raw']

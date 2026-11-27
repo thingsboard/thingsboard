@@ -1,0 +1,68 @@
+// Decode an IoT Creators callback
+// payload - array of bytes (the callback body)
+// metadata - key/value object
+
+/** Decoder **/
+
+var data = decodeToJson(payload);
+var reports = data.reports || [];
+var result = [];
+
+for (var i = 0; i < reports.length; i++) {
+  var report = reports[i];
+
+  // Decode only device uplinks.
+  if (report.resourcePath === "uplinkMsg/0/data" && report.value != null) {
+    // The device payload is a hex string.
+    var bytes = hexToBytes(report.value);
+
+    // The Comfort Sensor payload is 19 bytes long.
+    if (bytes.length >= 19) {
+      // IoT Creators identifies the device by "IMEI:<imei>".
+      var serialNumber = String(report.serialNumber);
+      var imei = serialNumber.replace("IMEI:", "");
+
+      result.push({
+        deviceName: "NB-IoT-" + imei,
+        deviceType: "NB-IoT sensor",
+        attributes: {
+          serialNumber: serialNumber,
+          subscriptionId: report.subscriptionId,
+          resourcePath: report.resourcePath,
+          model: "Comfort Sensor"
+        },
+        telemetry: {
+          ts: report.timestamp,
+          values: {
+            status: bytes[8],
+            batteryVoltage: ((bytes[9] << 8) | bytes[10]) / 100,
+            temperature: ((bytes[12] << 8) | bytes[13]) / 100,
+            humidity: ((bytes[14] << 8) | bytes[15]) / 100,
+            co2: (bytes[16] << 8) | bytes[17],
+            presence: bytes[18] === 1
+          }
+        }
+      });
+    }
+  }
+}
+
+/** Helper functions **/
+
+function decodeToString(payload) {
+  return String.fromCharCode.apply(String, payload);
+}
+
+function decodeToJson(payload) {
+  return JSON.parse(decodeToString(payload));
+}
+
+function hexToBytes(hex) {
+  var bytes = [];
+  for (var j = 0; j < hex.length; j += 2) {
+    bytes.push(parseInt(hex.substr(j, 2), 16));
+  }
+  return bytes;
+}
+
+return result;
