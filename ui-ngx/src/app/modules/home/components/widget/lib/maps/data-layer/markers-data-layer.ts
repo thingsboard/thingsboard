@@ -25,7 +25,7 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L, { FeatureGroup } from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import {
   deepClone,
@@ -55,10 +55,17 @@ import {
 import { TbImageMap } from '@home/components/widget/lib/maps/image-map';
 import { DataLayerColorProcessor, TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 
+const DEFAULT_MARKER_ICON_SIZE = 34;
+const ICON_LOAD_DEBOUNCE_MS = 150;
+// Extra fraction of the viewport size to treat as visible, so a marker whose anchor point sits just
+// outside the bounds (but whose icon still overlaps the viewport) is not hidden behind the placeholder.
+const VIEWPORT_VISIBILITY_PADDING = 0.2;
+
 export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDataLayerSettings> {
 
   private positionFunction: CompiledTbFunction<MarkerPositionFunction>;
   private markerIconProcessor: MarkerIconProcessor<any>;
+  private defaultMarkerIconInfo: MarkerIconInfo;
 
   constructor(public dataLayer: TbMapDataLayer,
               private settings: S,
@@ -69,6 +76,16 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   public setup(): Observable<any> {
     this.markerIconProcessor = MarkerIconProcessor.fromSettings(this, this.settings);
     const setup$: Observable<void>[] = [this.markerIconProcessor.setup()];
+    if (this.settings.markerType === MarkerType.image) {
+      setup$.push(
+        this.buildDefaultMarkerIcon(0).pipe(
+          map((info) => {
+            this.defaultMarkerIconInfo = info;
+            return null;
+          })
+        )
+      );
+    }
     if (this.dataLayer.mapType() === MapType.image) {
       setup$.push(
         parseTbFunction<MarkerPositionFunction>(this.dataLayer.getCtx().http, this.settings.positionFunction, ['origXPos', 'origYPos', 'data', 'dsData', 'aspect']).pipe(
@@ -124,11 +141,18 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   }
 
   public createDefaultMarkerIcon(rotationAngle = 0): Observable<MarkerIconInfo> {
+    if (rotationAngle !== 0) {
+      return this.buildDefaultMarkerIcon(rotationAngle);
+    }
+    return of(this.defaultMarkerIconInfo);
+  }
+
+  private buildDefaultMarkerIcon(rotationAngle: number): Observable<MarkerIconInfo> {
     const color = plainColorFromVariable(this.settings.markerShape?.color?.color || '#307FE5');
     return this.createColoredMarkerShape(MarkerShape.markerShape1, tinycolor(color), rotationAngle);
   }
 
-  public createColoredMarkerShape(shape: MarkerShape, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
+  public createColoredMarkerShape(shape: MarkerShape, color: tinycolor.Instance, rotationAngle = 0, size = DEFAULT_MARKER_ICON_SIZE): Observable<MarkerIconInfo> {
     return createColorMarkerShapeURI(this.dataLayer.getCtx().$injector.get(MatIconRegistry), this.dataLayer.getCtx().$injector.get(DomSanitizer), shape, color).pipe(
       map((iconUrl) => {
         let icon: L.Icon<L.BaseIconOptions>;
@@ -158,7 +182,7 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   }
 
   public createColoredMarkerIcon(iconContainer: MarkerIconContainer,
-                                 icon: string, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
+                                 icon: string, color: tinycolor.Instance, rotationAngle = 0, size = DEFAULT_MARKER_ICON_SIZE): Observable<MarkerIconInfo> {
     return createColorMarkerIconElement(this.dataLayer.getCtx().$injector.get(MatIconRegistry), this.dataLayer.getCtx().$injector.get(DomSanitizer),
       iconContainer, icon, color).pipe(
       map((element) => {
@@ -294,7 +318,7 @@ class ImageMarkerIconProcessor extends MarkerIconProcessor<MarkerImageSettings> 
     } else {
       const currentImage: MarkerImageInfo = {
         url: this.settings.image,
-        size: this.settings.imageSize || 34
+        size: this.settings.imageSize || DEFAULT_MARKER_ICON_SIZE
       };
       return this.loadMarkerIconInfo(currentImage, 0).pipe(
         map((iconInfo) => {
@@ -314,7 +338,7 @@ class ImageMarkerIconProcessor extends MarkerIconProcessor<MarkerImageSettings> 
     } else {
       const currentImage: MarkerImageInfo = {
         url: this.settings.image,
-        size: this.settings.imageSize || 34
+        size: this.settings.imageSize || DEFAULT_MARKER_ICON_SIZE
       };
       return this.loadMarkerIconInfo(currentImage, rotationAngle);
     }
@@ -386,6 +410,16 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
   private dragStart: () => void;
   private dragEnd: () => void;
 
+  private iconLoaded = false;
+  // Cluster mode only: true while the marker element is attached to the DOM, reset to false on removal.
+  private renderedInDom = false;
+  // Viewport mode only: one-way, set once the marker has entered the visible bounds and never reset.
+  private enteredViewport = false;
+  private iconLoadSubscription: Subscription;
+  private iconLoadTimeoutId: number;
+  private onMarkerAdd: () => void;
+  private onMarkerRemove: () => void;
+
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
               protected settings: MarkersDataLayerSettings,
@@ -412,8 +446,34 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
       bubblingMouseEvents: !this.dataLayer.isEditMode(),
       pane: this.dataLayer.getMarkersPane()
     });
-    this.updateMarkerIcon(data, dsData);
+    if (this.clusteredImageMarker()) {
+      this.onMarkerAdd = this.onMarkerAdded.bind(this);
+      this.onMarkerRemove = this.onMarkerRemoved.bind(this);
+      this.marker.on('add', this.onMarkerAdd);
+      this.marker.on('remove', this.onMarkerRemove);
+      this.applyPlaceholderMarkerIcon(data, dsData);
+    } else if (this.viewportLoadedImageMarker()) {
+      if (this.updateViewportVisibility(this.dataLayer.getViewportBounds())) {
+        this.updateMarkerIcon(data, dsData);
+      } else {
+        this.applyPlaceholderMarkerIcon(data, dsData);
+        this.dataLayer.registerViewportLazyItem(this);
+      }
+    } else {
+      this.updateMarkerIcon(data, dsData);
+    }
     return this.marker;
+  }
+
+  public remove() {
+    this.clearIconLoadTimeout();
+    this.cancelIconLoad();
+    if (this.onMarkerAdd) {
+      this.marker.off('add', this.onMarkerAdd);
+      this.marker.off('remove', this.onMarkerRemove);
+    }
+    this.dataLayer.unregisterViewportLazyItem(this);
+    super.remove();
   }
 
   protected unbindLabel() {
@@ -428,11 +488,22 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
     this.marker.options.tbMarkerData = data;
     this.updateMarkerLocation(data, dsData);
     this.updateTooltip(data, dsData);
-    this.updateMarkerIcon(data, dsData);
+    if (this.viewportLoadedImageMarker()) {
+      this.updateViewportVisibility(this.dataLayer.getViewportBounds());
+    }
+    if (this.isLazyImageMarker() && !this.isIndividuallyVisible()) {
+      this.iconLoaded = false;
+      this.updateLabel(data, dsData);
+    } else {
+      this.updateMarkerIcon(data, dsData);
+    }
   }
 
   protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
     this.updateMarkerLocation(data, dsData);
+    if (this.viewportLoadedImageMarker() && this.updateViewportVisibility(this.dataLayer.getViewportBounds())) {
+      this.updateMarkerIcon(data, dsData);
+    }
   }
 
   protected addItemClass(clazz: string): void {
@@ -510,28 +581,122 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
     }
   }
 
+  private isLazyImageMarker(): boolean {
+    return this.settings.markerType === MarkerType.image && this.settings.markerImage?.type === MarkerImageType.function;
+  }
+
+  private clusteredImageMarker(): boolean {
+    return this.isLazyImageMarker() && !!this.settings.markerClustering?.enable;
+  }
+
+  private viewportLoadedImageMarker(): boolean {
+    return this.dataLayer.viewportLazyLoadPossible();
+  }
+
+  private isIndividuallyVisible(): boolean {
+    return this.clusteredImageMarker() ? this.renderedInDom : this.enteredViewport;
+  }
+
+  private onMarkerAdded() {
+    this.renderedInDom = true;
+    if (!this.iconLoaded) {
+      this.clearIconLoadTimeout();
+      this.iconLoadTimeoutId = window.setTimeout(() => {
+        this.iconLoadTimeoutId = null;
+        if (this.renderedInDom && !this.iconLoaded) {
+          this.updateMarkerIcon(this.data, this.dataLayer.getMap().getData());
+        }
+      }, ICON_LOAD_DEBOUNCE_MS);
+    }
+  }
+
+  // Marks the item visible and unregisters it from the layer's viewport sweep. Returns
+  // true the first time the marker is found inside the bounds, so callers can decide
+  // whether a real icon load is needed without triggering it more than once per transition.
+  private updateViewportVisibility(bounds: L.LatLngBounds): boolean {
+    if (this.enteredViewport || this.iconLoaded) {
+      return false;
+    }
+    if (bounds.pad(VIEWPORT_VISIBILITY_PADDING).contains(this.marker.getLatLng())) {
+      this.enteredViewport = true;
+      this.dataLayer.unregisterViewportLazyItem(this);
+      return true;
+    }
+    return false;
+  }
+
+  public checkViewportVisibility(bounds: L.LatLngBounds): void {
+    if (this.updateViewportVisibility(bounds)) {
+      this.updateMarkerIcon(this.data, this.dataLayer.getMap().getData());
+    }
+  }
+
+  private onMarkerRemoved() {
+    this.renderedInDom = false;
+    this.clearIconLoadTimeout();
+    this.cancelIconLoad();
+  }
+
+  private clearIconLoadTimeout() {
+    if (this.iconLoadTimeoutId) {
+      window.clearTimeout(this.iconLoadTimeoutId);
+      this.iconLoadTimeoutId = null;
+    }
+  }
+
+  private cancelIconLoad() {
+    this.iconLoadSubscription?.unsubscribe();
+    this.iconLoadSubscription = null;
+  }
+
   private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    this.dataLayer.dataProcessor.createMarkerIcon(data, dsData).subscribe(
+    this.clearIconLoadTimeout();
+    this.cancelIconLoad();
+    this.iconLoadSubscription = this.dataLayer.dataProcessor.createMarkerIcon(data, dsData).subscribe(
       (iconInfo) => {
-        let icon: L.Icon | L.DivIcon;
-        const options = deepClone(iconInfo.icon.options);
-        options.className = this.updateIconClasses(options.className);
-        if (iconInfo.icon instanceof L.DivIcon) {
-          icon = L.divIcon(options);
-        } else {
-          icon = L.icon(options as L.IconOptions);
-        }
-        this.marker.setIcon(icon);
-        const anchor = options.iconAnchor;
-        if (anchor && Array.isArray(anchor)) {
-          this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
-        } else {
-          this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
-        }
-        this.updateLabel(data, dsData);
-        this.editModeUpdated();
+        this.iconLoadSubscription = null;
+        this.iconLoaded = true;
+        this.applyMarkerIcon(iconInfo, data, dsData);
       }
     );
+  }
+
+  // Transparent placeholder for lazily-loaded image markers, sized from the configured image size (or
+  // the shared default) so there is no default-shape SVG build. The box is only an approximation of the
+  // real icon: aspect correction and per-marker overrides (function-resolved images) are not known yet.
+  private applyPlaceholderMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+    const size = this.settings.markerImage?.imageSize || DEFAULT_MARKER_ICON_SIZE;
+    const iconInfo: MarkerIconInfo = {
+      size: [size, size],
+      icon: L.divIcon({
+        html: '',
+        className: 'tb-marker-div-icon',
+        iconSize: [size, size],
+        iconAnchor: [size * this.dataLayer.markerOffset[0], size * this.dataLayer.markerOffset[1]],
+        popupAnchor: [size * this.dataLayer.tooltipOffset[0], size * this.dataLayer.tooltipOffset[1]]
+      })
+    };
+    this.applyMarkerIcon(iconInfo, data, dsData);
+  }
+
+  private applyMarkerIcon(iconInfo: MarkerIconInfo, data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+    let icon: L.Icon | L.DivIcon;
+    const options = deepClone(iconInfo.icon.options);
+    options.className = this.updateIconClasses(options.className);
+    if (iconInfo.icon instanceof L.DivIcon) {
+      icon = L.divIcon(options);
+    } else {
+      icon = L.icon(options as L.IconOptions);
+    }
+    this.marker.setIcon(icon);
+    const anchor = options.iconAnchor;
+    if (anchor && Array.isArray(anchor)) {
+      this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
+    } else {
+      this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
+    }
+    this.updateLabel(data, dsData);
+    this.editModeUpdated();
   }
 
   private updateIconClasses(className: string, toRemove?: string): string {
@@ -565,6 +730,10 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
   private clusterMarkerColorFunction: CompiledTbFunction<ClusterMarkerColorFunction>;
   private readonly markersPane: string;
 
+  private readonly viewportLazyItems = new Set<TbMarkerDataLayerItem>();
+  private viewportBoundsCache: L.LatLngBounds;
+  private moveEndDebounceId: number = null;
+
   constructor(protected map: TbMap<any>,
               inputSettings: MarkersDataLayerSettings,
               markersLayerIndex: number) {
@@ -577,6 +746,44 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
 
   public getMarkersPane(): string {
     return this.markersPane;
+  }
+
+  public registerViewportLazyItem(item: TbMarkerDataLayerItem): void {
+    this.viewportLazyItems.add(item);
+  }
+
+  public unregisterViewportLazyItem(item: TbMarkerDataLayerItem): void {
+    this.viewportLazyItems.delete(item);
+  }
+
+  public getViewportBounds(): L.LatLngBounds {
+    if (!this.viewportBoundsCache) {
+      this.viewportBoundsCache = this.map.getMap().getBounds();
+    }
+    return this.viewportBoundsCache;
+  }
+
+  private readonly onMapMoveEnd = (): void => {
+    this.viewportBoundsCache = null;
+    if (!this.viewportLazyItems.size) {
+      return;
+    }
+    if (this.moveEndDebounceId) {
+      window.clearTimeout(this.moveEndDebounceId);
+    }
+    this.moveEndDebounceId = window.setTimeout(() => {
+      this.moveEndDebounceId = null;
+      if (!this.viewportLazyItems.size) {
+        return;
+      }
+      const bounds = this.getViewportBounds();
+      Array.from(this.viewportLazyItems).forEach(item => item.checkViewportVisibility(bounds));
+    }, ICON_LOAD_DEBOUNCE_MS);
+  };
+
+  public viewportLazyLoadPossible(): boolean {
+    return this.settings.markerType === MarkerType.image && this.settings.markerImage?.type === MarkerImageType.function
+      && !this.settings.markerClustering?.enable;
   }
 
   public dataLayerType(): MapDataLayerType {
@@ -661,7 +868,28 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
         )
       );
     }
+    if (this.viewportLazyLoadPossible()) {
+      this.map.getMap().on('moveend', this.onMapMoveEnd);
+    }
     return forkJoin(setup$).pipe(map(() => null));
+  }
+
+  protected onDataLayerEnabled(): void {
+    super.onDataLayerEnabled();
+    if (this.viewportLazyLoadPossible()) {
+      this.map.getMap().on('moveend', this.onMapMoveEnd);
+    }
+  }
+
+  protected onDataLayerDisabled(): void {
+    super.onDataLayerDisabled();
+    if (this.viewportLazyLoadPossible()) {
+      this.map.getMap().off('moveend', this.onMapMoveEnd);
+      if (this.moveEndDebounceId) {
+        window.clearTimeout(this.moveEndDebounceId);
+        this.moveEndDebounceId = null;
+      }
+    }
   }
 
   protected isValidLayerData(layerData: FormattedData<TbMapDatasource>): boolean {
