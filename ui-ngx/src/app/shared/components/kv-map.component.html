@@ -13,10 +13,19 @@
         <input [formControl]="keyValControl.get('key')" matInput required
                placeholder="{{ (keyPlaceholderText ? keyPlaceholderText : 'key-val.key') | translate }}"/>
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}" [appearance]="appearance">
-        <input [formControl]="keyValControl.get('value')" matInput [required]="isValueRequired"
-               placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
-      </mat-form-field>
+      @if (secretValues) {
+        <tb-secret-key-input class="flex-1"
+                             [formControl]="keyValControl.get('value')"
+                             [required]="isValueRequired"
+                             [appearance]="appearance"
+                             placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}">
+        </tb-secret-key-input>
+      } @else {
+        <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}" [appearance]="appearance">
+          <input [formControl]="keyValControl.get('value')" matInput [required]="isValueRequired"
+                 placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
+        </mat-form-field>
+      }
       <button mat-icon-button color="primary"
               [class.!hidden]="disabled"
               type="button"
@@ -33,6 +42,12 @@
           '!hidden': keyValsFormArray().length
         }"
         class="no-data-found flex items-center justify-center" translate>{{noDataText ? noDataText : 'key-val.no-data'}}</span>
+  @if (secretValues || secretHint) {
+    <div class="tb-form-hint tb-primary-fill mt-2">
+      <mat-icon>info_outline</mat-icon>
+      <span [innerHTML]="(secretValues ? 'secret-storage.picker-hint' : 'secret-storage.placeholder-hint') | translate | safe: 'html'"></span>
+    </div>
+  }
   <div style="margin-top: 8px;">
     @if (!isStrokedButton) {
       <button mat-button mat-raised-button color="primary"

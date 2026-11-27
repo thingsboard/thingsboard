@@ -1883,6 +1883,8 @@
         "secrets-are-in-use-text": "Not all secrets have been deleted because they are used by other entities.</br>You can view referenced entities by clicking the <b>References</b> button in the corresponding secret row.</br>To delete these secrets,  first remove their usage from the entities where they are mentioned.",
         "selected-secrets": "{ count, plural, =1 {1 secret} other {# secrets} } selected",
         "use-secret-storage": "Use Secret storage",
+        "picker-hint": "Values can come from Secrets storage: click the key button to pick a secret, or enter the placeholder <code>$&#123;secret:name;type:TEXT&#125;</code>, where 'name' is the secret name.",
+        "placeholder-hint": "To use a value from Secrets storage, enter the placeholder <code>$&#123;secret:name;type:TEXT&#125;</code>, where 'name' is the secret name.",
         "dialog-title": "Add secret",
         "use-storage": "Use storage",
         "create": {

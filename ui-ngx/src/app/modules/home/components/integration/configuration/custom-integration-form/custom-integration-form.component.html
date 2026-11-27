@@ -21,6 +21,10 @@
     validateContent
     validateOnChange>
   </tb-json-content>
+  <div class="tb-form-hint tb-primary-fill mb-4">
+    <mat-icon>info_outline</mat-icon>
+    <span [innerHTML]="'secret-storage.placeholder-hint' | translate | safe: 'html'"></span>
+  </div>
 
   <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
   </ng-container>
