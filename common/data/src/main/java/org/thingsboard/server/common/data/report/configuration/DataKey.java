@@ -42,6 +42,11 @@ public class DataKey {
     private DataKeySettings settings;
 
     @JsonIgnore
+    public boolean isAggregated() {
+        return aggregationType != null && aggregationType != Aggregation.NONE;
+    }
+
+    @JsonIgnore
     public boolean isComparisonKey() {
         if (settings != null && settings.getType() == DataKeySettingsType.TIME_SERIES_CHART) {
             TimeSeriesChartKeySettings timeSeriesChartKeySettings = (TimeSeriesChartKeySettings)settings;
