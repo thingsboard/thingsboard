@@ -15,6 +15,7 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -115,5 +116,10 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
         if (shouldRemove) {
             securityStore.remove(endpoint);
         }
+    }
+
+    @Override
+    public void removeByDeviceId(UUID deviceId) {
+        securityStore.removeByDeviceId(deviceId);
     }
 }

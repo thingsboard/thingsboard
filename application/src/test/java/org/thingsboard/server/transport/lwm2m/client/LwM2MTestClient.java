@@ -9,12 +9,14 @@ import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.LeshanClientBuilder;
+import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpoint;
 import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpointFactory;
 import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpointsProvider;
 import org.eclipse.leshan.client.californium.endpoint.ClientProtocolProvider;
 import org.eclipse.leshan.client.californium.endpoint.coap.CoapOscoreProtocolProvider;
 import org.eclipse.leshan.client.californium.endpoint.coaps.CoapsClientEndpointFactory;
 import org.eclipse.leshan.client.californium.endpoint.coaps.CoapsClientProtocolProvider;
+import org.eclipse.leshan.client.endpoint.LwM2mClientEndpoint;
 import org.eclipse.leshan.client.endpoint.LwM2mClientEndpointsProvider;
 import org.eclipse.leshan.client.engine.DefaultRegistrationEngineFactory;
 import org.eclipse.leshan.client.object.Security;
@@ -132,14 +134,13 @@ public class LwM2MTestClient {
     private LwM2mClientContext clientContext;
     private LwM2mTemperatureSensor lwM2MTemperatureSensor12;
     private String deviceIdStr;
-    private int clientPort;
+    private volatile ResponseCode lastUpdateFailureCode;
 
-    public void init(Security securityLwm2m, Security securityBs, int clientPort, boolean isRpc,
+    public void init(Security securityLwm2m, Security securityBs, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
                      LwM2mClientContext clientContext, Integer cIdLength, boolean queueMode,
                      boolean supportFormatOnly_SenMLJSON_SenMLCBOR, Integer value3_0_9) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
-        this.clientPort = clientPort;
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
 
@@ -240,7 +241,7 @@ public class LwM2MTestClient {
 
         // Set Californium Configuration
         endpointsBuilder.setConfiguration(clientCoapConfig);
-        endpointsBuilder.setClientAddress(new InetSocketAddress(clientPort).getAddress());
+        endpointsBuilder.setClientAddress(new InetSocketAddress(0).getAddress());
 
 
         // creates EndpointsProvider
@@ -253,13 +254,12 @@ public class LwM2MTestClient {
 
         // Configure Registration Engine
         DefaultRegistrationEngineFactory engineFactory = new DefaultRegistrationEngineFactory();
-        // old
+
         /**
          * Force reconnection/rehandshake on registration update.
          */
-        int comPeriodInSec = 5;
-        if (comPeriodInSec > 0) engineFactory.setCommunicationPeriod(comPeriodInSec * 1000);
-//        engineFactory.setCommunicationPeriod(5000); // old
+        engineFactory.setCommunicationPeriod(5000);
+
         /**
          * By default client will try to resume DTLS session by using abbreviated Handshake. This option force to always do a full handshake."
          */
@@ -361,6 +361,7 @@ public class LwM2MTestClient {
 
             @Override
             public void onUpdateFailure(LwM2mServer server, UpdateRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
+                lastUpdateFailureCode = responseCode;
                 clientStates.add(ON_UPDATE_FAILURE);
             }
 
@@ -457,12 +458,6 @@ public class LwM2MTestClient {
 
     public void start(boolean isStartLw) {
         if (leshanClient != null) {
-            if (clientPort > 0) {
-                log.error("Await UDP clientPort {} to be available before leshanClient.start()", clientPort);
-                await("Await UDP clientPort " + clientPort + " to be available before leshanClient.start()")
-                        .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                        .until(() -> isUDPPortAvailable(clientPort));
-            }
             leshanClient.start();
             if (isStartLw) {
                 this.awaitClientAfterStartConnectLw();
@@ -475,12 +470,6 @@ public class LwM2MTestClient {
     public void stop(boolean deregister) {
         if (leshanClient != null) {
             leshanClient.stop(deregister);
-            if (clientPort > 0) {
-                log.error("Await UDP clientPort {} to disconnect after leshanClient.stop(deregister)", clientPort);
-                await("Await client UDP port " + clientPort + " to disconnect after leshanClient.stop(deregister)")
-                        .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                        .until(() -> isUDPPortAvailable(clientPort));
-            }
         }
     }
 
@@ -542,6 +531,31 @@ public class LwM2MTestClient {
             log.error("[forceNullSecurityId] Failed to set id=null for {}", security.getClass(), e);
         }
     }
+    public void sleepClient() {
+        if (leshanClient != null) {
+            leshanClient.getRegisteredServers().values().forEach(server -> {
+                LwM2mClientEndpoint endpoint = leshanClient.getEndpoint(server);
+                if (endpoint instanceof CaliforniumClientEndpoint californiumEndpoint) {
+                    californiumEndpoint.getCoapEndpoint().stop();
+                }
+            });
+        }
+    }
 
+    public void unSleepClient() {
+        if (leshanClient != null) {
+            leshanClient.getRegisteredServers().values().forEach(server -> {
+                LwM2mClientEndpoint endpoint = leshanClient.getEndpoint(server);
+                if (endpoint instanceof CaliforniumClientEndpoint californiumEndpoint) {
+                    try {
+                        californiumEndpoint.getCoapEndpoint().start();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+            leshanClient.triggerRegistrationUpdate();
+        }
+    }
 }
 
