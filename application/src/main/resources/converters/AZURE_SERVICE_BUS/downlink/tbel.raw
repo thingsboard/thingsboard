@@ -1,0 +1,21 @@
+/** Encoder **/
+
+// Publish the ThingsBoard message as JSON to the downlink topic.
+// metadata.deviceId becomes the To property and the custom property deviceId of the message;
+// the integration skips messages without it. This template uses the ThingsBoard device name.
+// Add it to the message metadata with the "originator fields" rule node (Name -> deviceName).
+var deviceId = metadata.deviceName != null ? metadata.deviceName.trim() : null;
+if (deviceId == null || deviceId.isEmpty()) {
+    raiseError("Message metadata has no deviceName");
+}
+
+var result = {
+    // Payload content type: JSON, TEXT, or BINARY (Base64).
+    contentType: "JSON",
+    data: JSON.stringify(msg),
+    metadata: {
+        deviceId: deviceId
+    }
+};
+
+return result;

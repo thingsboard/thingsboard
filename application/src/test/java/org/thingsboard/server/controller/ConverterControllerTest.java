@@ -1003,6 +1003,121 @@ public class ConverterControllerTest extends AbstractControllerTest {
         testDecoder(LORIOT_UPLINK_DECODER_RETURN_ARRAY, getDefaultPayload(IntegrationType.LORIOT), expectedDecodedMessage, converter);
     }
 
+    @Test
+    public void testAzureServiceBusDefaultDecoder() throws Exception {
+        String uplinkDir = "converters/AZURE_SERVICE_BUS/uplink/";
+        String payload = readResource(uplinkDir + "payload.json").orElseThrow();
+        JsonNode noMetadata = JacksonUtil.newObjectNode();
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String decoder = readResource(uplinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // The default payload is a real message without timestamp: ts is the current server time,
+            // and fields the decoder does not map (humidity) are kept as telemetry.
+            long before = System.currentTimeMillis();
+            JsonNode response = decodeAzureServiceBusUplink(decoder, scriptLang, payload, noMetadata);
+            long after = System.currentTimeMillis();
+            assertAzureServiceBusDecoded(softly, scriptLang + ": default payload", response, "sb-sensor-01", "default");
+            JsonNode output = JacksonUtil.toJsonNode(response.get("output").asText());
+            if (output != null) {
+                softly.assertThat(output.path("attributes")).as(scriptLang + ": attributes").isEqualTo(JacksonUtil.newObjectNode());
+                softly.assertThat(output.path("telemetry").path("values")).as(scriptLang + ": telemetry")
+                        .isEqualTo(JacksonUtil.toJsonNode("{\"temperature\":24.6,\"humidity\":51}"));
+                softly.assertThat(output.path("telemetry").path("ts").asLong()).as(scriptLang + ": ts").isBetween(before, after);
+            }
+
+            // An empty timestamp is replaced with the current server time.
+            before = System.currentTimeMillis();
+            JsonNode emptyTimestamp = decodeAzureServiceBusUplink(decoder, scriptLang,
+                    "{\"deviceId\":\"sb-sensor-01\",\"timestamp\":\"\",\"temperature\":24.6}", noMetadata);
+            after = System.currentTimeMillis();
+            assertAzureServiceBusDecoded(softly, scriptLang + ": empty timestamp", emptyTimestamp, "sb-sensor-01", "default");
+            JsonNode emptyTimestampOutput = JacksonUtil.toJsonNode(emptyTimestamp.get("output").asText());
+            if (emptyTimestampOutput != null) {
+                softly.assertThat(emptyTimestampOutput.path("telemetry").path("ts").asLong())
+                        .as(scriptLang + ": empty timestamp ts").isBetween(before, after);
+            }
+
+            // A missing, null or blank deviceId falls back to the custom message property deviceId; spaces are trimmed.
+            JsonNode property = JacksonUtil.toJsonNode("{\"sysProp:deviceId\":\" sb-sensor-02 \"}");
+            assertAzureServiceBusDecoded(softly, scriptLang + ": no deviceId",
+                    decodeAzureServiceBusUplink(decoder, scriptLang, "{\"temperature\":1}", property), "sb-sensor-02", "default");
+            assertAzureServiceBusDecoded(softly, scriptLang + ": deviceId null",
+                    decodeAzureServiceBusUplink(decoder, scriptLang, "{\"deviceId\":null,\"temperature\":1}", property), "sb-sensor-02", "default");
+            assertAzureServiceBusDecoded(softly, scriptLang + ": deviceId blank",
+                    decodeAzureServiceBusUplink(decoder, scriptLang, "{\"deviceId\":\"   \",\"temperature\":1}", property), "sb-sensor-02", "default");
+
+            // A numeric deviceId is used as the device name; a blank deviceType gives the "default" profile.
+            assertAzureServiceBusDecoded(softly, scriptLang + ": numeric deviceId",
+                    decodeAzureServiceBusUplink(decoder, scriptLang, "{\"deviceId\":12345,\"deviceType\":\"   \",\"temperature\":1}", noMetadata),
+                    "12345", "default");
+
+            // Without a device name in the payload or a non-blank deviceId property, the message is rejected.
+            for (JsonNode noName : List.of(noMetadata, JacksonUtil.toJsonNode("{\"sysProp:deviceId\":\"   \"}"))) {
+                JsonNode rejected = decodeAzureServiceBusUplink(decoder, scriptLang, "{\"temperature\":1}", noName);
+                softly.assertThat(rejected.get("output").asText()).as(scriptLang + ": no device name output " + noName).isEmpty();
+                softly.assertThat(rejected.get("error").asText()).as(scriptLang + ": no device name error " + noName)
+                        .contains("Payload has no deviceId and the message has no deviceId property");
+            }
+
+            // An invalid timestamp rejects the message.
+            JsonNode invalidTimestamp = decodeAzureServiceBusUplink(decoder, scriptLang,
+                    "{\"deviceId\":\"sb-sensor-01\",\"timestamp\":\"abc\",\"temperature\":1}", noMetadata);
+            softly.assertThat(invalidTimestamp.get("output").asText()).as(scriptLang + ": invalid timestamp output").isEmpty();
+            softly.assertThat(invalidTimestamp.get("error").asText()).as(scriptLang + ": invalid timestamp error").isNotEmpty();
+            if (scriptLang == ScriptLanguage.JS) {
+                softly.assertThat(invalidTimestamp.get("error").asText()).as(scriptLang + ": invalid timestamp error text")
+                        .contains("Invalid timestamp: abc");
+            }
+        }
+        softly.assertAll();
+    }
+
+    @Test
+    public void testAzureServiceBusDefaultEncoder() throws Exception {
+        String downlinkDir = "converters/AZURE_SERVICE_BUS/downlink/";
+        String msg = readResource(downlinkDir + "payload.json").orElseThrow();
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String encoder = readResource(downlinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // Spaces around deviceName are trimmed.
+            JsonNode trimmed = encodeDownlink(encoder, scriptLang, msg, "ATTRIBUTES_UPDATED", "{\"deviceName\":\" sb-sensor-01 \"}");
+            softly.assertThat(trimmed.get("error").asText()).as(scriptLang + ": deviceName with spaces error").isEmpty();
+            softly.assertThat(JacksonUtil.toJsonNode(trimmed.get("output").asText()).path("metadata").path("deviceId").asText())
+                    .as(scriptLang + ": deviceName with spaces").isEqualTo("sb-sensor-01");
+
+            // A missing or blank deviceName rejects the message, so it is not skipped silently by the integration.
+            for (String metadata : List.of("{}", "{\"deviceName\":\"   \"}")) {
+                JsonNode rejected = encodeDownlink(encoder, scriptLang, msg, "ATTRIBUTES_UPDATED", metadata);
+                softly.assertThat(rejected.get("output").isNull()).as(scriptLang + ": " + metadata + " output").isTrue();
+                softly.assertThat(rejected.get("error").asText()).as(scriptLang + ": " + metadata + " error")
+                        .contains("Message metadata has no deviceName");
+            }
+        }
+        softly.assertAll();
+    }
+
+    private static void assertAzureServiceBusDecoded(SoftAssertions softly, String description, JsonNode response, String deviceName, String deviceType) {
+        softly.assertThat(response.get("error").asText()).as(description + " error").isEmpty();
+        JsonNode output = JacksonUtil.toJsonNode(response.get("output").asText());
+        softly.assertThat(output).as(description + " output").isNotNull();
+        if (output != null) {
+            softly.assertThat(output.path("deviceName").asText()).as(description + " deviceName").isEqualTo(deviceName);
+            softly.assertThat(output.path("deviceType").asText()).as(description + " deviceType").isEqualTo(deviceType);
+        }
+    }
+
+    private JsonNode decodeAzureServiceBusUplink(String decoder, ScriptLanguage scriptLang, String payload, JsonNode metadata) {
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("decoder", decoder);
+        inputParams.set("metadata", metadata);
+        inputParams.put("payload", Base64.getEncoder().encodeToString(payload.getBytes(StandardCharsets.UTF_8)));
+        return doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
+    }
+
     private String getDefaultPayload(IntegrationType integrationType) throws IOException {
         return readResource("converters/" + integrationType.getDirectory() + "/uplink/payload.json").orElseThrow();
     }

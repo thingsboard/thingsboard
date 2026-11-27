@@ -38,11 +38,13 @@ export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.TTN, '/assets/converters/TTN/uplink/js.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/js.raw'],
   [IntegrationType.TPE, '/assets/converters/TPE/uplink/js.raw'],
+  [IntegrationType.AZURE_SERVICE_BUS, '/assets/converters/AZURE_SERVICE_BUS/uplink/js.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/uplink/js.raw']
 ]);
 
 export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string>([
   [IntegrationType.OPC_UA, '/assets/converters/OPC_UA/downlink/tbel.raw'],
+  [IntegrationType.AZURE_SERVICE_BUS, '/assets/converters/AZURE_SERVICE_BUS/downlink/tbel.raw'],
   [IntegrationType.TTI, '/assets/converters/TTI/downlink/tbel.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/downlink/tbel.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/downlink/tbel.raw'],
@@ -51,6 +53,7 @@ export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string
 ])
 
 export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>([
+  [IntegrationType.AZURE_SERVICE_BUS, '/assets/converters/AZURE_SERVICE_BUS/downlink/js.raw'],
   [IntegrationType.TTI, '/assets/converters/TTI/downlink/js.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/downlink/js.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/downlink/js.raw'],

@@ -1,0 +1,11 @@
+{
+  "deviceName": "sb-sensor-01",
+  "deviceType": "default",
+  "attributes": {},
+  "telemetry": {
+    "ts": 1795098300000,
+    "values": {
+      "temperature": 27.8
+    }
+  }
+}
