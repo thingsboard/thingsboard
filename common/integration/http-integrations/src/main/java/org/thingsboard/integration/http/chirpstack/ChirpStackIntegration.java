@@ -5,12 +5,14 @@ package org.thingsboard.integration.http.chirpstack;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.IntegrationContext;
@@ -130,12 +132,15 @@ public class ChirpStackIntegration extends BasicHttpIntegration<JsonHttpIntegrat
                     }
                     String payload = new String(downlink.getData(), StandardCharsets.UTF_8);
                     ObjectNode body = createBodyForParameter(metadata, payload);
+                    String queueUrl = devicesUrl + "/" + metadata.get(DEV_EUI) + "/queue";
                     try {
-                        httpClient.postForEntity(devicesUrl + "/" + metadata.get(DEV_EUI) + "/queue", createRequest(body), String.class);
+                        httpClient.postForEntity(queueUrl, createRequest(body), String.class);
                     } catch (HttpStatusCodeException e) {
-                        throw new ThingsboardException(
-                                "ChirpStack rejected downlink (" + e.getStatusCode() + "): " + StringUtils.truncate(e.getResponseBodyAsString(), MAX_ERROR_BODY_CHARS),
+                        throw new ThingsboardException(rejectedDownlinkMessage(e),
                                 e.getStatusCode().is4xxClientError() ? ThingsboardErrorCode.BAD_REQUEST_PARAMS : ThingsboardErrorCode.GENERAL);
+                    } catch (ResourceAccessException e) {
+                        throw new ThingsboardException("ChirpStack is not reachable: " + queueUrl + " (" + ExceptionUtils.getRootCauseMessage(e) + ")",
+                                e, ThingsboardErrorCode.GENERAL);
                     }
                     reportDownlinkOk(context, downlink);
                 }
@@ -144,6 +149,14 @@ public class ChirpStackIntegration extends BasicHttpIntegration<JsonHttpIntegrat
             log.warn("Failed to process downLink message", e);
             reportDownlinkError(context, msg, "ERROR", e);
         }
+    }
+
+    private static String rejectedDownlinkMessage(HttpStatusCodeException e) {
+        String prefix = "ChirpStack rejected downlink (" + e.getStatusCode() + "): ";
+        if (e.getStatusCode().isSameCodeAs(HttpStatus.UNAUTHORIZED)) {
+            return prefix + "check the Application server API token and that the device exists in ChirpStack";
+        }
+        return prefix + StringUtils.truncate(e.getResponseBodyAsString(), MAX_ERROR_BODY_CHARS);
     }
 
     private ObjectNode createBodyForParameter(Map<String, String> metadata, String payload) throws ThingsboardException {

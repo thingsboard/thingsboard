@@ -4,9 +4,12 @@ package org.thingsboard.integration.api.util;
 
 import com.google.gson.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
+import org.thingsboard.server.exception.ThingsboardRuntimeException;
 
 import javax.script.ScriptException;
 import java.io.PrintWriter;
@@ -37,10 +40,17 @@ public class ExceptionUtil {
         return lookupExceptionInCause(source.getCause(), clazzes);
     }
 
+    /**
+     * True if {@link #toString} shows the message of this error in the debug event instead of "Please contact system administrator".
+     */
+    public static boolean isShownInDebugEvent(Throwable e) {
+        return findShownMessage(e) != null;
+    }
+
     public static String toString(Throwable e, EntityId componentId, boolean stackTraceEnabled) {
-        Exception exception = lookupExceptionInCause(e, ScriptException.class, JsonParseException.class, TbRateLimitsException.class);
-        if (exception != null && StringUtils.isNotEmpty(exception.getMessage())) {
-            return exception.getMessage();
+        String shownMessage = findShownMessage(e);
+        if (shownMessage != null) {
+            return shownMessage;
         } else {
             if (stackTraceEnabled) {
                 StringWriter sw = new StringWriter();
@@ -52,4 +62,26 @@ public class ExceptionUtil {
             }
         }
     }
+
+    private static String findShownMessage(Throwable e) {
+        Exception exception = lookupExceptionInCause(e, ScriptException.class, JsonParseException.class, TbRateLimitsException.class,
+                ThingsboardException.class, ThingsboardRuntimeException.class);
+        if (exception != null && StringUtils.isNotEmpty(exception.getMessage())) {
+            return exception.getMessage();
+        }
+        String scriptErrorMessage = getScriptErrorMessage(e);
+        return StringUtils.isNotEmpty(scriptErrorMessage) ? scriptErrorMessage : null;
+    }
+
+    private static String getScriptErrorMessage(Throwable e) {
+        TbScriptException scriptException = lookupException(e, TbScriptException.class);
+        if (scriptException == null || scriptException.getCause() == null) {
+            return null;
+        }
+        return switch (scriptException.getErrorCode()) {
+            case RUNTIME, COMPILATION -> scriptException.getCause().getMessage();
+            case TIMEOUT, OTHER -> null;
+        };
+    }
+
 }
