@@ -1,27 +1,17 @@
 {
-  "deviceName": "Production 1 - 3G7H1j-9zF",
-  "deviceType": "default",
-  "groupName": "Production",
+  "deviceName": "Thermostat-01",
+  "deviceType": "thermostat",
   "attributes": {
-    "deviceId": "3G7H1j-9zF"
+    "fwVersion": "1.4.2",
+    "latitude": 37.7749,
+    "longitude": -122.4194
   },
   "telemetry": {
-    "ts": 1686398400000,
+    "ts": 1791901200000,
     "values": {
       "temperature": 25.3,
       "humidity": 62.8,
-      "pressure": 1012.5,
-      "latitude": 37.7749,
-      "longitude": -122.4194,
-      "status": "active",
-      "power_status": "on",
-      "x": 0.02,
-      "y": 0.03,
-      "z": 0.01,
-      "fault_codes.0": 100,
-      "fault_codes.1": 204,
-      "fault_codes.2": 301,
-      "battery_level": 78.5
+      "battery": 78.5
     }
   }
 }

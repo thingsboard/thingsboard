@@ -1,0 +1,77 @@
+/** Decoder **/
+
+// ThingsBoard passes the MQTT topic of each AWS IoT message in metadata.topic.
+// This example uses the last two topic segments to identify the device:
+//
+//   tb/aws/iot/telemetry/thermostat/Thermostat-01
+//                        ^^^^^^^^^^ ^^^^^^^^^^^^^
+//                        type       name
+
+// Get the MQTT topic and reject messages if it is missing or empty.
+var topic = metadata.topic;
+if (typeof topic !== "string" || !topic.trim()) {
+    throw new Error("MQTT topic is missing or empty");
+}
+
+// Split the topic into segments; empty segments are kept.
+var topicParts = topic.split("/");
+var n = topicParts.length;
+
+// Reject topics without valid device type and device name segments.
+if (n < 2 || !topicParts[n - 1].trim() || !topicParts[n - 2].trim()) {
+    throw new Error("MQTT topic must contain device type and device name: " + topic);
+}
+
+// Extract the device name and type from the last two topic segments, without surrounding spaces.
+var deviceName = topicParts[n - 1].trim();
+var deviceType = topicParts[n - 2].trim();
+
+// Decode the incoming payload to a JSON object.
+var data = decodeToJson(payload);
+
+// Use the device timestamp if provided; otherwise, use the current server time.
+var ts = data.ts != null ? data.ts : Date.now();
+
+// Map device properties to ThingsBoard attributes.
+var attributes = {
+    fwVersion: data.fwVersion
+};
+
+// Add location attributes if available.
+if (data.location != null) {
+    attributes.latitude = data.location.latitude;
+    attributes.longitude = data.location.longitude;
+}
+
+// Map device measurements to ThingsBoard telemetry.
+var telemetry = {
+    temperature: data.temperature,
+    humidity: data.humidity,
+    battery: data.battery
+};
+
+// Build the converted uplink message.
+var result = {
+    deviceName: deviceName,
+    deviceType: deviceType,
+    attributes: attributes,
+    telemetry: {
+        ts: ts,
+        values: telemetry
+    }
+};
+
+/** Helper functions **/
+
+// Convert the byte array to a string.
+function decodeToString(payload) {
+    return String.fromCharCode.apply(String, payload);
+}
+
+// Convert the byte array to a JSON object.
+function decodeToJson(payload) {
+    return JSON.parse(decodeToString(payload));
+}
+
+// Return the converted uplink message.
+return result;
