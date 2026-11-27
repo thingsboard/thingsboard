@@ -16,6 +16,7 @@ import dev.langchain4j.model.chat.request.ResponseFormatType;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonSchema;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.output.FinishReason;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -1028,6 +1029,129 @@ class TbAiNodeTest {
         // THEN
         then(ctxMock).should().tellSuccess(argThat(
                 resultMsg -> resultMsg.getData().equals(JacksonUtil.newObjectNode().put("response", chatResponse.aiMessage().text()).toString()))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("responsesCutOffByOutputTokenLimit")
+    void givenResponseCutOffByOutputTokenLimit_whenOnMsg_thenTellsFailure(TbResponseFormat responseFormat, String responseText) throws TbNodeException {
+        // GIVEN
+        config.setModelId(modelId);
+        config.setUserPrompt("Check the device telemetry");
+        config.setResponseFormat(responseFormat);
+        config.setTimeoutSeconds(10);
+        config.setForceAck(false);
+
+        aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        var msg = TbMsg.newMsg()
+                .originator(deviceId)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        var chatResponse = ChatResponse.builder()
+                .aiMessage(AiMessage.from(responseText))
+                .finishReason(FinishReason.LENGTH)
+                .build();
+
+        given(aiChatModelServiceMock.sendChatRequestAsync(eq(tenantId), any(), any())).willReturn(FluentFuture.from(immediateFuture(chatResponse)));
+
+        // WHEN
+        aiNode.onMsg(ctxMock, msg);
+
+        // THEN
+        var exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().tellFailure(eq(msg), exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue().getMessage())
+                .isEqualTo("AI model response was cut off by the output token limit. Set a higher 'Maximum output tokens' value in the AI model settings");
+
+        then(ctxMock).should(never()).tellSuccess(any());
+    }
+
+    static Stream<Arguments> responsesCutOffByOutputTokenLimit() {
+        return Stream.of(
+                Arguments.of(new TbTextResponseFormat(), "The bearing temperature is above the normal range, which"),
+                Arguments.of(new TbJsonResponseFormat(), "{\"status\":\"degraded\",\"reason\":\"bearing temp")
+        );
+    }
+
+    @Test
+    void givenResponseBlockedByContentFilter_whenOnMsg_thenTellsFailure() throws TbNodeException {
+        // GIVEN
+        config.setModelId(modelId);
+        config.setUserPrompt("Check the device telemetry");
+        config.setResponseFormat(new TbJsonResponseFormat());
+        config.setTimeoutSeconds(10);
+        config.setForceAck(false);
+
+        aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        var msg = TbMsg.newMsg()
+                .originator(deviceId)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        var chatResponse = ChatResponse.builder()
+                .aiMessage(AiMessage.builder().build())
+                .finishReason(FinishReason.CONTENT_FILTER)
+                .build();
+
+        given(aiChatModelServiceMock.sendChatRequestAsync(eq(tenantId), any(), any())).willReturn(FluentFuture.from(immediateFuture(chatResponse)));
+
+        // WHEN
+        aiNode.onMsg(ctxMock, msg);
+
+        // THEN
+        var exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().tellFailure(eq(msg), exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue().getMessage()).isEqualTo("AI model response was blocked by the provider's content filter");
+
+        then(ctxMock).should(never()).tellSuccess(any());
+    }
+
+    @ParameterizedTest
+    @MethodSource("emptyResponseTexts")
+    void givenEmptyResponse_whenOnMsg_thenTellsFailure(String responseText) throws TbNodeException {
+        // GIVEN
+        config.setModelId(modelId);
+        config.setUserPrompt("Check the device telemetry");
+        config.setResponseFormat(new TbTextResponseFormat());
+        config.setTimeoutSeconds(10);
+        config.setForceAck(false);
+
+        aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        var msg = TbMsg.newMsg()
+                .originator(deviceId)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        var chatResponse = ChatResponse.builder()
+                .aiMessage(AiMessage.builder().text(responseText).build())
+                .finishReason(FinishReason.STOP)
+                .build();
+
+        given(aiChatModelServiceMock.sendChatRequestAsync(eq(tenantId), any(), any())).willReturn(FluentFuture.from(immediateFuture(chatResponse)));
+
+        // WHEN
+        aiNode.onMsg(ctxMock, msg);
+
+        // THEN
+        var exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().tellFailure(eq(msg), exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue().getMessage()).isEqualTo("AI model returned an empty response");
+
+        then(ctxMock).should(never()).tellSuccess(any());
+    }
+
+    static Stream<Arguments> emptyResponseTexts() {
+        return Stream.of(
+                Arguments.of((String) null),
+                Arguments.of(""),
+                Arguments.of("   ")
         );
     }
 
