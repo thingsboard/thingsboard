@@ -183,9 +183,10 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                             log.debug("[{}] Server max inbound message size: {}", edgeKey, connectResponseMsg.getMaxInboundMessageSize());
                             serverMaxInboundMessageSize = connectResponseMsg.getMaxInboundMessageSize();
                         }
-                        log.info("[{}] Configuration received: {}", edgeKey, connectResponseMsg.getConfiguration());
+                        EdgeConfiguration configuration = connectResponseMsg.getConfiguration();
+                        log.info("[{}] Configuration received for edge [{}] of type [{}]", edgeKey, configuration.getName(), configuration.getType());
                         connected = true;
-                        onEdgeUpdate.accept(connectResponseMsg.getConfiguration());
+                        onEdgeUpdate.accept(configuration);
                     } else {
                         connected = false;
                         log.error("[{}] Failed to establish the connection! Code: {}. Error message: {}.", edgeKey, connectResponseMsg.getResponseCode(), connectResponseMsg.getErrorMsg());
@@ -197,8 +198,9 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                         onError.accept(new EdgeConnectionException("Failed to establish the connection! Response code: " + connectResponseMsg.getResponseCode().name()));
                     }
                 } else if (responseMsg.hasEdgeUpdateMsg()) {
-                    log.debug("[{}] Edge update message received {}", edgeKey, responseMsg.getEdgeUpdateMsg());
-                    onEdgeUpdate.accept(responseMsg.getEdgeUpdateMsg().getConfiguration());
+                    EdgeConfiguration configuration = responseMsg.getEdgeUpdateMsg().getConfiguration();
+                    log.debug("[{}] Edge update message received for edge [{}] of type [{}]", edgeKey, configuration.getName(), configuration.getType());
+                    onEdgeUpdate.accept(configuration);
                 } else if (responseMsg.hasUplinkResponseMsg()) {
                     log.debug("[{}] Uplink response message received {}", edgeKey, responseMsg.getUplinkResponseMsg());
                     onUplinkResponse.accept(responseMsg.getUplinkResponseMsg());
