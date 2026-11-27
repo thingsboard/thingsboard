@@ -416,13 +416,18 @@ public final class IntegrationGrpcSession implements Closeable {
                 .setConverterIdMSB(converter.getId().getId().getMostSignificantBits())
                 .setConverterIdLSB(converter.getId().getId().getLeastSignificantBits())
                 .setName(converter.getName())
-                .setConfiguration(JacksonUtil.toString(converter.getConfiguration()))
-                .setAdditionalInfo(JacksonUtil.toString(converter.getAdditionalInfo()));
+                .setConfiguration(JacksonUtil.toString(converter.getConfiguration()));
+        if (converter.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(JacksonUtil.toString(converter.getAdditionalInfo()));
+        }
         if (converter.getDebugSettings() != null) {
             builder.setDebugSettings(JacksonUtil.toString(converter.getDebugSettings()));
         }
         if (converter.getIntegrationType() != null) {
             builder.setIntegrationType(converter.getIntegrationType().toString());
+        }
+        if (converter.getConverterVersion() != null) {
+            builder.setConverterVersion(converter.getConverterVersion());
         }
         return builder.build();
     }
