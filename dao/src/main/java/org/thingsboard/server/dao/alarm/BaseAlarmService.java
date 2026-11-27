@@ -6,6 +6,7 @@ package org.thingsboard.server.dao.alarm;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Striped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +77,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,6 +94,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     private static final PageLink DEFAULT_ALARM_TYPES_PAGE_LINK = new PageLink(25, 0, null, new SortOrder("type"));
+    private static final int ACTIVE_ALARM_LOCK_STRIPES = 1024;
     // Upper bound on the per-tenant set of type names kept in the registration cache. A tenant with more distinct
     // types than this simply falls through to the idempotent insert on registration -- correct, just not cache-skipped.
     // Configurable so a tenant with thousands of distinct alarm types can raise the cap instead of paying the insert
@@ -110,6 +113,8 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Autowired
     @Qualifier("AlarmTypeNamesCache")
     private TbTransactionalCache<TenantId, HashSet<String>> alarmTypeNamesCache;
+
+    private final Striped<Lock> activeAlarmLocks = Striped.lock(ACTIVE_ALARM_LOCK_STRIPES);
 
     @Override
     @TransactionalEventListener
@@ -145,7 +150,14 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
             throw new DataValidationException("Can't assign alarm to customer. Originator belongs to different customer!");
         }
         request.setCustomerId(customerId);
-        AlarmApiCallResult result = alarmDao.createOrUpdateActiveAlarm(request, alarmCreationEnabled);
+        AlarmApiCallResult result;
+        Lock lock = activeAlarmLocks.get(List.of(request.getOriginator().getId(), request.getType()));
+        lock.lock();
+        try {
+            result = alarmDao.createOrUpdateActiveAlarm(request, alarmCreationEnabled);
+        } finally {
+            lock.unlock();
+        }
         if (!result.isSuccessful() && !alarmCreationEnabled) {
             throw new ApiUsageLimitsExceededException("Alarms creation is disabled");
         }
