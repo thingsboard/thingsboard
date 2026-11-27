@@ -31,8 +31,11 @@ import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.MfaConfigurationToken;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.exception.UserPasswordNotValidException;
+import org.thingsboard.server.service.security.ip.SysAdminIpPolicy;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+
+import java.net.InetAddress;
 import org.thingsboard.server.service.security.permission.UserPermissionsService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
@@ -46,19 +49,22 @@ public class RestAuthenticationProvider extends AbstractAuthenticationProvider {
     private final UserService userService;
     private final UserPermissionsService userPermissionsService;
     private final TwoFactorAuthService twoFactorAuthService;
+    private final SysAdminIpPolicy sysAdminIpPolicy;
 
     @Autowired
     public RestAuthenticationProvider(final UserService userService, final CustomerService customerService,
                                       final UserPermissionsService userPermissionsService,
                                       final SystemSecurityService systemSecurityService,
                                       SecuritySettingsService securitySettingsService,
-                                      TwoFactorAuthService twoFactorAuthService) {
+                                      TwoFactorAuthService twoFactorAuthService,
+                                      SysAdminIpPolicy sysAdminIpPolicy) {
         super(customerService, null, userPermissionsService);
         this.userService = userService;
         this.userPermissionsService = userPermissionsService;
         this.systemSecurityService = systemSecurityService;
         this.securitySettingsService = securitySettingsService;
         this.twoFactorAuthService = twoFactorAuthService;
+        this.sysAdminIpPolicy = sysAdminIpPolicy;
     }
 
     @Override
@@ -108,6 +114,12 @@ public class RestAuthenticationProvider extends AbstractAuthenticationProvider {
         }
 
         try {
+            // Checked before credential validation, so a blocked address can neither brute-force the
+            // password nor lock the account; the generic error keeps the account's role unknowable.
+            if (isSysAdminIpBlocked(user, authentication.getDetails())) {
+                throw new BadCredentialsException("Authentication Failed. Username or password not valid.");
+            }
+
             UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, user.getId());
             if (userCredentials == null) {
                 throw new UsernameNotFoundException("User credentials not found");
@@ -140,6 +152,16 @@ public class RestAuthenticationProvider extends AbstractAuthenticationProvider {
 
     private SecurityUser authenticateByPublicId(UserPrincipal userPrincipal, String publicId) {
         return super.authenticateByPublicId(publicId, "Public Id", userPrincipal);
+    }
+
+    private boolean isSysAdminIpBlocked(User user, Object details) {
+        InetAddress resolved = null;
+        InetAddress socket = null;
+        if (details instanceof RestAuthenticationDetails restDetails) {
+            resolved = restDetails.getResolvedAddress();
+            socket = restDetails.getRawSocketAddress();
+        }
+        return sysAdminIpPolicy.isBlocked(user.getAuthority(), user.getTenantId(), user.getId(), resolved, socket, "login");
     }
 
     @Override

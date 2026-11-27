@@ -22,7 +22,8 @@ public enum ThingsboardErrorCode {
     ENTITIES_LIMIT_EXCEEDED(41),
     PASSWORD_VIOLATION(45),
     DATABASE(46),
-    SETUP_INCOMPLETE(47);
+    SETUP_INCOMPLETE(47),
+    IP_NOT_ALLOWED(48);
 
     private int errorCode;
 

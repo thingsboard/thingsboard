@@ -97,6 +97,12 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       if (errorResponse.error && errorResponse.error.refreshTokenPending ||
           errorCode && errorCode === Constants.serverErrorCode.jwtTokenExpired) {
           return this.refreshTokenAndRetry(req, next);
+      } else if (errorCode === Constants.serverErrorCode.ipNotAllowed) {
+        // terminal: the address is blocked by the sysadmin IP allowlist, a token refresh cannot help
+        if (!ignoreErrors) {
+          this.showError(this.translate.instant('server-error.ip-not-allowed'));
+        }
+        this.authService.logout(true, true);
       } else if (errorCode !== Constants.serverErrorCode.credentialsExpired) {
         unhandled = true;
       }
