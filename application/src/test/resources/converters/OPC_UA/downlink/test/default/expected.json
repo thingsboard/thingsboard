@@ -1,0 +1,5 @@
+{
+  "contentType": "JSON",
+  "data": "{\"writeValues\":[{\"nodeId\":\"ns=6;s=MySwitch\",\"value\":true,\"dataType\":\"Boolean\"}],\"callMethods\":[]}",
+  "metadata": {}
+}

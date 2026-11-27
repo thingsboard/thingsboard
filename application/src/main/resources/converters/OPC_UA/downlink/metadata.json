@@ -1,0 +1,5 @@
+{
+  "deviceName": "MyDevice",
+  "deviceType": "OPC-UA Device",
+  "cs_opcUaNamespaceIndex": "6"
+}
