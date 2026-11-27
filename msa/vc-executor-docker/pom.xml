@@ -26,7 +26,6 @@
         <main.dir>${maven.multiModuleProjectDirectory}</main.dir>
         <pkg.name>tb-vc-executor</pkg.name>
         <docker.name>${tb.docker.id}-vc-executor</docker.name>
-        <sbom.metadata.skip>true</sbom.metadata.skip>
         <sbom.image.package.dir>${main.dir}/msa/vc-executor/target</sbom.image.package.dir>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>

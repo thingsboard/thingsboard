@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3"
@@ -40,9 +41,24 @@
             <directory>${project.build.directory}/data</directory>
             <outputDirectory>data</outputDirectory>
         </fileSet>
+        <!-- The third-party notices, when the build makes them (-Dnotices.skip=false) -->
+        <fileSet>
+            <directory>${project.build.directory}/notices/windows</directory>
+            <outputDirectory/>
+            <includes>
+                <include>THIRD-PARTY-NOTICES</include>
+            </includes>
+            <lineEnding>windows</lineEnding>
+        </fileSet>
     </fileSets>
 
     <files>
+        <!-- The license of ThingsBoard -->
+        <file>
+            <source>${project.build.directory}/LICENSE</source>
+            <outputDirectory/>
+            <lineEnding>windows</lineEnding>
+        </file>
         <file>
             <source>${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</source>
             <outputDirectory>lib</outputDirectory>
