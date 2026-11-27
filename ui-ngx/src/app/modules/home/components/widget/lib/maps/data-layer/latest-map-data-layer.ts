@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataLayerEditAction,
   MapDataLayerSettings,
@@ -12,12 +13,25 @@ import L from 'leaflet';
 import { createTooltip, updateTooltip } from './data-layer-utils';
 import { TbDataLayerItem, TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 
+const isSameFormattedData = (a: FormattedData<TbMapDatasource>, b: FormattedData<TbMapDatasource>): boolean => {
+  if (a === b) {
+    return true;
+  }
+  if (!a || !b) {
+    return false;
+  }
+  const aKeys = Object.keys(a);
+  return aKeys.length === Object.keys(b).length && aKeys.every(key => a[key] === b[key]);
+};
+
 export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = MapDataLayerSettings,
   D extends TbLatestMapDataLayer<S,D> = TbLatestMapDataLayer<any>, L extends L.Layer = L.Layer> extends TbDataLayerItem<S,D,L> {
 
   protected tooltip: L.Popup;
+  protected labelContent: string;
   protected data: FormattedData<TbMapDatasource>;
   protected selected = false;
+  private dataStale = false;
 
   protected constructor(data: FormattedData<TbMapDatasource>,
                         dsData: FormattedData<TbMapDatasource>[],
@@ -35,8 +49,10 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
         this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, data, dsData);
     }
     this.bindEvents();
+  }
+
+  public onAddedToContainer(): void {
     try {
-      this.dataLayer.getDataLayerContainer().addLayer(this.layer);
       this.editModeUpdated();
     } catch (e) {
       console.warn(e);
@@ -113,9 +129,15 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
     }
   }
 
-  public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.data = data;
-    this.doUpdate(data, dsData);
+  public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): boolean {
+    if (!this.dataStale && this.dataLayer.canSkipUnchangedItems() && isSameFormattedData(this.data, data)) {
+      return false;
+    } else {
+      this.dataStale = false;
+      this.data = data;
+      this.doUpdate(data, dsData);
+      return true;
+    }
   }
 
   public remove() {
@@ -128,6 +150,15 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
 
   public isEditing() {
     return false;
+  }
+
+  protected markDataStale(): void {
+    this.dataStale = true;
+  }
+
+  protected reapplyData(): void {
+    this.dataStale = false;
+    this.doUpdate(this.data, this.dataLayer.getMap().getData());
   }
 
   protected bindEvents(): void {
@@ -182,14 +213,21 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
     }
   }
 
-  protected updateLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+  protected updateLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[], force = true) {
     if (this.settings.label.show) {
-      this.unbindLabel();
-      const label = this.dataLayer.dataLayerLabelProcessor.processPattern(data, dsData);
-      const labelColor = this.dataLayer.getCtx().widgetConfig.color;
-      const content: L.Content = `<div style="color: ${labelColor};"><b>${label}</b></div>`;
-      this.bindLabel(content);
+      const content = this.createLabelContent(data, dsData);
+      if (force || content !== this.labelContent) {
+        this.unbindLabel();
+        this.bindLabel(content);
+        this.labelContent = content;
+      }
     }
+  }
+
+  protected createLabelContent(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): string {
+    const label = this.dataLayer.dataLayerLabelProcessor.processPattern(data, dsData);
+    const labelColor = this.dataLayer.getCtx().widgetConfig.color;
+    return `<div style="color: ${labelColor};"><b>${label}</b></div>`;
   }
 
   protected canDeselect(cancel = false): boolean {
@@ -311,15 +349,18 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
     const layerData = dsData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
     const toDelete = new Set(Array.from(this.layerItems.keys()));
     const updatedItems: TbLatestDataLayerItem<S,D,L>[] = [];
+    const createdItems: TbLatestDataLayerItem<S,D,L>[] = [];
     layerData.forEach((data) => {
       if (this.isValidLayerData(data)) {
         let layerItem = this.layerItems.get(data.entityId);
         if (layerItem) {
-          layerItem.update(data, dsData);
-          updatedItems.push(layerItem);
+          if (layerItem.update(data, dsData)) {
+            updatedItems.push(layerItem);
+          }
         } else {
           layerItem = this.createLayerItem(data, dsData);
           this.layerItems.set(data.entityId, layerItem);
+          createdItems.push(layerItem);
         }
         toDelete.delete(data.entityId);
       } else {
@@ -332,6 +373,9 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
     toDelete.forEach((key) => {
       this.removeItem(key);
     });
+    if (createdItems.length) {
+      this.addItemsToContainer(createdItems);
+    }
     if (updatedItems.length) {
       this.layerItemsUpdated(updatedItems);
     }
@@ -388,11 +432,24 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
       this.unplacedItems.splice(index, 1);
       const layerItem = this.createLayerItem(unplacedItem.entity, this.map.getData());
       this.layerItems.set(unplacedItem.entity.entityId, layerItem);
+      this.addItemsToContainer([layerItem]);
       this.map.enabledDataLayersUpdated();
     }
   }
 
   protected layerItemsUpdated(_updatedItems: TbLatestDataLayerItem<S,D,L>[]): void {
+  }
+
+  protected addItemsToContainer(items: TbLatestDataLayerItem<S,D,L>[]): void {
+    const container = this.getDataLayerContainer();
+    for (const item of items) {
+      try {
+        container.addLayer(item.getLayer());
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    items.forEach(item => item.onAddedToContainer());
   }
 
   private prepareUnplacedItems(): UnplacedMapDataItem[] {

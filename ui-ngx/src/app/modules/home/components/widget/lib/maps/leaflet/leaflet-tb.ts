@@ -5,7 +5,7 @@ import L, { TB } from 'leaflet';
 import { guid, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
 import { GestureHandling } from 'leaflet-gesture-handling';
-import { Map as MapLibreGLMap, setWorkerUrl } from 'maplibre-gl';
+import { LngLat, Map as MapLibreGLMap, setWorkerUrl } from 'maplibre-gl';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -1094,7 +1094,11 @@ const chinaProvider = (type: string, options?: L.TileLayerOptions): L.TB.TileLay
 setWorkerUrl(new URL('assets/maplibre-gl/maplibre-gl-worker.mjs', document.baseURI).href);
 
 // Same as MapLibre's own default maxZoom
-const MAP_LIBRE_GL_DEFAULT_MAX_ZOOM = 22;
+const mapLibreGlDefaultMaxZoom = 22;
+// Web Mercator latitude limit
+const mapLibreGlMaxLatitude = 85.051129;
+// MapLibre renders the world plus 3 copies on each side; longitude limit in degrees
+const mapLibreGlMaxLongitude = 180 + 3 * 360;
 
 class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
 
@@ -1107,11 +1111,13 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   private _offset: L.Point;
   private _zooming: boolean;
   private _glError = false;
+  private _ownMaxBounds: L.LatLngBounds;
+  private _prevMaxBoundsViscosity: number;
 
   constructor(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions) {
     super();
     options = {
-      maxZoom: MAP_LIBRE_GL_DEFAULT_MAX_ZOOM,
+      maxZoom: mapLibreGlDefaultMaxZoom,
       ...options,
       updateInterval: 32,
       padding: 0.1,
@@ -1125,28 +1131,26 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   beforeAdd(map: L.Map): this {
-    map._addZoomLimit(this);
+    if (!this.options.overlay) {
+      map._addZoomLimit(this);
+    }
     return this;
   }
 
   onAdd(map: L.Map): this {
-    let update = false;
     if (!this._container) {
       this._initContainer();
-    } else {
-      update = true;
     }
     const paneName = this.getPaneName();
     map.getPane(paneName).appendChild(this._container);
     this._initGL();
+    this._limitPan(map);
 
     this._offset = this._map.containerPointToLayerPoint([0, 0]);
     if ((this._map as any)._proxy && map.options.zoomAnimation) {
       L.DomEvent.on((map as any)._proxy, L.DomUtil.TRANSITION_END, this._transitionEnd, this);
     }
-    if (update) {
-      this._update();
-    }
+    this._update();
     return this;
   }
 
@@ -1157,6 +1161,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     const paneName = this.getPaneName();
     map.getPane(paneName).removeChild(this._container);
     map._removeZoomLimit(this);
+    this._releasePan(map);
 
     if (this._glMap) {
       this._glMap.remove();
@@ -1221,13 +1226,16 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _initGL() {
-    const center = this._map.getCenter();
     const options = L.extend({}, this.options, {
       container: this._container,
-      center: [center.lng, center.lat],
+      center: this._getGLCenter(),
       zoom: this._map.getZoom() - 1,
-      attributionControl: false
+      attributionControl: false,
+      transformConstrain: (lngLat: LngLat, zoom: number) => ({center: lngLat, zoom})
     });
+    delete options.minZoom;
+    delete options.maxZoom;
+    delete options.overlay;
     this._glError = false;
     try {
       this._glMap = new MapLibreGLMap(options);
@@ -1276,30 +1284,68 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
       offset = this._map.getSize().multiplyBy(this.options.padding),
       topLeft = this._map.containerPointToLayerPoint([0, 0]).subtract(offset);
 
-    L.DomUtil.setPosition(container, this._roundPoint(topLeft));
-
-    this._transformGL(gl);
-
     if (container.clientWidth !== size.x || container.clientHeight !== size.y) {
       container.style.width  = size.x + 'px';
       container.style.height = size.y + 'px';
       gl.resize();
     }
+
+    this._transformGL(gl);
+
+    L.DomUtil.setPosition(container, this._roundPoint(topLeft.add([0, this._getGLCenterOffsetY()])));
   }
 
   private _transformGL(gl: MapLibreGLMap) {
-    const center = this._map.getCenter();
     gl.jumpTo({
-      center: [center.lng, center.lat],
+      center: this._getGLCenter(),
       zoom: this._map.getZoom() - 1
     });
+  }
+
+  private _getGLCenter(): LngLat {
+    const center = this._map.getCenter();
+    const lat = Math.max(-mapLibreGlMaxLatitude, Math.min(mapLibreGlMaxLatitude, center.lat));
+    return new LngLat(center.lng, lat);
+  }
+
+  private _getGLCenterOffsetY(): number {
+    const glCenter = this._getGLCenter();
+    const centerPoint = this._map.containerPointToLayerPoint(this._map.getSize().divideBy(2));
+    const glCenterPoint = this._map.latLngToLayerPoint([glCenter.lat, glCenter.lng]);
+    const offsetY = glCenterPoint.y - centerPoint.y;
+    return Number.isFinite(offsetY) ? offsetY : 0;
+  }
+
+  private _limitPan(map: L.Map) {
+    if (!this.options.overlay && !map.options.maxBounds) {
+      this._ownMaxBounds = L.latLngBounds([-mapLibreGlMaxLatitude, -mapLibreGlMaxLongitude],
+        [mapLibreGlMaxLatitude, mapLibreGlMaxLongitude]);
+      this._prevMaxBoundsViscosity = map.options.maxBoundsViscosity;
+      map.options.maxBoundsViscosity = 1;
+      map.setMaxBounds(this._ownMaxBounds);
+    }
+  }
+
+  private _releasePan(map: L.Map) {
+    if (this._ownMaxBounds && map.options.maxBounds === this._ownMaxBounds) {
+      map.setMaxBounds(null);
+      map.options.maxBoundsViscosity = this._prevMaxBoundsViscosity;
+      let handedOff = false;
+      map.eachLayer((layer) => {
+        if (!handedOff && layer !== this && layer instanceof MapLibreGLLayer && !layer.options.overlay) {
+          layer._limitPan(map);
+          handedOff = true;
+        }
+      });
+    }
+    this._ownMaxBounds = null;
   }
 
   private _pinchZoom() {
     if (!this._glReady()) { return; }
     this._glMap.jumpTo({
       zoom: this._map.getZoom() - 1,
-      center: this._map.getCenter()
+      center: this._getGLCenter()
     });
   }
 
@@ -1345,7 +1391,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     L.Util.requestAnimFrame(() => {
       if (!this._glReady()) { return; }
       const zoom = this._map.getZoom();
-      const center = this._map.getCenter();
+      const center = this._getGLCenter();
       const offset = this._map.latLngToContainerPoint(
         this._map.getBounds().getNorthWest()
       );

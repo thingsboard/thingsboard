@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataLayerColorSettings,
   loadImageWithAspect,
@@ -60,6 +61,21 @@ export interface ShapeStyleInfo {
   patternId: string;
   style: L.PathOptions;
 }
+
+export const isSameShapeStyle = (a: ShapeStyleInfo, b: ShapeStyleInfo): boolean => {
+  if (!a || !b) {
+    return false;
+  }
+  if (a === b) {
+    return true;
+  }
+  if (a.patternId !== b.patternId) {
+    return false;
+  }
+  const aKeys = Object.keys(a.style);
+  const bKeys = Object.keys(b.style);
+  return aKeys.length === bKeys.length && aKeys.every(key => a.style[key] === b.style[key]);
+};
 
 abstract class ShapePatternProcessor<S = any> {
 

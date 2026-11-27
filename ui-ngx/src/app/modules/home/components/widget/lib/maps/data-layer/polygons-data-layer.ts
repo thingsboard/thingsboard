@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   defaultBasePolygonsDataLayerSettings,
   isCutPolygon, isJSON, MapDataLayerType,
@@ -8,9 +9,9 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
+import { isSameShapeStyle, ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { isNotEmptyStr, isString } from '@core/utils';
 import {
   TbLatestDataLayerItem,
@@ -23,7 +24,10 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   private polygonContainer: L.FeatureGroup;
   private polygon: L.Polygon;
   private polygonStyleInfo: ShapeStyleInfo;
+  private styleSubscription: Subscription;
+  private appliedGeometryKey: string;
   private editing = false;
+  private pendingGeometryUpdate = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -41,6 +45,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   }
 
   public remove() {
+    this.styleSubscription?.unsubscribe();
     super.remove();
     if (this.polygonStyleInfo?.patternId) {
       this.dataLayer.getMap().unUseShapePattern(this.polygonStyleInfo.patternId);
@@ -49,6 +54,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const polyData = this.dataLayer.extractPolygonCoordinates(data);
+    this.appliedGeometryKey = this.geometryKey(data);
     const polyConstructor = isCutPolygon(polyData) || polyData.length !== 2 ? L.polygon : L.rectangle;
     this.polygon = polyConstructor(polyData as (TbPolygonRawCoordinates & L.LatLngTuple[]), {
       noClip: true,
@@ -56,7 +62,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
       bubblingMouseEvents: !this.dataLayer.isEditMode()
     });
 
-    this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polygonStyleInfo = styleInfo;
       if (this.polygon) {
         this.polygon.setStyle(this.polygonStyleInfo.style);
@@ -80,19 +86,21 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription?.unsubscribe();
+    this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
+      const styleChanged = !isSameShapeStyle(this.polygonStyleInfo, styleInfo);
       this.polygonStyleInfo = styleInfo;
-      this.updatePolygonShape(data);
+      const geometryChanged = this.updatePolygonShape(data);
       this.updateTooltip(data, dsData);
-      this.updateLabel(data, dsData);
-      if (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled()) {
+      this.updateLabel(data, dsData, geometryChanged);
+      if (styleChanged && (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled())) {
         this.polygon.setStyle(this.polygonStyleInfo.style);
       }
     });
   }
 
   protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.updatePolygonShape(data);
+    this.updatePolygonShape(data, true);
     this.updateLabel(data, dsData);
   }
 
@@ -130,6 +138,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   protected disableDrag(): void {
     this.polygon.pm.disableLayerDrag();
     this.polygon.off('pm:dragstart');
+    this.polygon.off('pm:drag');
     this.polygon.off('pm:dragend');
   }
 
@@ -292,6 +301,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     const map = this.dataLayer.getMap().getMap();
     map.pm.disableGlobalCutMode();
     cutButton?.setActive(false);
+    this.applyPendingGeometryUpdate();
   }
 
   private enablePolygonRotateMode(rotateButton?: L.TB.ToolbarButton) {
@@ -314,6 +324,14 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     this.polygon.off('pm:rotateend');
     this.polygon.off('pm:rotatedisable');
     rotateButton?.setActive(false);
+    this.applyPendingGeometryUpdate();
+  }
+
+  private applyPendingGeometryUpdate() {
+    if (this.pendingGeometryUpdate) {
+      this.pendingGeometryUpdate = false;
+      this.reapplyData();
+    }
   }
 
   private savePolygonCoordinates() {
@@ -329,12 +347,27 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
       }
     }
     this.dataLayer.savePolygonCoordinates(this.data, coordinates).subscribe();
+    this.pendingGeometryUpdate = false;
+    this.appliedGeometryKey = null;
+    this.markDataStale();
   }
 
-  private updatePolygonShape(data: FormattedData<TbMapDatasource>) {
+  private geometryKey(data: FormattedData<TbMapDatasource>): string {
+    const rawPolyData = data[this.settings.polygonKey.label];
+    return isString(rawPolyData) ? rawPolyData : JSON.stringify(rawPolyData);
+  }
+
+  private updatePolygonShape(data: FormattedData<TbMapDatasource>, force = false): boolean {
     if (this.editing) {
-      return;
+      this.pendingGeometryUpdate = true;
+      this.markDataStale();
+      return false;
     }
+    const geometryKey = this.geometryKey(data);
+    if (!force && geometryKey === this.appliedGeometryKey) {
+      return false;
+    }
+    this.appliedGeometryKey = geometryKey;
     const polyData = this.dataLayer.extractPolygonCoordinates(data) as TbPolyData;
     if (isCutPolygon(polyData) || polyData.length !== 2) {
       if (this.polygon instanceof L.Rectangle) {
@@ -354,6 +387,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
       const bounds = new L.LatLngBounds(polyData as L.LatLngTuple[]);
       (this.polygon as L.Rectangle).setBounds(bounds);
     }
+    return true;
   }
 
 }

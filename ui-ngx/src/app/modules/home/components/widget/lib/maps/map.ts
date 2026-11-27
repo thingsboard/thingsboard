@@ -68,7 +68,7 @@ import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/pane
 import { ComponentRef } from '@angular/core';
 import { TbTripsDataLayer } from '@home/components/widget/lib/maps/data-layer/trips-data-layer';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
-import { TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import { TbMapDataLayer, tbFunctionUsesAdditionalData } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { EntityType } from '@shared/models/entity-type.models';
 import { ShapePatternStorage } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbPolylineDataLayer } from '@home/components/widget/lib/maps/data-layer/polylines-data-layer';
@@ -122,6 +122,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected timeLineComponentRef: ComponentRef<MapTimelinePanelComponent>;
   protected timeLineComponent: MapTimelinePanelComponent;
   protected locationSnapFilterFunction: CompiledTbFunction<MapBooleanFunction>;
+  private locationSnapFilterUsesAdditionalData = false;
 
   protected addMarkerDataLayers: TbLatestMapDataLayer<any>[];
   protected addPolygonDataLayers: TbLatestMapDataLayer<any>[];
@@ -223,6 +224,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
     const setup = [this.doSetupControls()];
     if (this.timeline && this.settings.tripTimeline.snapToRealLocation) {
+      this.locationSnapFilterUsesAdditionalData = tbFunctionUsesAdditionalData(this.settings.tripTimeline.locationSnapFilter);
       setup.push(parseTbFunction<MapBooleanFunction>(this.getCtx().http, this.settings.tripTimeline.locationSnapFilter, ['data', 'dsData']).pipe(
         map((parsed) => {
           this.locationSnapFilterFunction = parsed;
@@ -964,7 +966,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
       undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
     this.latestDataLayers.forEach(dl => dl.updateData(this.dsData));
     this.updateTripsAppearance();
-    this.updateTripsAnchors();
+    if (this.locationSnapFilterUsesAdditionalData) {
+      this.updateTripsAnchors();
+    }
     this.updateBounds();
     this.updateEditButtonsStates();
     this.ctx.updateLabelPatterns();
@@ -1010,7 +1014,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private updateTripsAppearance() {
-    this.tripDataLayers.forEach(dl => dl.updateAppearance());
+    this.tripDataLayers.filter(dl => !dl.canSkipUnchangedItems()).forEach(dl => dl.updateAppearance());
   }
 
   private updateTripsTime() {
@@ -1021,13 +1025,12 @@ export abstract class TbMap<S extends BaseMapSettings> {
     if (this.timeline) {
       if (this.settings.tripTimeline.snapToRealLocation) {
         // Recalculate anchors only for enabled layers
-        let anchors: number[] = [];
+        const anchorSet = new Set<number>();
         const enableTrips = this.tripDataLayers.filter(dl => dl.isEnabled());
         for (const tripsDataLayer of enableTrips) {
-          const tripsAnchors = tripsDataLayer.calculateAnchors();
-          anchors = [...new Set([...anchors, ...tripsAnchors])];
+          tripsDataLayer.calculateAnchors().forEach(anchor => anchorSet.add(anchor));
         }
-        anchors.sort((a, b) => a - b);
+        const anchors = [...anchorSet].sort((a, b) => a - b);
         this.timeLineComponent.anchors = anchors;
       }
     }

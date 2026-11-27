@@ -301,6 +301,7 @@ declare module 'leaflet' {
 
       interface LeafletMapLibreGLMapOptions extends L.InteractiveLayerOptions, Omit<MapLibreGLMapOptions, "container"> {
         updateInterval?: number;
+        overlay?: boolean;
         padding?: number;
         className?: string;
       }

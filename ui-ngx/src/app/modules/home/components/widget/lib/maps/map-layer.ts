@@ -250,8 +250,7 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
         }
         return L.TB.MapLibreGL.mapLibreGLLayer({
           style: this.referenceLayerStyle(spec),
-          // The reference layer is drawn over a raster base, so the base layer's zoom limit applies
-          maxZoom: undefined
+          overlay: true
         });
       })
     );

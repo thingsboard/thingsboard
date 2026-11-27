@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   defaultBasePolylinesDataLayerSettings,
   isCutPolygon,
@@ -13,9 +14,9 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
+import { isSameShapeStyle, ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { isNotEmptyStr, isString } from '@core/utils';
 import {
   TbLatestDataLayerItem,
@@ -28,7 +29,10 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   private polylineContainer: L.FeatureGroup;
   private polyline: L.Polyline;
   private polylineStyleInfo: ShapeStyleInfo;
+  private styleSubscription: Subscription;
+  private appliedGeometryKey: string;
   private editing = false;
+  private pendingGeometryUpdate = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -46,6 +50,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   }
 
   public remove() {
+    this.styleSubscription?.unsubscribe();
     super.remove();
     if (this.polylineStyleInfo?.patternId) {
       this.dataLayer.getMap().unUseShapePattern(this.polylineStyleInfo.patternId);
@@ -54,6 +59,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const polyData = this.dataLayer.extractPolylineCoordinates(data);
+    this.appliedGeometryKey = this.geometryKey(data);
     const polyConstructor = L.polyline;
     this.polyline = polyConstructor(polyData as (TbPolylineRawCoordinates & L.LatLngTuple[]), {
       noClip: true,
@@ -61,7 +67,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       bubblingMouseEvents: !this.dataLayer.isEditMode()
     });
 
-    this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription = this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polylineStyleInfo = styleInfo;
       if (this.polyline) {
         this.polyline.setStyle(this.polylineStyleInfo.style);
@@ -85,20 +91,23 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription?.unsubscribe();
+    this.styleSubscription = this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
+      const styleChanged = !isSameShapeStyle(this.polylineStyleInfo, styleInfo);
       this.polylineStyleInfo = styleInfo;
-      this.updatePolylineShape(data);
+      const geometryChanged = this.updatePolylineShape(data);
       this.updateTooltip(data, dsData);
-      this.updateLabel(data, dsData);
+      this.updateLabel(data, dsData, geometryChanged);
 
-      if (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled()) {
+      if (styleChanged && (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled())) {
         this.polyline.setStyle(this.polylineStyleInfo.style);
       }
     });
   }
 
-  protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
-    this.updatePolylineShape(data);
+  protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.updatePolylineShape(data, true);
+    this.updateLabel(data, dsData);
   }
 
   protected addItemClass(clazz: string): void {
@@ -135,6 +144,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   protected disableDrag(): void {
     this.polyline.pm.disableLayerDrag();
     this.polyline.off('pm:dragstart');
+    this.polyline.off('pm:drag');
     this.polyline.off('pm:dragend');
   }
 
@@ -312,6 +322,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     const map = this.dataLayer.getMap().getMap();
     map.pm.disableGlobalCutMode();
     cutButton?.setActive(false);
+    this.applyPendingGeometryUpdate();
   }
 
   private enablePolylineRotateMode(rotateButton?: L.TB.ToolbarButton) {
@@ -334,6 +345,14 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     this.polyline.off('pm:rotateend');
     this.polyline.off('pm:rotatedisable');
     rotateButton?.setActive(false);
+    this.applyPendingGeometryUpdate();
+  }
+
+  private applyPendingGeometryUpdate() {
+    if (this.pendingGeometryUpdate) {
+      this.pendingGeometryUpdate = false;
+      this.reapplyData();
+    }
   }
 
   private savePolylineCoordinates() {
@@ -349,12 +368,27 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       }
     }
     this.dataLayer.savePolylineCoordinates(this.data, coordinates).subscribe();
+    this.pendingGeometryUpdate = false;
+    this.appliedGeometryKey = null;
+    this.markDataStale();
   }
 
-  private updatePolylineShape(data: FormattedData<TbMapDatasource>) {
+  private geometryKey(data: FormattedData<TbMapDatasource>): string {
+    const rawPolyData = data[this.settings.polylineKey.label];
+    return isString(rawPolyData) ? rawPolyData : JSON.stringify(rawPolyData);
+  }
+
+  private updatePolylineShape(data: FormattedData<TbMapDatasource>, force = false): boolean {
     if (this.editing) {
-      return;
+      this.pendingGeometryUpdate = true;
+      this.markDataStale();
+      return false;
     }
+    const geometryKey = this.geometryKey(data);
+    if (!force && geometryKey === this.appliedGeometryKey) {
+      return false;
+    }
+    this.appliedGeometryKey = geometryKey;
 
     const polyData = this.dataLayer.extractPolylineCoordinates(data) as TbPolylineData;
     if (this.polyline instanceof L.Polyline && !(this.polyline instanceof L.Rectangle)) {
@@ -376,6 +410,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       this.polyline.addTo(this.polylineContainer);
       this.editModeUpdated();
     }
+    return true;
   }
 }
 

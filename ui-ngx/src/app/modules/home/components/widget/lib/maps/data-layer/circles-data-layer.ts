@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   CirclesDataLayerSettings,
   defaultBaseCirclesDataLayerSettings,
@@ -9,9 +10,9 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
+import { isSameShapeStyle, ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { isNotEmptyStr } from '@core/utils';
 import {
   TbLatestDataLayerItem,
@@ -23,6 +24,8 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
 
   private circle: L.Circle;
   private circleStyleInfo: ShapeStyleInfo;
+  private styleSubscription: Subscription;
+  private geometryDirty = false;
   private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -41,6 +44,7 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
   }
 
   public remove() {
+    this.styleSubscription?.unsubscribe();
     super.remove();
     if (this.circleStyleInfo?.patternId) {
       this.dataLayer.getMap().unUseShapePattern(this.circleStyleInfo.patternId);
@@ -56,7 +60,7 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
       snapIgnore: !this.dataLayer.isSnappable()
     });
 
-    this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
       this.circleStyleInfo = styleInfo;
       if (this.circle) {
         this.circle.setStyle(this.circleStyleInfo.style);
@@ -77,12 +81,16 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription?.unsubscribe();
+    this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
+      const styleChanged = !isSameShapeStyle(this.circleStyleInfo, styleInfo);
       this.circleStyleInfo = styleInfo;
-      this.updateCircleShape(data);
+      const geometryChanged = this.updateCircleShape(data);
       this.updateTooltip(data, dsData);
-      this.updateLabel(data, dsData);
-      this.circle.setStyle(this.circleStyleInfo.style);
+      this.updateLabel(data, dsData, geometryChanged);
+      if (styleChanged) {
+        this.circle.setStyle(this.circleStyleInfo.style);
+      }
     });
   }
 
@@ -154,20 +162,28 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
     const center = this.circle.getLatLng();
     const radius = this.circle.getRadius();
     this.dataLayer.saveCircleCoordinates(this.data, center, radius).subscribe();
+    this.geometryDirty = true;
+    this.markDataStale();
   }
 
-  private updateCircleShape(data: FormattedData<TbMapDatasource>) {
+  private updateCircleShape(data: FormattedData<TbMapDatasource>): boolean {
     if (this.editing) {
-      return;
+      this.markDataStale();
+      return false;
     }
+    let changed = this.geometryDirty;
+    this.geometryDirty = false;
     const circleData = this.dataLayer.extractCircleCoordinates(data);
     const center = new L.LatLng(circleData.latitude, circleData.longitude);
     if (!this.circle.getLatLng().equals(center)) {
       this.circle.setLatLng(center);
+      changed = true;
     }
     if (this.circle.getRadius() !== circleData.radius) {
       this.circle.setRadius(circleData.radius);
+      changed = true;
     }
+    return changed;
   }
 }
 
