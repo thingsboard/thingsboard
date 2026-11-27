@@ -79,12 +79,12 @@ public class DockerComposeConfig extends AgentAppConfig {
         if (securityType == null || securityType.isBlank()) {
             throw new DataValidationException("Gateway security type (TB_GW_SECURITY_TYPE) must be specified");
         }
-        switch (securityType) {
-            case "accessToken" -> requireEnvKeys(env, "TB_GW_ACCESS_TOKEN");
-            case "usernamePassword" -> requireEnvKeys(env, "TB_GW_CLIENT_ID", "TB_GW_USERNAME", "TB_GW_PASSWORD");
-            default -> throw new DataValidationException("Unsupported gateway security type: " + securityType
-                    + ". Supported types: accessToken, usernamePassword");
+        GatewaySecurityType type = GatewaySecurityType.fromValue(securityType);
+        if (type == null) {
+            throw new DataValidationException("Unsupported gateway security type: " + securityType
+                    + ". Supported types: " + GatewaySecurityType.supportedValues());
         }
+        requireEnvKeys(env, type.requiredCredentialKeys(schema).toArray(String[]::new));
     }
 
     // legacy gateway images have no security-type variable; the auth type is implied by which credential keys are set

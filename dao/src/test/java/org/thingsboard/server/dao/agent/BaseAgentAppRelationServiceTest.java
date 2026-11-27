@@ -64,6 +64,30 @@ class BaseAgentAppRelationServiceTest {
     }
 
     @Test
+    void tlsAccessTokenGatewayComposeResolvesItsDeviceByAccessToken() {
+        stubCredentials("tls-token");
+
+        EntityId resolved = service.findRelatedEntityByConfig(TENANT_ID, gatewayApp("""
+                {"services": {"tb-gw": {"image": "thingsboard/tb-gateway:3.7", "environment": {
+                  "TB_GW_SECURITY_TYPE": "tlsAccessToken", "TB_GW_ACCESS_TOKEN": "tls-token"}}}}
+                """));
+
+        assertThat(resolved).isEqualTo(DEVICE_ID);
+    }
+
+    @Test
+    void unsupportedSecurityTypeResolvesNothing() {
+        stubCredentials("some-token");
+
+        EntityId resolved = service.findRelatedEntityByConfig(TENANT_ID, gatewayApp("""
+                {"services": {"tb-gw": {"image": "thingsboard/tb-gateway:3.7", "environment": {
+                  "TB_GW_SECURITY_TYPE": "x509", "TB_GW_ACCESS_TOKEN": "some-token"}}}}
+                """));
+
+        assertThat(resolved).isNull();
+    }
+
+    @Test
     void legacyGatewayComposeResolvesItsDeviceByAccessToken() {
         stubCredentials("legacy-token");
 

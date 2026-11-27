@@ -21,8 +21,8 @@ import org.thingsboard.server.common.data.agent.AgentApplicationType;
 import org.thingsboard.server.common.data.agent.AgentProfile;
 import org.thingsboard.server.common.data.agent.AgentProvisionType;
 import org.thingsboard.server.common.data.agent.config.DockerComposeConfig;
-import org.thingsboard.server.common.data.agent.config.DockerComposeUtils;
 import org.thingsboard.server.common.data.agent.config.GatewayEnvSchema;
+import org.thingsboard.server.common.data.agent.config.GatewaySecurityType;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AgentId;
@@ -239,8 +239,7 @@ public class AgentAutoInstallService {
         device.setAdditionalInfo(JacksonUtil.newObjectNode().put(DataConstants.GATEWAY_PARAMETER, true));
         // deviceProfileId auto-resolved to default by DeviceServiceImpl when null
 
-        String securityType = extractGatewaySecurityType(profile);
-        if ("usernamePassword".equals(securityType)) {
+        if (extractGatewaySecurityType(profile) == GatewaySecurityType.USERNAME_PASSWORD) {
             DeviceCredentials creds = new DeviceCredentials();
             creds.setCredentialsType(DeviceCredentialsType.MQTT_BASIC);
             BasicMqttCredentials basic = new BasicMqttCredentials();
@@ -260,21 +259,11 @@ public class AgentAutoInstallService {
         return saved;
     }
 
-    private String extractGatewaySecurityType(AgentAppProfile profile) {
+    private GatewaySecurityType extractGatewaySecurityType(AgentAppProfile profile) {
         if (!(profile.getConfig() instanceof DockerComposeConfig cfg) || cfg.getCompose() == null) {
             return null;
         }
         var imagePattern = AgentApplicationType.GATEWAY.getMainImagePattern();
-        GatewayEnvSchema schema = GatewayEnvSchema.detect(cfg.getCompose(), imagePattern);
-        if (schema.getSecurityTypeKey() != null) {
-            String securityType = DockerComposeUtils.getEnvVariable(cfg.getCompose(), imagePattern, schema.getSecurityTypeKey());
-            if (securityType != null) {
-                return securityType;
-            }
-        }
-        // legacy schema has no security-type variable; infer the auth type from the credential keys
-        boolean usernamePassword = DockerComposeUtils.getEnvVariable(cfg.getCompose(), imagePattern, schema.getUsernameKey()) != null
-                && DockerComposeUtils.getEnvVariable(cfg.getCompose(), imagePattern, schema.getAccessTokenKey()) == null;
-        return usernamePassword ? "usernamePassword" : "accessToken";
+        return GatewayEnvSchema.detect(cfg.getCompose(), imagePattern).readSecurityType(cfg.getCompose(), imagePattern);
     }
 }

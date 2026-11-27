@@ -11,6 +11,7 @@ import org.thingsboard.server.common.data.agent.AgentApplicationType;
 import org.thingsboard.server.common.data.agent.config.DockerComposeConfig;
 import org.thingsboard.server.common.data.agent.config.DockerComposeUtils;
 import org.thingsboard.server.common.data.agent.config.GatewayEnvSchema;
+import org.thingsboard.server.common.data.agent.config.GatewaySecurityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AgentApplicationId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -27,14 +28,9 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.exception.DataValidationException;
 
-import java.util.regex.Pattern;
-
 @Service
 @RequiredArgsConstructor
 public class BaseAgentAppRelationService implements AgentAppRelationService {
-
-    private static final String ACCESS_TOKEN_SECURITY_TYPE = "accessToken";
-    private static final String USERNAME_PASSWORD_SECURITY_TYPE = "usernamePassword";
 
     private final EdgeService edgeService;
     private final DeviceService deviceService;
@@ -134,31 +130,16 @@ public class BaseAgentAppRelationService implements AgentAppRelationService {
         var imagePattern = AgentApplicationType.GATEWAY.getMainImagePattern();
         JsonNode compose = config.getCompose();
         GatewayEnvSchema schema = GatewayEnvSchema.detect(compose, imagePattern);
-        String accessToken = DockerComposeUtils.getEnvVariable(compose, imagePattern, schema.getAccessTokenKey());
+        GatewaySecurityType securityType = schema.readSecurityType(compose, imagePattern);
+        if (securityType == null) {
+            return null;
+        }
+        if (securityType.isTokenBased()) {
+            return DockerComposeUtils.getEnvVariable(compose, imagePattern, schema.getAccessTokenKey());
+        }
         String clientId = DockerComposeUtils.getEnvVariable(compose, imagePattern, schema.getClientIdKey());
         String userName = DockerComposeUtils.getEnvVariable(compose, imagePattern, schema.getUsernameKey());
-        String securityType = resolveGatewaySecurityType(compose, imagePattern, schema, accessToken, clientId, userName);
-        if (ACCESS_TOKEN_SECURITY_TYPE.equals(securityType)) {
-            return accessToken;
-        } else if (USERNAME_PASSWORD_SECURITY_TYPE.equals(securityType)) {
-            return BasicMqttCredentialsIds.toCredentialsId(clientId, userName);
-        }
-        return null;
-    }
-
-    // legacy gateway images have no security-type variable; the auth type is implied by which credential keys are set
-    private static String resolveGatewaySecurityType(JsonNode compose, Pattern imagePattern, GatewayEnvSchema schema,
-                                                     String accessToken, String clientId, String userName) {
-        if (schema.getSecurityTypeKey() != null) {
-            String securityType = DockerComposeUtils.getEnvVariable(compose, imagePattern, schema.getSecurityTypeKey());
-            if (securityType != null) {
-                return securityType;
-            }
-        }
-        if (accessToken != null) {
-            return ACCESS_TOKEN_SECURITY_TYPE;
-        }
-        return clientId != null || userName != null ? USERNAME_PASSWORD_SECURITY_TYPE : null;
+        return BasicMqttCredentialsIds.toCredentialsId(clientId, userName);
     }
 
 }

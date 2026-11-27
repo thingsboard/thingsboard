@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.agent.AgentApplication;
@@ -166,6 +168,28 @@ class MergeCredentialsToConfigRuleTest {
         assertEquals("my-access-token", env.get("TB_GW_ACCESS_TOKEN").asText());
     }
 
+    @ParameterizedTest
+    @CsvSource(value = {
+            "tlsAccessToken, tlsAccessToken",
+            "accessToken, accessToken",
+            "usernamePassword, accessToken",
+            "x509, accessToken",
+            "NULL, accessToken"
+    }, nullValues = "NULL")
+    void apply_shouldResolveSecurityTypeForAccessTokenDevice(String composeSecurityType, String expectedSecurityType) {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        stubAccessTokenCredentials(deviceId, "my-access-token");
+
+        JsonNode compose = createGatewayAccessTokenCompose("placeholder-token", composeSecurityType);
+        AgentApplication app = createGatewayApp(compose);
+
+        rule.apply(app, AppConfigMergeCtx.builder().relatedEntityId(deviceId).build());
+
+        JsonNode env = getServiceEnvironment(app, "mygateway");
+        assertEquals(expectedSecurityType, env.get("TB_GW_SECURITY_TYPE").asText());
+        assertEquals("my-access-token", env.get("TB_GW_ACCESS_TOKEN").asText());
+    }
+
     // ==================== apply() - Gateway (MQTT_BASIC) ====================
 
     @Test
@@ -212,6 +236,28 @@ class MergeCredentialsToConfigRuleTest {
         assertNull(env.get("TB_GW_CLIENT_ID")); // removed since field was empty
         assertEquals("onlyUser", env.get("TB_GW_USERNAME").asText());
         assertNull(env.get("TB_GW_PASSWORD")); // removed
+    }
+
+    @Test
+    void apply_shouldReplaceTlsAccessTokenWithUsernamePassword_whenDeviceUsesMqttBasic() {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setCredentialsType(DeviceCredentialsType.MQTT_BASIC);
+        credentials.setCredentialsValue("{\"clientId\":\"myClient\",\"userName\":\"myUser\",\"password\":\"myPass\"}");
+        when(deviceCredentialsService.findDeviceCredentialsByDeviceId(TENANT_ID, deviceId)).thenReturn(credentials);
+
+        JsonNode compose = createGatewayAccessTokenCompose("placeholder-token", "tlsAccessToken");
+        AgentApplication app = createGatewayApp(compose);
+
+        rule.apply(app, AppConfigMergeCtx.builder().relatedEntityId(deviceId).build());
+
+        JsonNode env = getServiceEnvironment(app, "mygateway");
+        assertEquals("usernamePassword", env.get("TB_GW_SECURITY_TYPE").asText());
+        assertEquals("myClient", env.get("TB_GW_CLIENT_ID").asText());
+        assertEquals("myUser", env.get("TB_GW_USERNAME").asText());
+        assertEquals("myPass", env.get("TB_GW_PASSWORD").asText());
+        assertNull(env.get("TB_GW_ACCESS_TOKEN")); // stale token removed, device credentials win
     }
 
     // ==================== apply() - Gateway (legacy env schema, pre-3.6 images) ====================
@@ -451,9 +497,19 @@ class MergeCredentialsToConfigRuleTest {
         return compose;
     }
 
+    private void stubAccessTokenCredentials(DeviceId deviceId, String accessToken) {
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        credentials.setCredentialsId(accessToken);
+        when(deviceCredentialsService.findDeviceCredentialsByDeviceId(TENANT_ID, deviceId)).thenReturn(credentials);
+    }
+
+    // a null security type leaves TB_GW_SECURITY_TYPE out of the compose
     private JsonNode createGatewayAccessTokenCompose(String accessToken, String securityType) {
         ObjectNode env = MAPPER.createObjectNode();
-        env.put("TB_GW_SECURITY_TYPE", securityType);
+        if (securityType != null) {
+            env.put("TB_GW_SECURITY_TYPE", securityType);
+        }
         env.put("TB_GW_ACCESS_TOKEN", accessToken);
 
         ObjectNode service = MAPPER.createObjectNode();
