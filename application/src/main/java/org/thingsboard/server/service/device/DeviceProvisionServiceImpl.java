@@ -13,8 +13,11 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
 import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -98,6 +101,24 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         String deviceName = extractDeviceNameFromCNByRegEx(targetProfile, commonName, certificateRegEx);
         provisionRequest.setDeviceName(deviceName);
         Device targetDevice = deviceService.findDeviceByTenantIdAndName(targetProfile.getTenantId(), provisionRequest.getDeviceName());
+        if (provisionRequest.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
+            if (targetProfile.getTransportType() != DeviceTransportType.LWM2M
+                    || StringUtils.isBlank(commonName) || StringUtils.isBlank(deviceName)) {
+                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            }
+            if (targetDevice != null) {
+                DeviceCredentials credentials = getDeviceCredentials(targetDevice);
+                if (targetProfile.getId().equals(targetDevice.getDeviceProfileId()) && credentials != null
+                        && credentials.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
+                    LwM2MDeviceCredentials lwm2m = JacksonUtil.fromString(credentials.getCredentialsValue(), LwM2MDeviceCredentials.class);
+                    if (lwm2m.getClient() instanceof X509ClientCredential x509
+                            && commonName.equals(x509.getEndpoint()) && certificateValue.equals(x509.getCert())) {
+                        return new ProvisionResponse(credentials, ProvisionResponseStatus.SUCCESS);
+                    }
+                }
+                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            }
+        }
         X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
         if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())) {
             DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(targetDevice.getTenantId(), targetDevice.getId());
