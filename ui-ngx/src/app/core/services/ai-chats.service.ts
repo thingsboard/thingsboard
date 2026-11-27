@@ -1,0 +1,363 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+import { computed, DestroyRef, effect, inject, Injectable, Injector, signal, untracked, WritableSignal } from '@angular/core';
+import { interval, Observable, of } from 'rxjs';
+import { distinctUntilChanged, filter, map, skip, switchMap, tap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { getCurrentAuthState, selectAuthUser } from '@core/auth/auth.selectors';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Authority } from '@shared/models/authority.enum';
+import { Operation, Resource } from '@shared/models/security.models';
+import { TranslateService } from '@ngx-translate/core';
+import { AiChatService } from '@core/http/ai-chat.service';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { DialogService } from '@core/services/dialog.service';
+import { AnswerFeedback, ChatConfiguration, ChatInfo, ChatLevel } from '@shared/models/ai-chat.models';
+
+@Injectable({ providedIn: 'root' })
+export class AiChatsService {
+
+  private aiChat = inject(AiChatService);
+  private panelService = inject(AiAssistantPanelService);
+  private dialog = inject(DialogService);
+  private translate = inject(TranslateService);
+  private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
+
+  private _chats = signal<ChatInfo[]>([]);
+  readonly chats = this._chats.asReadonly();
+
+  private _loaded = signal(false);
+  readonly loaded = this._loaded.asReadonly();
+
+  private _replying = signal<ReadonlySet<string>>(new Set());
+  readonly replying = this._replying.asReadonly();
+
+  private _waiting = signal<ReadonlySet<string>>(new Set());
+
+  private _open = signal<ReadonlySet<string>>(new Set());
+
+  private _failed = signal<ReadonlyMap<string, string>>(new Map());
+
+  private static readonly STATUS_POLL_MS = 15000;
+
+  private _statuses = signal<ChatInfo[]>([]);
+
+  private _statusResolved = signal(false);
+
+  readonly statusChats = computed(() => this._loaded() ? this._chats() : this._statuses());
+
+  readonly statusResolved = computed(() => this._loaded() || this._statusResolved());
+
+  private watching = false;
+
+  private polling = false;
+
+  private generation = 0;
+
+  private store = inject(Store<AppState>);
+
+  private userPermissions = inject(UserPermissionsService);
+
+  private userWatch = this.store.select(selectAuthUser).pipe(
+    map(user => user?.userId ?? null),
+    distinctUntilChanged(),
+    skip(1),
+    takeUntilDestroyed(this.destroyRef)
+  ).subscribe(userId => this.reset(userId));
+
+  private reset(userId: string | null): void {
+    this.generation++;
+    this.polling = false;
+    this.ensuring = false;
+    this._chats.set([]);
+    this._loaded.set(false);
+    this._replying.set(new Set());
+    this._waiting.set(new Set());
+    this._open.set(new Set());
+    this._failed.set(new Map());
+    this._statuses.set([]);
+    this._statusResolved.set(false);
+    if (userId && this.watching) {
+      this.pollStatus();
+    }
+  }
+
+  private aiAvailable(): boolean {
+    const authState = getCurrentAuthState(this.store);
+    return !!authState?.aiEnabled && authState.authUser?.authority === Authority.TENANT_ADMIN
+      && this.userPermissions.hasGenericPermission(Resource.AI, Operation.ALL);
+  }
+
+  watchStatus(): void {
+    if (this.watching) {
+      return;
+    }
+    this.watching = true;
+    this.pollStatus();
+    let wasOpen = untracked(this.panelService.open);
+    const panelWatch = effect(() => {
+      const open = this.panelService.open();
+      if (wasOpen && !open) {
+        this.pollStatus();
+      }
+      wasOpen = open;
+    }, {injector: this.injector});
+    const poll = interval(AiChatsService.STATUS_POLL_MS).subscribe(() => {
+      if (!untracked(this.panelService.open) && document.visibilityState === 'visible'
+        && untracked(this.statusChats).some(chat => this.levelOf(chat) === 'running')) {
+        this.pollStatus();
+      }
+    });
+    this.destroyRef.onDestroy(() => {
+      panelWatch.destroy();
+      poll.unsubscribe();
+    });
+  }
+
+  private pollStatus(): void {
+    if (this.polling || !this.aiAvailable()) {
+      return;
+    }
+    this.polling = true;
+    const generation = this.generation;
+    this.aiChat.listChatStatuses({ignoreLoading: true, ignoreErrors: true}).pipe(
+      filter(() => generation === this.generation)
+    ).subscribe({
+      next: statuses => {
+        this.polling = false;
+        this._statuses.set(statuses);
+        this._statusResolved.set(true);
+        if (untracked(this._loaded)) {
+          const byId = new Map(statuses.map(chat => [chat.id, chat]));
+          this._chats.update(list => list.map(chat => {
+            const live = byId.get(chat.id);
+            return live?.status === chat.status && live?.statusReason === chat.statusReason && (!live || live.updatedTime === chat.updatedTime)
+              ? chat : {...chat, status: live?.status, statusReason: live?.statusReason, updatedTime: live?.updatedTime ?? chat.updatedTime};
+          }));
+        }
+      },
+      error: () => {
+        if (generation === this.generation) {
+          this.polling = false;
+          this._statusResolved.set(true);
+        }
+      }
+    });
+  }
+
+  levelOf(chat: ChatInfo): ChatLevel | null {
+    if (this._waiting().has(chat.id)) {
+      return 'needs';
+    }
+    if (this._replying().has(chat.id)) {
+      return 'running';
+    }
+    if (this._failed().has(chat.id)) {
+      return 'error';
+    }
+    if (this._open().has(chat.id)) {
+      return chat.status === 'FAILED' ? 'error' : null;
+    }
+    return chat.status === 'NEEDS_YOU' ? 'needs' : chat.status === 'NO_DATA' ? 'nodata' : chat.status === 'RUNNING' ? 'running' : chat.status === 'FAILED' ? 'error' : null;
+  }
+
+  needsAttention(chat: ChatInfo): boolean {
+    const level = this.levelOf(chat);
+    return level === 'needs' || level === 'error';
+  }
+
+  tipOf(chat: ChatInfo): string {
+    const level = this.levelOf(chat);
+    if (!level) {
+      return '';
+    }
+    const reason = level === 'error' ? this._failed().get(chat.id) ?? chat.statusReason : undefined;
+    return reason || this.translate.instant('ai-assistant.status-tip-' + level);
+  }
+
+  setFailed(chatId: string | undefined, reason: string): void {
+    if (chatId) {
+      this._failed.update(map => new Map(map).set(chatId, reason));
+    }
+  }
+
+  clearFailure(chatId: string | undefined): void {
+    if (!chatId) {
+      return;
+    }
+    if (untracked(this._failed).has(chatId)) {
+      this._failed.update(map => {
+        const next = new Map(map);
+        next.delete(chatId);
+        return next;
+      });
+    }
+    if (untracked(this._chats).some(chat => chat.id === chatId && chat.status === 'FAILED')) {
+      this._chats.update(list => list.map(chat => chat.id === chatId && chat.status === 'FAILED'
+        ? {...chat, status: undefined, statusReason: undefined} : chat));
+    }
+  }
+
+  setWaiting(chatId: string | undefined, waiting: boolean): void {
+    this.toggle(this._waiting, chatId, waiting);
+  }
+
+  setOpen(chatId: string | undefined, open: boolean): void {
+    this.toggle(this._open, chatId, open);
+  }
+
+  refresh(): Observable<ChatInfo[]> {
+    const generation = this.generation;
+    return this.aiChat.listChats({ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap(chats => {
+        if (generation === this.generation) {
+          this._chats.set(chats);
+        }
+      })
+    );
+  }
+
+  private ensuring = false;
+
+  ensureLoaded(): void {
+    if (this._loaded() || this.ensuring) {
+      return;
+    }
+    this.ensuring = true;
+    const generation = this.generation;
+    const done = () => {
+      if (generation === this.generation) {
+        this.ensuring = false;
+      }
+    };
+    this.load().subscribe({error: done, complete: done});
+  }
+
+  load(): Observable<ChatInfo[]> {
+    const generation = this.generation;
+    return this.aiChat.listChats({ignoreLoading: true, ignoreErrors: true}).pipe(
+      filter(() => generation === this.generation),
+      tap({
+        next: chats => {
+          this._chats.set(chats);
+          this._loaded.set(true);
+          this.panelService.setChats(chats);
+          this.moveStoredAutoApprove(chats);
+        },
+        error: () => this._loaded.set(true)
+      })
+    );
+  }
+
+  find(chatId: string | undefined): ChatInfo | undefined {
+    return chatId ? this._chats().find(chat => chat.id === chatId) : undefined;
+  }
+
+  create(title: string, autoApprove = false): Observable<ChatInfo> {
+    const request: ChatConfiguration = autoApprove ? {title, autoApprove} : {title};
+    return this.aiChat.createChat(request, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      map(id => ({id, title, createdTime: Date.now(), autoApprove} as ChatInfo)),
+      tap(chat => {
+        this._chats.update(list => [chat, ...list]);
+        if (this.panelService.chats() !== null) {
+          this.panelService.addChat(chat);
+        }
+      })
+    );
+  }
+
+  rename(chatId: string, title: string): Observable<void> {
+    return this.aiChat.updatedChat(chatId, {title}, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap(() => this.setTitle(chatId, title))
+    );
+  }
+
+  sendFeedback(chatId: string, feedback: AnswerFeedback): Observable<void> {
+    return this.aiChat.updatedChat(chatId, {feedback}, {ignoreLoading: true});
+  }
+
+  isAutoApprove(chatId: string | undefined): boolean {
+    return !!this.find(chatId)?.autoApprove;
+  }
+
+  setAutoApprove(chatId: string, autoApprove: boolean): Observable<void> {
+    const before = this.isAutoApprove(chatId);
+    this.applyAutoApprove(chatId, autoApprove);
+    return this.aiChat.updatedChat(chatId, {autoApprove}, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap({error: () => this.applyAutoApprove(chatId, before)})
+    );
+  }
+
+  private applyAutoApprove(chatId: string, autoApprove: boolean): void {
+    this._chats.update(list => list.map(chat => chat.id === chatId ? {...chat, autoApprove} : chat));
+    this.panelService.updateChatAutoApprove(chatId, autoApprove);
+  }
+
+  private moveStoredAutoApprove(chats: ChatInfo[]): void {
+    const stored = new Set(this.panelService.takeStoredAutoApproveChats());
+    chats.filter(chat => stored.has(chat.id) && !chat.autoApprove)
+      .forEach(chat => this.setAutoApprove(chat.id, true).subscribe({error: () => {}}));
+  }
+
+  setPinned(chatId: string, pinned: boolean): Observable<void> {
+    return this.aiChat.updatedChat(chatId, {pinned}, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap(() => this._chats.update(list => list.map(chat => chat.id === chatId ? {...chat, pinned, pinnedTime: pinned ? Date.now() : undefined} : chat)))
+    );
+  }
+
+  setTitle(chatId: string, title: string): void {
+    this._chats.update(list => list.map(chat => chat.id === chatId ? {...chat, title} : chat));
+    this.panelService.updateChatTitle(chatId, title);
+  }
+
+  discard(chatId: string): Observable<void> {
+    return this.aiChat.deleteChat(chatId, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap(() => {
+        this._chats.update(list => list.filter(c => c.id !== chatId));
+        this.panelService.removeChat(chatId);
+      })
+    );
+  }
+
+  confirmAndDelete(chat: ChatInfo): Observable<boolean> {
+    const title = chat.title || this.translate.instant('ai-assistant.new-chat');
+    return this.dialog.confirm(
+      this.translate.instant('ai-assistant.delete-chat-title', {name: title}),
+      this.translate.instant('ai-assistant.delete-chat-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('ai-assistant.delete-chat-confirm')
+    ).pipe(
+      switchMap(confirmed => confirmed
+        ? this.aiChat.deleteChat(chat.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
+          tap(() => {
+            this._chats.update(list => list.filter(c => c.id !== chat.id));
+            this.panelService.removeChat(chat.id);
+          }),
+          map(() => true)
+        )
+        : of(false))
+    );
+  }
+
+  setReplying(chatId: string | undefined, replying: boolean): void {
+    this.toggle(this._replying, chatId, replying);
+  }
+
+  private toggle(target: WritableSignal<ReadonlySet<string>>, chatId: string | undefined, on: boolean): void {
+    if (!chatId || untracked(target).has(chatId) === on) {
+      return;
+    }
+    target.update(set => {
+      const next = new Set(set);
+      if (on) {
+        next.add(chatId);
+      } else {
+        next.delete(chatId);
+      }
+      return next;
+    });
+  }
+}

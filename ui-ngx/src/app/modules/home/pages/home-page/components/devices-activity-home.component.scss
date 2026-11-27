@@ -1,0 +1,64 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use './home-tiles';
+
+:host {
+  display: block;
+  min-width: 0;
+  container: tb-activity-home / inline-size;
+}
+
+.tb-activity-period {
+  margin-left: 4px;
+  font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+  white-space: nowrap;
+  color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+}
+
+.tb-activity-series {
+  min-width: 0;
+}
+
+.tb-activity-pair[data-tab="devices"] .tb-activity-series[data-series="messages"],
+.tb-activity-pair[data-tab="messages"] .tb-activity-series[data-series="devices"] {
+  display: none;
+}
+
+.tb-activity-name {
+  display: none;
+  margin: 0 0 8px 36px;
+  font: 500 14px/20px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+}
+
+.tb-activity-chart {
+  height: 130px;
+}
+
+@container tb-activity-home (min-width: 560px) {
+  .tb-activity-toggle {
+    display: none;
+  }
+
+  .tb-activity-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+  }
+
+  .tb-activity-pair[data-tab] .tb-activity-series[data-series] {
+    display: block;
+  }
+
+  .tb-activity-name {
+    display: block;
+  }
+}
+
+.tb-activity-pair.single {
+  display: block;
+
+  .tb-activity-name {
+    display: block;
+  }
+}

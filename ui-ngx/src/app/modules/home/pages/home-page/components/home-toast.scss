@@ -1,0 +1,93 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.mat-mdc-snack-bar-container.tb-home-toast.tb-home-toast {
+  .tb-toast.tb-toast.tb-toast {
+    gap: 4px;
+    box-sizing: border-box;
+    max-width: min(480px, calc(100vw - 16px));
+    margin: 8px;
+    padding: 6px 6px 6px 16px;
+    border-radius: 4px;
+    background: #323232;
+    box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
+    font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+    letter-spacing: .25px;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .tb-toast .toast-text.toast-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 4px 8px 4px 0;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+  }
+
+  .tb-toast .mat-mdc-button.mat-mdc-button-base.mat-mdc-button-base {
+    --mat-button-text-label-text-color: rgba(255, 255, 255, 0.92);
+    --mdc-text-button-label-text-color: rgba(255, 255, 255, 0.92);
+    flex: none;
+    min-width: 0;
+    height: 32px;
+    margin: 0;
+    padding: 0 10px;
+    border-radius: 4px;
+    font: 500 14px/32px var(--tb-font, Roboto, sans-serif);
+    letter-spacing: 0.03125em;
+    color: rgba(255, 255, 255, 0.92);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: -2px;
+    }
+  }
+
+  .mdc-snackbar__surface.mdc-snackbar__surface {
+    min-width: 0;
+    padding: 0;
+  }
+
+  &.mat-snack-bar-container-animations-enabled {
+    &.mat-snack-bar-container-enter {
+      animation-duration: 1ms;
+
+      .mdc-snackbar__surface {
+        animation: tb-home-toast-in .2s ease both;
+      }
+    }
+
+    &.mat-snack-bar-container-exit {
+      animation-duration: .2s;
+      animation-timing-function: ease;
+
+      .mdc-snackbar__surface {
+        animation: tb-home-toast-out .2s ease both;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &.mat-snack-bar-container-animations-enabled .mdc-snackbar__surface {
+      animation: none;
+    }
+  }
+}
+
+@keyframes tb-home-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes tb-home-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}

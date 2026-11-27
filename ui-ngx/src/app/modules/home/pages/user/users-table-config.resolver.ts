@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   CellActionDescriptor,
@@ -57,6 +59,8 @@ export interface UsersTableRouteData {
 
 @Injectable()
 export class UsersTableConfigResolver  {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private allEntitiesTableConfigService: AllEntitiesTableConfigService<UserInfo>,
               private store: Store<AppState>,
@@ -114,6 +118,7 @@ export class UsersTableConfigResolver  {
         config.cellActionDescriptors = this.configureCellActions(authState, config);
         config.groupActionDescriptors = this.configureGroupActions(config);
         config.addActionDescriptors = this.configureAddActions(config);
+        config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.USER_LIST, AiAssistantViewType.USER);
         return this.allEntitiesTableConfigService.prepareConfiguration(config);
       })
     );

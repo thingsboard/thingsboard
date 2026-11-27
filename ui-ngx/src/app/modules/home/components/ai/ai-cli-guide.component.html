@@ -1,0 +1,237 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<header class="ai-chat-head" [class.scrolled]="scrolled()" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
+        (fullscreenChanged)="fullscreen.set($event)">
+  <ng-content select="[aiChatLead]"></ng-content>
+  <tb-ai-chat-title [placeholder]="'ai-assistant.cli.title' | translate" [renamable]="false"></tb-ai-chat-title>
+  <div class="ai-chat-actions">
+    <button type="button" class="ai-ib" (click)="closed.emit()"
+            [matTooltip]="'ai-assistant.cli.close' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.cli.close' | translate">
+      <mat-icon fontSet="material-icons-round">close</mat-icon>
+    </button>
+    <button type="button" class="ai-ib" (click)="toggleFullscreen()"
+            [matTooltip]="(fullscreen() ? 'fullscreen.exit' : 'ai-assistant.open-full-screen') | translate" matTooltipPosition="above"
+            [attr.aria-label]="(fullscreen() ? 'fullscreen.exit' : 'ai-assistant.open-full-screen') | translate">
+      <mat-icon fontSet="material-icons-round">{{ fullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </div>
+</header>
+<div #scroller class="ai-cli-scroll" (scroll)="onScroll(scroller)">
+  <div class="ai-cli-hero">
+    <pre class="ai-cli-ascii" aria-hidden="true">{{ globe }}</pre>
+    <div class="ai-cli-hero-in">
+      <div class="ai-cli-head">
+        <span class="ai-cli-tile" aria-hidden="true"><mat-icon>terminal</mat-icon></span>
+        <h1 class="ob-title">{{ 'ai-assistant.cli.hero.title' | translate }}</h1>
+        <p class="ob-lead">{{ 'ai-assistant.cli.hero.lead' | translate }}</p>
+      </div>
+      <div class="ai-cli-hero-set">
+        <div class="ai-cli-acts">
+          <button type="button" class="ai-cli-start" (click)="toSteps()">
+            {{ 'ai-assistant.cli.hero.start' | translate }}
+            <mat-icon fontSet="material-icons-round" aria-hidden="true">arrow_downward</mat-icon>
+          </button>
+          <a class="ai-cli-alt" [href]="docs" target="_blank" rel="noopener">
+            <span>{{ 'ai-assistant.cli.hero.docs' | translate }}</span>
+            <mat-icon fontSet="material-icons-round" aria-hidden="true">arrow_outward</mat-icon>
+          </a>
+        </div>
+        <div class="ai-cli-slot" data-kind="term"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ai-cli">
+    <section class="ai-sec ai-cli-intro">
+      <div class="ai-sec-head"><h2>{{ 'ai-assistant.cli.how.title' | translate }}</h2></div>
+      <ol class="ai-cli-flow">
+        <li>
+          <div class="ai-cli-pic agents">
+            @for (agent of agents; track agent.id) {
+              <a class="ai-cli-logo" [href]="agent.get" target="_blank" rel="noopener" [attr.title]="agent.name" [attr.aria-label]="agent.name"
+                 [style.--glow]="agent.glow">
+                <img [src]="'assets/ai/agents/' + agent.id + '.svg'" alt="" width="34" height="34">
+              </a>
+            }
+          </div>
+          <b>{{ 'ai-assistant.cli.how.agent.title' | translate }}</b>
+          <p>{{ 'ai-assistant.cli.how.agent.text' | translate }}</p>
+        </li>
+        <li>
+          <div class="ai-cli-pic tree" aria-hidden="true">
+            <div class="ai-cli-tree">
+              <span class="commit">
+                <mat-icon fontSet="material-icons-round">commit</mat-icon>
+                <b>a3f9c21</b>
+                <span>{{ 'ai-assistant.cli.how.files.commit' | translate }}</span>
+              </span>
+              @for (row of tree; track row.name) {
+                <span class="row" [class.top]="!row.depth" [class.last]="row.last" [class.first]="row.first" [style.--d]="row.depth">
+                  <mat-icon fontSet="material-icons-round" [class]="row.tone ? 'tone-' + row.tone : ''">{{ row.icon }}</mat-icon>
+                  <span>{{ row.name }}</span>
+                </span>
+              }
+            </div>
+          </div>
+          <b>{{ 'ai-assistant.cli.how.files.title' | translate }}</b>
+          <p>{{ 'ai-assistant.cli.how.files.text' | translate }}</p>
+        </li>
+        <li>
+          <div class="ai-cli-pic ask" aria-hidden="true">
+            <div class="ai-cli-ask">
+              <span class="chk"><i>✔</i><span>tb validate</span></span>
+              <span class="q">{{ 'ai-assistant.cli.how.deploy.question' | translate }}</span>
+              <span class="opt on"><i>❯</i><span>{{ 'ai-assistant.cli.how.deploy.yes' | translate }}</span><span class="enter">↵</span></span>
+              <span class="opt"><i></i><span>{{ 'ai-assistant.cli.how.deploy.no' | translate }}</span></span>
+            </div>
+          </div>
+          <b>{{ 'ai-assistant.cli.how.deploy.title' | translate }}</b>
+          <p>{{ 'ai-assistant.cli.how.deploy.text' | translate }}</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="ai-sec" id="ai-cli-steps">
+      <div class="ai-sec-head">
+        <h2>{{ 'ai-assistant.cli.steps.title' | translate }}</h2>
+        <p>{{ 'ai-assistant.cli.steps.hint' | translate }}</p>
+      </div>
+      <ol class="ai-cli-steps">
+        <li class="ai-cli-step">
+          <span class="ai-cli-n" aria-hidden="true"><mat-icon fontSet="material-icons-round">terminal</mat-icon></span>
+          <div class="ai-cli-body">
+            <div class="ai-cli-step-head">
+              <b>{{ 'ai-assistant.cli.setup.title' | translate }}</b>
+              <div class="ai-cli-ways tb-toggle-header" role="group" [attr.aria-label]="'ai-assistant.cli.how-to-set-up' | translate">
+                @for (item of ways; track item) {
+                  <button type="button" class="tb-toggle-option" [attr.data-way]="item" [attr.aria-pressed]="way() === item"
+                          (click)="pickWay(item, $event)">{{ ('ai-assistant.cli.way.' + item) | translate }}</button>
+                }
+              </div>
+            </div>
+            <div class="ai-cli-setup">
+              <ol class="ai-cli-subs">
+                @if (way() === 'terminal') {
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.run-install' | translate }}</b>
+                    <div class="ai-cli-slot" data-kind="install"></div>
+                  </li>
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.accept-folder' | translate }}</b>
+                    <p>{{ 'ai-assistant.cli.setup.accept-before' | translate }}<span class="ai-cli-nb"><code>thingsboard-project</code>.</span>{{ 'ai-assistant.cli.setup.accept-after' | translate }}</p>
+                  </li>
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.paste-url' | translate }}</b>
+                    <div class="ai-cli-slot" data-kind="url"></div>
+                  </li>
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.api-key' | translate }}</b>
+                    <p>{{ 'ai-assistant.cli.setup.api-key-text' | translate }}</p>
+                    <button mat-stroked-button type="button" class="ai-cli-keys" (click)="openApiKeys()">
+                      <mat-icon fontSet="material-icons-round">key</mat-icon>{{ 'ai-assistant.cli.setup.open-api-keys' | translate }}
+                    </button>
+                  </li>
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.start-agent' | translate }}</b>
+                    <p>{{ 'ai-assistant.cli.setup.start-agent-text' | translate }}</p>
+                    <p>{{ 'ai-assistant.cli.setup.both-agents' | translate }}<code>claude</code>{{ 'ai-assistant.cli.setup.both-agents-or' | translate }}<span class="ai-cli-nb"><code>antigravity</code>.</span></p>
+                    <p>{{ 'ai-assistant.cli.setup.come-back-folder' | translate }}</p>
+                    <div class="ai-cli-slot" data-kind="agent-return"></div>
+                  </li>
+                } @else {
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.agent-start' | translate }}</b>
+                    <div class="ai-cli-slot" data-kind="agent-start"></div>
+                  </li>
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.agent-send' | translate }}</b>
+                    <div class="ai-cli-slot" data-kind="prompt"></div>
+                    <p>{{ 'ai-assistant.cli.setup.agent-allow' | translate }}</p>
+                  </li>
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.agent-connect' | translate }}</b>
+                    <p>{{ 'ai-assistant.cli.setup.agent-connect-text' | translate }}</p>
+                    <div class="ai-cli-slot" data-kind="url"></div>
+                  </li>
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.agent-key' | translate }}</b>
+                    <p>{{ 'ai-assistant.cli.setup.agent-key-text' | translate }}</p>
+                    <button mat-stroked-button type="button" class="ai-cli-keys" (click)="openApiKeys()">
+                      <mat-icon fontSet="material-icons-round">key</mat-icon>{{ 'ai-assistant.cli.setup.open-api-keys' | translate }}
+                    </button>
+                  </li>
+                  <li>
+                    <b>{{ 'ai-assistant.cli.setup.agent-restart' | translate }}</b>
+                    <p>{{ 'ai-assistant.cli.setup.restart-before' | translate }}<code>/exit</code>{{ 'ai-assistant.cli.setup.restart-after' | translate }}</p>
+                    <div class="ai-cli-slot" data-kind="agent-restart"></div>
+                    <p>{{ 'ai-assistant.cli.setup.come-back' | translate }}</p>
+                  </li>
+                }
+              </ol>
+            </div>
+          </div>
+        </li>
+        <li class="ai-cli-step">
+          <span class="ai-cli-n" aria-hidden="true"><mat-icon fontSet="material-icons-round">chat_bubble_outline</mat-icon></span>
+          <div class="ai-cli-body">
+            <b>{{ 'ai-assistant.cli.describe.title' | translate }}</b>
+            <p>{{ 'ai-assistant.cli.describe.text' | translate }}</p>
+            <div class="ai-cli-picks" role="group" [attr.aria-label]="'ai-assistant.cli.describe.examples' | translate">
+              @for (item of builds; track item.id) {
+                <button type="button" class="ai-cli-pick" [attr.aria-pressed]="build() === item.id" (click)="pickBuild(item.id)">
+                  {{ ('ai-assistant.cli.describe.' + item.id + '.label') | translate }}
+                </button>
+              }
+            </div>
+            <div class="ai-cli-slot" data-kind="build" [attr.data-key]="build()"></div>
+            <p class="ai-cli-what">
+              {{ ('ai-assistant.cli.describe.' + build() + '.what') | translate }}
+              @if (buildLink(build()); as link) {
+                <a [href]="link" target="_blank" rel="noopener">{{ ('ai-assistant.cli.describe.' + build() + '.link') | translate }}</a>
+              }
+            </p>
+          </div>
+        </li>
+        <li class="ai-cli-step">
+          <span class="ai-cli-n" aria-hidden="true"><mat-icon fontSet="material-icons-round">rocket_launch</mat-icon></span>
+          <div class="ai-cli-body">
+            <b>{{ 'ai-assistant.cli.deploy.title' | translate }}</b>
+            <p>{{ 'ai-assistant.cli.deploy.text' | translate }}</p>
+            <p class="ai-cli-note">{{ 'ai-assistant.cli.deploy.push-note' | translate }}</p>
+            <p class="ai-cli-note">{{ 'ai-assistant.cli.deploy.stream' | translate }}</p>
+            <div class="ai-cli-slot" data-kind="emulator" [attr.data-key]="os()"></div>
+          </div>
+        </li>
+        <li class="ai-cli-step">
+          <span class="ai-cli-n" aria-hidden="true"><mat-icon fontSet="material-icons-round">sensors</mat-icon></span>
+          <div class="ai-cli-body">
+            <b>{{ 'ai-assistant.cli.connect-device.title' | translate }}</b>
+            <p>{{ 'ai-assistant.cli.connect-device.text' | translate }}</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+  </div>
+
+  <div class="ai-cli-end">
+    <div class="ai-cli-end-in">
+      <h2>{{ 'ai-assistant.cli.docs.title' | translate }}</h2>
+      <div class="ai-cli-links">
+        @for (link of links; track link.key) {
+          <a class="ai-cli-link" [href]="docs + link.path" target="_blank" rel="noopener">
+            <mat-icon fontSet="material-icons-round" aria-hidden="true">{{ link.icon }}</mat-icon>
+            <span>
+              <b>{{ ('ai-assistant.cli.docs.' + link.key + '.title') | translate }}</b>
+              <small>{{ ('ai-assistant.cli.docs.' + link.key + '.line') | translate }}</small>
+            </span>
+            <mat-icon fontSet="material-icons-round" class="ai-cli-go" aria-hidden="true">arrow_outward</mat-icon>
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+</div>

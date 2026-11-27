@@ -32,7 +32,6 @@ import { NgxFlowModule } from '@flowjs/ngx-flow';
 import { ResourceLibraryTabsComponent } from '@home/pages/admin/resource/resource-library-tabs.component';
 import { LicenseManagementComponent } from '@home/pages/admin/license-management.component';
 import { AddLicenseItemDialogComponent } from '@home/pages/admin/add-license-item-dialog.component';
-import { LicenseHandOffDialogComponent } from '@home/pages/admin/license-hand-off-dialog.component';
 
 @NgModule({
   declarations:
@@ -60,8 +59,7 @@ import { LicenseHandOffDialogComponent } from '@home/pages/admin/license-hand-of
       AutoCommitAdminSettingsComponent,
       TwoFactorAuthSettingsComponent,
       LicenseManagementComponent,
-      AddLicenseItemDialogComponent,
-      LicenseHandOffDialogComponent
+      AddLicenseItemDialogComponent
     ],
   imports: [
     CommonModule,

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
@@ -54,9 +54,13 @@ import {
   AgentAutoProvisionDialogComponent
 } from '@home/components/agent/dialog/agent-auto-provision-dialog.component';
 import { AgentApplicationType } from '@shared/models/agent.models';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 
 @Injectable()
 export class EdgesTableConfigResolver  {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private allEntitiesTableConfigService: AllEntitiesTableConfigService<EdgeInfo>,
               private userPermissionsService: UserPermissionsService,
@@ -102,6 +106,7 @@ export class EdgesTableConfigResolver  {
         config.groupActionDescriptors = this.configureGroupActions(config);
         config.addActionDescriptors = this.configureAddActions(config);
         config.addEntity = () => { this.addEdge(config); return of(null); };
+        config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.EDGE_LIST, AiAssistantViewType.EDGE);
         return this.allEntitiesTableConfigService.prepareConfiguration(config);
       })
     );

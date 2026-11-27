@@ -1,17 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import {
-  AfterViewInit,
-  Component,
-  computed,
-  ElementRef,
-  Inject,
-  OnDestroy,
-  OnInit, Renderer2,
-  signal,
-  ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, computed, ElementRef, Inject, OnDestroy, OnInit, Renderer2, signal, ViewChild, inject } from '@angular/core';
 import { combineLatest, Observable, skip, startWith, Subject } from 'rxjs';
 import { select, Store } from '@ngrx/store';
 import { debounceTime, distinctUntilChanged, map, share, take, takeUntil } from 'rxjs/operators';
@@ -30,6 +20,7 @@ import { ActiveComponentService } from '@core/services/active-component.service'
 import { FormBuilder } from '@angular/forms';
 import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TourService } from '@core/services/tour.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 import { HomeService } from '@core/services/home.service';
@@ -81,6 +72,10 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   private destroy$ = new Subject<void>();
 
+  private tourService = inject(TourService);
+
+  readonly aiAvailable = this.tourService.aiAvailable();
+
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
               private activeComponentService: ActiveComponentService,
@@ -95,6 +90,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   ngOnInit() {
+    this.tourService.offerWelcome();
 
     const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
     this.sidenavMode = isGtSm ? 'side' : 'over';

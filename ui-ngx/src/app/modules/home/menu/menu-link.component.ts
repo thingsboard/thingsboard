@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { MenuSection } from '@core/services/menu.models';
+import { ChangeDetectionStrategy, Component, computed, inject, Input, OnInit, signal } from '@angular/core';
+import { MenuId, MenuSection } from '@core/services/menu.models';
+import { AiChatsService } from '@core/services/ai-chats.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
@@ -12,7 +13,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class MenuLinkComponent {
+export class MenuLinkComponent implements OnInit {
 
   @Input() section: MenuSection;
 
@@ -20,7 +21,20 @@ export class MenuLinkComponent {
   @coerceBoolean()
   collapsed = false;
 
-  constructor() {
+  readonly active = signal(false);
+
+  private chats = inject(AiChatsService);
+
+  private countsChats = signal(false);
+
+  readonly needYou = computed(() => this.countsChats()
+    ? this.chats.statusChats().filter(chat => this.chats.needsAttention(chat)).length : 0);
+
+  ngOnInit(): void {
+    if (this.section?.id === MenuId.ai_assistant) {
+      this.countsChats.set(true);
+      this.chats.watchStatus();
+    }
   }
 
 }

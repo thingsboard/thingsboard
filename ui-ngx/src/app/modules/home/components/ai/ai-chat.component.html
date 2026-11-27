@@ -1,0 +1,480 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="art-cols" [class.with-pane]="!!shownFile() && fileOpen()" [class.narrow]="docked()">
+<div class="ai-chat-col">
+<header class="ai-chat-head" [class.scrolled]="scrolled()" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
+        (fullscreenChanged)="onFullscreenChanged($event)">
+  <ng-content select="[aiChatLead]"></ng-content>
+  @if (variant() === 'panel') {
+    <tb-ai-mark size="32"></tb-ai-mark>
+  }
+  <tb-ai-chat-title [title]="chat()?.title" [placeholder]="historyLoading() ? '' : ((showGetStarted() ? 'ai-assistant.get-started.title' : 'ai-assistant.new-chat') | translate)" [level]="level()"
+                    [statusTip]="statusTip()" [compact]="variant() === 'panel'" (renamed)="rename($event)"></tb-ai-chat-title>
+  <div class="ai-chat-actions">
+    @if (chatFiles().length && !titleRef?.renaming()) {
+      <button type="button" class="ai-ib art-files-btn" [class.shown]="!!shownFile() && fileOpen()" [matMenuTriggerFor]="filesMenu"
+              (menuClosed)="unlisting.set(null)"
+              [matTooltip]="'ai-assistant.file.files' | translate" matTooltipPosition="above"
+              [attr.aria-label]="'ai-assistant.file.files-in-chat' | translate: {count: chatFiles().length}">
+        <span class="art-files-ic" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 8.6A1.6 1.6 0 0 1 5.6 7h6.2l3.7 3.7v8.7a1.6 1.6 0 0 1-1.6 1.6H5.6A1.6 1.6 0 0 1 4 19.4Z"/><path d="M11.6 7v2.5a1.2 1.2 0 0 0 1.2 1.2h2.7"/><path d="M8.5 7V4.6A1.6 1.6 0 0 1 10.1 3h6.2L20 6.7v8.7a1.6 1.6 0 0 1-1.6 1.6h-2.9"/></svg></span>
+        <span class="art-files-n">{{ chatFiles().length }}</span>
+      </button>
+    }
+    @if (variant() === 'panel') {
+      @if (!titleRef?.renaming()) {
+        <button type="button" class="ai-ib more" [matMenuTriggerFor]="panelMenu"
+                [matTooltip]="'ai-assistant.chats-menu' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.chats-menu' | translate">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <button type="button" class="ai-ib" (click)="toggleFullscreen()"
+                [matTooltip]="(fullscreen() ? 'fullscreen.exit' : 'ai-assistant.open-full-screen') | translate" matTooltipPosition="above"
+                [attr.aria-label]="(fullscreen() ? 'fullscreen.exit' : 'ai-assistant.open-full-screen') | translate">
+          <mat-icon fontSet="material-icons-round">{{ fullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+        @if (!fullscreen()) {
+          <button type="button" class="ai-ib" (click)="closed.emit()"
+                  [matTooltip]="'action.close' | translate" matTooltipPosition="above" [attr.aria-label]="'action.close' | translate">
+            <mat-icon fontSet="material-icons-round">close</mat-icon>
+          </button>
+        }
+      }
+    } @else if (chat() && !titleRef?.renaming()) {
+      <button type="button" class="ai-ib more" [matMenuTriggerFor]="chatMenu"
+              [matTooltip]="'action.more' | translate" matTooltipPosition="above" [attr.aria-label]="'action.more' | translate">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+    }
+    <ng-content select="[aiChatActions]"></ng-content>
+    @if (showGetStarted()) {
+      <button type="button" class="ai-tour-link" (click)="takeTour.emit()">
+        <mat-icon fontSet="material-icons-round" aria-hidden="true">tour</mat-icon>
+        <span>{{ 'ai-assistant.get-started.take-tour' | translate }}</span>
+      </button>
+    }
+    @if (fullscreenEnabled()) {
+      <button type="button" class="ai-ib" (click)="toggleFullscreen()"
+              [matTooltip]="(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate" matTooltipPosition="above"
+              [attr.aria-label]="(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate">
+        <mat-icon fontSet="material-icons-round">{{ fullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      </button>
+    }
+  </div>
+</header>
+<div tb-toast [toastTarget]="toastTarget()" class="pointer-events-none absolute inset-0"></div>
+<div #chatArea class="ai-chat-body" [class.empty]="!messages().length && !loading() && !historyLoading()" (scroll)="onLogScroll(chatArea)">
+  @if (messages().length || loading()) {
+    <tb-ai-chat-messages
+      class="ai-chat-log"
+      [messages]="messages()"
+      [loading]="loading()"
+      [completedExecutions]="completedExecutions()"
+      [autoApprove]="autoApprove()"
+      [additionalStyles]="markdownStyles"
+      [scrollContainer]="chatArea"
+      initialScroll="bottom"
+      [denyReasons]="denyReasons()"
+      [work]="work()"
+      (approvalAction)="onApprovalAction($event)"
+      (askAgain)="onAskAgain()"
+      [feedback]="!!chatId()"
+      (rate)="onRate($event)"
+      (report)="onReport($event)"
+      (resume)="resume()"
+      (autoApproveRest)="setAutoApprove(true)"
+      (runPlan)="runPlan($event)"
+      (changePlan)="changePlan()"
+      [shownFile]="fileOpen() ? (shownFile()?.executionId ?? null) : null"
+      [ghostFirst]="true"
+      (openFile)="showFile($event)"
+      (prompt)="ask($event)"
+      (stopRun)="stop()"
+      (compose)="composeText($event)"
+      (answer)="ask($event.message, $event.secrets)"
+      (editMessage)="promptInput?.setValue($event)">
+    </tb-ai-chat-messages>
+  } @else if (historyLoading()) {
+    <div class="ai-chat-loading" role="status">
+      <tb-ai-spin kind="think"></tb-ai-spin>
+      <span>{{ 'ai-assistant.loading-chat' | translate }}</span>
+    </div>
+  } @else if (!chatId() && docked()) {
+    <div class="k-newchat">
+      <tb-ai-mark size="44"></tb-ai-mark>
+      <h3>{{ startTitle() || ('ai-assistant.panel-title' | translate) }}</h3>
+      <p>{{ startLine() || ('ai-assistant.panel-line' | translate) }}</p>
+      @if (prompts().length) {
+        <div class="prompts" role="list">
+          @for (example of prompts(); track example.message) {
+            <button type="button" class="prompt" role="listitem" (click)="ask(example.message)">
+              <mat-icon fontSet="material-icons-round" aria-hidden="true">chat_bubble_outline</mat-icon>
+              <span>{{ example.label }}</span>
+              <mat-icon fontSet="material-icons-round" class="go" aria-hidden="true">arrow_upward</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  } @else if (!chatId()) {
+    <div class="ai-chat-start">
+      <tb-ai-mark size="64"></tb-ai-mark>
+      @if (variant() === 'panel') {
+        <h1 class="ai-chat-start-title">{{ startTitle() || ('ai-assistant.panel-title' | translate) }}</h1>
+        <p class="ai-chat-start-line">{{ startLine() || ('ai-assistant.panel-line' | translate) }}</p>
+      } @else {
+        <h1 class="ai-chat-start-title">{{ (showGetStarted() ? 'ai-assistant.get-started.heading' : 'ai-assistant.what-to-work-on') | translate }}</h1>
+      }
+    </div>
+  }
+  <div #composer class="ai-chat-composer">
+    @if (pill(); as current) {
+      <button type="button" class="k-pill" [class.new]="current.mode === 'new'"
+              [matTooltip]="current.label" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.go-to-end' | translate"
+              (click)="goToEnd(chatArea)">
+        @if (current.mode === 'new') {
+          <mat-icon class="tb-mat-18">arrow_downward</mat-icon>{{ current.count }}
+        } @else {
+          <tb-ai-spin [kind]="current.kind"></tb-ai-spin>
+        }
+      </button>
+    }
+    @if (creditsOut(); as limitType) {
+      <tb-ai-credits-out [limitType]="limitType" (dismissed)="creditsOut.set(null)"></tb-ai-credits-out>
+    } @else if (limitOut(); as platformLimit) {
+      <tb-ai-limit-out [platformLimit]="platformLimit" (dismissed)="limitOut.set(null)"></tb-ai-limit-out>
+    } @else if (notice(); as current) {
+      <div class="k-notice k-notice-edge" [class]="'k-notice k-notice-edge ' + (current.kind === 'block' ? 'blocking' : current.kind)" [attr.role]="current.kind === 'block' ? 'alert' : 'status'">
+        <mat-icon aria-hidden="true">{{ current.icon }}</mat-icon><span>{{ current.text }}</span>
+      </div>
+    }
+    <tb-ai-prompt-input
+      [blocked]="notice()?.kind === 'block' || !!creditsOut()"
+      [docked]="docked()"
+      [placeholder]="placeholder()"
+      [suggestion]="suggestion()"
+      [quote]="composerQuote()"
+      (quoteRemoved)="composerQuote.set(null)"
+      [loading]="loading() && !waitingApproval()"
+      [dropZone]="chatArea"
+      [pinned]="!!messages().length || loading() || historyLoading()"
+      [showAutoApprove]="true"
+      [sendWhileWorking]="true"
+      [autoApprove]="autoApprove()"
+      [autoApproveInChat]="!!chatId()"
+      [stoppable]="!!chatId()"
+      [stopping]="stopping()"
+      (stopped)="stop()"
+      (autoApproveChange)="setAutoApprove($event)"
+      (messageSent)="sendMsgFromUser($event)">
+    </tb-ai-prompt-input>
+  </div>
+  @if (variant() === 'panel' && !docked() && !chatId() && !messages().length && !loading() && prompts().length) {
+    <section class="ai-sec k-prompts" [attr.aria-label]="'ai-assistant.start-a-task' | translate">
+      <div class="prompts" role="list">
+        @for (example of prompts(); track example.message) {
+          <button type="button" class="prompt" role="listitem" (click)="ask(example.message)">
+            <mat-icon fontSet="material-icons-round" aria-hidden="true">chat_bubble_outline</mat-icon>
+            <span>{{ example.label }}</span>
+            <mat-icon fontSet="material-icons-round" class="go" aria-hidden="true">arrow_upward</mat-icon>
+          </button>
+        }
+      </div>
+    </section>
+  }
+  @if (showGetStarted() && !messages().length && !loading()) {
+    <section class="ai-sec ai-sec-lg" aria-labelledby="ai-sec-examples">
+      <div class="ai-sec-head">
+        <h2 id="ai-sec-examples">{{ 'ai-assistant.get-started.examples' | translate }}</h2>
+        <p>{{ 'ai-assistant.get-started.examples-hint' | translate }}</p>
+      </div>
+      <div class="k-pcards">
+        @for (example of examples; track example.key) {
+          <button type="button" class="k-pcard" (click)="startExample(example)">
+            <span class="k-pcard-tile"><mat-icon fontSet="material-icons-round" aria-hidden="true">{{ example.icon }}</mat-icon></span>
+            <span class="k-pcard-body">
+              <b>{{ ('ai-assistant.get-started.example.' + example.key + '.title') | translate }}</b>
+              <span>{{ ('ai-assistant.get-started.example.' + example.key + '.what') | translate }}</span>
+            </span>
+          </button>
+        }
+      </div>
+    </section>
+    <section class="ai-cli-band" aria-labelledby="ai-cli-band-h">
+      <span class="ai-cli-band-tile" aria-hidden="true"><mat-icon fontSet="material-icons-round">terminal</mat-icon></span>
+      <div class="ai-cli-band-text">
+        <h2 id="ai-cli-band-h">{{ 'ai-assistant.cli.band.heading' | translate }}</h2>
+        <p>{{ 'ai-assistant.cli.band.line' | translate }}</p>
+      </div>
+      <button type="button" class="ai-cli-band-btn" (click)="openCli.emit()">
+        <span>{{ 'ai-assistant.cli.band.action' | translate }}</span>
+        <mat-icon fontSet="material-icons-round" aria-hidden="true">arrow_forward</mat-icon>
+      </button>
+    </section>
+  }
+  @if (variant() === 'page' && !showGetStarted() && !chatId() && !messages().length && !loading()) {
+    <section class="ai-sec" aria-labelledby="ai-sec-tasks">
+      <div class="ai-sec-head"><h2 id="ai-sec-tasks">{{ 'ai-assistant.start-a-task' | translate }}</h2></div>
+      <div class="ai-tasks">
+        @for (task of tasks; track task) {
+          <button type="button" class="ai-task" (click)="startTask(task)">
+            <b>{{ ('ai-assistant.task.' + task + '.title') | translate }}</b>
+            <small>{{ ('ai-assistant.task.' + task + '.hint') | translate }}</small>
+            <mat-icon fontSet="material-icons-round" aria-hidden="true">chevron_right</mat-icon>
+          </button>
+        }
+      </div>
+    </section>
+  }
+  @if (variant() === 'page' && !showGetStarted() && !chatId() && !messages().length && !loading()) {
+    <button type="button" class="ai-sol-card" (click)="newSolution.emit()">
+      <tb-ai-mark class="ai-sol-card-mark" size="44" icon="layers"></tb-ai-mark>
+      <span class="ai-sol-card-text">
+        <b>{{ 'ai-assistant.create-solution' | translate }}</b>
+        <small>{{ 'ai-assistant.create-solution-hint' | translate }}</small>
+      </span>
+      <span class="ai-sol-card-go">
+        <span class="ai-sol-card-go-t">{{ 'ai-assistant.create-solution-start' | translate }}</span>
+        <mat-icon fontSet="material-icons-round" aria-hidden="true">arrow_forward</mat-icon>
+      </span>
+    </button>
+  }
+</div>
+</div>
+@if (shownFile(); as file) {
+  @if (fileOpen()) {
+    <tb-ai-artifact-pane [class.art-dark]="fileDark(file)" [dark]="fileCode(file)" (closed)="fileOpen.set(false)">
+      <h2 artHead class="art-title" [matTooltip]="file.name" matTooltipPosition="below" [matTooltipShowDelay]="600">
+        <mat-icon class="tb-mat-20" aria-hidden="true">{{ fileMark(file) }}</mat-icon>
+        <span class="art-name">{{ fileName(file.name).base }}<span class="art-ext">{{ fileName(file.name).ext }}</span></span>
+      </h2>
+      <div artHead class="art-head-r">
+        @if (!file.previewed) {
+          <div class="art-tools">
+            @if (!fileBody()?.editing()) {
+              <button type="button" class="art-tool icon-only" (click)="fileBody()?.openFind()"
+                    [matTooltip]="'ai-assistant.file.find' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.find' | translate">
+                <mat-icon class="tb-mat-18" aria-hidden="true">search</mat-icon>
+              </button>
+            }
+            <button type="button" class="art-tool icon-only" [class.on]="fileWrap()" [attr.aria-pressed]="fileWrap()" (click)="toggleFileWrap()"
+                    [matTooltip]="'ai-assistant.file.wrap' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.wrap' | translate">
+              <mat-icon class="tb-mat-18" aria-hidden="true">wrap_text</mat-icon>
+            </button>
+            <button type="button" class="art-tool icon-only" [matMenuTriggerFor]="fileOptions"
+                    [matTooltip]="'ai-assistant.file.more' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.more' | translate">
+              <mat-icon class="tb-mat-18" aria-hidden="true">more_vert</mat-icon>
+            </button>
+          </div>
+        }
+        <div class="art-tools">
+          <button type="button" class="art-tool icon-only art-copy" [class.copied]="fileCopied()" (click)="copyFile(file)"
+                  [matTooltip]="(fileCopied() ? 'ai-assistant.copied' : 'ai-assistant.file.copy') | translate" matTooltipPosition="below"
+                  [attr.aria-label]="'ai-assistant.file.copy' | translate">
+            <mat-icon class="tb-mat-18 art-copy-ic" aria-hidden="true">content_copy</mat-icon>
+            <svg class="art-copy-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+          </button>
+          <span class="tb-ai-sr-only" aria-live="polite">{{ fileCopied() ? ('ai-assistant.copied' | translate) : '' }}</span>
+          @if (file.image) {
+            <button type="button" class="art-tool icon-only" [matMenuTriggerFor]="imageDownloads"
+                    [matTooltip]="'ai-assistant.file.download' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.download' | translate">
+              <mat-icon class="tb-mat-18" aria-hidden="true">download</mat-icon>
+            </button>
+          } @else {
+            <button type="button" class="art-tool icon-only" (click)="downloadFile(file)"
+                    [matTooltip]="'ai-assistant.file.download' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.download' | translate">
+              <mat-icon class="tb-mat-18" aria-hidden="true">download</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+      <tb-ai-file-body [file]="file" [wrap]="fileWrap()" [whitespace]="fileWhitespace()" [saver]="fileSaver"
+                       [marks]="fileMarks()" (marksChange)="fileMarks.set($event)" (discarded)="onFileDiscarded($event)"></tb-ai-file-body>
+      <ng-container ngProjectAs="[artFoot]">
+        @if (fileMarks(); as marks) {
+          <footer artFoot class="art-pane-foot art-marks">
+            <span class="file-marked">
+              <span class="file-marked-n">{{ (marks.from === marks.to ? 'ai-assistant.file.line' : 'ai-assistant.file.lines-range') | translate: {from: marks.from, to: marks.to} }}</span>
+              {{ 'ai-assistant.file.marked' | translate }}
+            </span>
+            <span class="art-spacer"></span>
+            <button mat-button type="button" (click)="fileMarks.set(null)">{{ 'ai-assistant.file.clear' | translate }}</button>
+            <button mat-stroked-button type="button" (click)="copyMarked(file)"><mat-icon>content_copy</mat-icon>{{ 'action.copy' | translate }}</button>
+            <button mat-flat-button type="button" class="art-ask" (click)="askAboutMarks(file)"><mat-icon>auto_awesome</mat-icon>{{ 'ai-assistant.file.ask-about' | translate }}</button>
+          </footer>
+        } @else {
+          <footer artFoot class="art-pane-foot file-bar">
+            <span class="file-bar-info">
+              @if (fileBody()?.editing()) {
+                @if (fileBody()?.dirty()) {
+                  <span class="file-bar-state"><i class="file-bar-dot" aria-hidden="true"></i>{{ 'ai-assistant.file.unsaved' | translate }}</span>
+                } @else {
+                  <span class="file-bar-state">{{ 'ai-assistant.file.editing' | translate }}</span>
+                }
+                @if (fileBody()?.caret(); as caret) {
+                  <i class="file-bar-sep" aria-hidden="true">·</i>
+                  <span class="file-bar-pos">{{ 'ai-assistant.file.position' | translate: {line: caret.line, col: caret.col} }}@if (caret.selected) { ({{ 'ai-assistant.file.selected' | translate: {count: caret.selected} }})}</span>
+                }
+              } @else if (fileBody()?.saved()) {
+                <span class="file-bar-saved"><mat-icon aria-hidden="true">check</mat-icon>{{ 'ai-assistant.file.saved' | translate }}</span>
+              } @else {
+                <span>{{ 'ai-assistant.file.lines' | translate: {count: file.lines} }}</span>
+                <i class="file-bar-sep" aria-hidden="true">·</i>
+                <span>{{ file.size }}</span>
+                @if (file.edited) {
+                  <i class="file-bar-sep" aria-hidden="true">·</i>
+                  <span class="file-bar-ed">{{ 'ai-assistant.file.edited-in-chat' | translate }}</span>
+                }
+              }
+            </span>
+            <span class="file-bar-acts">
+              @if (fileBody()?.editing()) {
+                @if (fileBody()?.dirty()) {
+                  <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.discard()">{{ 'ai-assistant.file.discard' | translate }}</button>
+                  <button mat-flat-button type="button" class="file-bar-b file-bar-save" [disabled]="loading() || fileBody()?.saving()" (click)="fileBody()?.save()">
+                    {{ 'ai-assistant.file.save' | translate }}
+                  </button>
+                } @else {
+                  <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.done()">{{ 'ai-assistant.file.done' | translate }}</button>
+                }
+              } @else if (chatId()) {
+                <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.startEdit()">
+                  <mat-icon>edit</mat-icon>{{ 'ai-assistant.file.edit' | translate }}
+                </button>
+              }
+            </span>
+          </footer>
+        }
+      </ng-container>
+    </tb-ai-artifact-pane>
+    <mat-menu #imageDownloads="matMenu" xPosition="before" class="tb-ai-chat-menu">
+      <button mat-menu-item type="button" (click)="downloadFile(file)">
+        <mat-icon fontSet="material-icons-round">image</mat-icon><span>{{ 'ai-assistant.file.download-svg' | translate }}</span>
+      </button>
+      <button mat-menu-item type="button" (click)="downloadFileAsPng(file)">
+        <mat-icon fontSet="material-icons-round">photo</mat-icon><span>{{ 'ai-assistant.file.download-png' | translate }}</span>
+      </button>
+    </mat-menu>
+    <mat-menu #fileOptions="matMenu" xPosition="before" class="tb-ai-chat-menu art-opts">
+      @if (!fileBody()?.editing()) {
+        <button mat-menu-item role="menuitemcheckbox" [attr.aria-checked]="fileWhitespace()" (click)="$event.stopPropagation(); toggleFileWhitespace()">
+          <mat-icon fontSet="material-icons-round">space_bar</mat-icon>
+          <span class="art-opt-l">{{ 'ai-assistant.file.show-whitespace' | translate }}</span>
+          <span class="art-switch" [class.on]="fileWhitespace()" aria-hidden="true"><i></i></span>
+        </button>
+      }
+      <div class="art-opt-row" role="group" [attr.aria-label]="'ai-assistant.file.theme' | translate" (click)="$event.stopPropagation()">
+        <mat-icon fontSet="material-icons-round" aria-hidden="true">contrast</mat-icon>
+        <span>{{ 'ai-assistant.file.theme' | translate }}</span>
+        <div class="art-modes art-opt-modes" role="radiogroup">
+          <button type="button" role="radio" [attr.aria-checked]="fileTheme() === 'dark'" (click)="setFileTheme('dark')">
+            <mat-icon class="tb-mat-16" aria-hidden="true">dark_mode</mat-icon><span>{{ 'ai-assistant.file.dark' | translate }}</span>
+          </button>
+          <button type="button" role="radio" [attr.aria-checked]="fileTheme() === 'light'" (click)="setFileTheme('light')">
+            <mat-icon class="tb-mat-16" aria-hidden="true">light_mode</mat-icon><span>{{ 'ai-assistant.file.light' | translate }}</span>
+          </button>
+        </div>
+      </div>
+    </mat-menu>
+  }
+}
+</div>
+
+<mat-menu #panelMenu="matMenu" xPosition="before" class="tb-ai-chat-menu">
+  @if (chat()) {
+    <button mat-menu-item (click)="startRename()">
+      <mat-icon fontSet="material-icons-round">edit</mat-icon>
+      <span>{{ 'action.rename' | translate }}</span>
+    </button>
+    <button mat-menu-item (click)="newChat()">
+      <mat-icon fontSet="material-icons-round">add</mat-icon>
+      <span>{{ 'ai-assistant.new-chat' | translate }}</span>
+    </button>
+  }
+  @if (docked() && (split() || splitAvailable())) {
+    <button mat-menu-item (click)="splitToggle.emit()">
+      <mat-icon fontSet="material-icons-round">{{ split() ? 'view_sidebar' : 'vertical_split' }}</mat-icon>
+      <span>{{ (split() ? 'ai-assistant.back-to-panel' : 'ai-assistant.split-view') | translate }}</span>
+    </button>
+  }
+  @if (recentChats().length) {
+    <div class="tb-ai-menu-h">{{ 'ai-assistant.recent-chats' | translate }}</div>
+    @for (other of recentChats(); track other.id) {
+      <button mat-menu-item class="chat" (click)="chatId.set(other.id)">
+        <mat-icon fontSet="material-icons-round">chat_bubble_outline</mat-icon>
+        <span class="tb-ai-menu-chat">
+          <span class="t">{{ other.title }}</span>
+          @if (levelOf(other); as level) {
+            <span class="tb-ai-status-mark" [class]="'tb-ai-status-mark ' + level"></span>
+          }
+        </span>
+      </button>
+    }
+  }
+  <button mat-menu-item (click)="openAllChats()">
+    <mat-icon fontSet="material-icons-round">forum</mat-icon>
+    <span>{{ 'ai-assistant.all-chats' | translate }}</span>
+  </button>
+  @if (chat()) {
+    <button mat-menu-item class="danger" (click)="deleteChat()">
+      <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>
+      <span>{{ 'action.delete' | translate }}</span>
+    </button>
+  }
+</mat-menu>
+
+<mat-menu #chatMenu="matMenu" xPosition="before" class="tb-ai-chat-menu">
+  <button mat-menu-item (click)="startRename()">
+    <mat-icon fontSet="material-icons-round">edit</mat-icon>
+    <span>{{ 'action.rename' | translate }}</span>
+  </button>
+  <button mat-menu-item (click)="togglePinned()">
+    <mat-icon fontSet="material-icons-round">push_pin</mat-icon>
+    <span>{{ (chat()?.pinned ? 'ai-assistant.unpin' : 'ai-assistant.pin') | translate }}</span>
+  </button>
+  <button mat-menu-item class="danger" (click)="deleteChat()">
+    <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>
+    <span>{{ 'action.delete' | translate }}</span>
+  </button>
+</mat-menu>
+
+<mat-menu #filesMenu="matMenu" xPosition="before" class="tb-ai-chat-menu art-list">
+  <div class="tb-ai-menu-h art-list-h">{{ 'ai-assistant.file.files-in-chat' | translate: {count: chatFiles().length} }}</div>
+  @for (entry of chatFiles(); track entry.file.name) {
+    @if (unlisting() === entry.file.name) {
+      <div class="art-list-confirm" (click)="$event.stopPropagation()" (keydown.escape)="keepListed($event)">
+        <span class="art-list-ic"><mat-icon class="tb-mat-18" aria-hidden="true">{{ fileMark(entry.file) }}</mat-icon></span>
+        <span class="art-list-q"><b>{{ 'ai-assistant.file.unlist-ask' | translate }}</b>
+          <small><span class="art-name">{{ fileName(entry.file.name).base }}<span class="art-ext">{{ fileName(entry.file.name).ext }}</span></span></small></span>
+        <button type="button" class="art-list-no" (click)="keepListed($event)"
+                [matTooltip]="'ai-assistant.file.keep' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.file.keep' | translate">
+          <mat-icon class="tb-mat-18" aria-hidden="true">close</mat-icon>
+        </button>
+        <button type="button" class="art-list-yes" (click)="unlist(entry.file, $event)"
+                [matTooltip]="'ai-assistant.file.unlist-do' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.file.unlist-do' | translate">
+          <mat-icon class="tb-mat-18" aria-hidden="true">delete_outline</mat-icon>
+        </button>
+      </div>
+    } @else {
+      <div class="art-list-row">
+        <button mat-menu-item type="button" class="art-list-item" [class.on]="isShownFile(entry.file)" role="menuitemradio"
+                [attr.aria-checked]="isShownFile(entry.file)" (click)="showFile(entry.file)" (keydown.delete)="askUnlist(entry.file, $event)">
+          <span class="art-list-ic"><mat-icon class="tb-mat-18" aria-hidden="true">{{ fileMark(entry.file) }}</mat-icon></span>
+          <span class="art-list-t"><b><span class="art-name">{{ fileName(entry.file.name).base }}<span class="art-ext">{{ fileName(entry.file.name).ext }}</span></span></b></span>
+          @if (entry.running) {
+            <tb-ai-spin kind="gen"></tb-ai-spin>
+          }
+          @if (isShownFile(entry.file)) {
+            <mat-icon class="tb-mat-18 art-list-check" aria-hidden="true">check</mat-icon>
+          }
+        </button>
+        <button type="button" class="art-list-del" tabindex="-1" (click)="askUnlist(entry.file, $event)"
+                [matTooltip]="'ai-assistant.file.unlist' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.file.unlist' | translate">
+          <mat-icon class="tb-mat-18" aria-hidden="true">delete_outline</mat-icon>
+        </button>
+      </div>
+    }
+  }
+</mat-menu>

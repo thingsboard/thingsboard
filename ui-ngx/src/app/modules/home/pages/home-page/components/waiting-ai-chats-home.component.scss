@@ -1,0 +1,128 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.tb-ai-attn-block {
+  margin-top: 22px;
+  container-type: inline-size;
+}
+
+.tb-ai-attn-block.appear {
+  animation: tb-ai-attn-in .25s ease-out;
+}
+
+@keyframes tb-ai-attn-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-ai-attn-block.appear {
+    animation: none;
+  }
+}
+
+.tb-ai-attn-block.reserve .tb-ai-attn-h {
+  color: var(--tb-ink-38, rgba(0, 0, 0, 0.38));
+}
+
+.tb-chat-pill.placeholder {
+  width: 200px;
+  pointer-events: none;
+}
+
+.tb-chat-pill-skeleton {
+  flex: 1;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.09) 50%, rgba(0, 0, 0, 0.05) 100%) 0 0 / 200% 100%;
+  animation: tb-ai-attn-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes tb-ai-attn-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-chat-pill-skeleton {
+    animation: none;
+  }
+}
+
+.tb-ai-attn-h {
+  margin: 0 2px 6px;
+  font: 500 14px/20px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: .1px;
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+}
+
+.tb-ai-attn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-chat-pill {
+  &:hover, &:focus, &:active {
+    border-bottom: none;
+  }
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 40px;
+  max-width: 300px;
+  padding: 0 14px 0 12px;
+  border-radius: 12px;
+  background: var(--tb-surface, #fff);
+  box-shadow: var(--tb-home-card-shadow);
+  font: 500 14px/20px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+  text-decoration: none;
+  border-bottom: none;
+  transition: box-shadow .15s ease;
+
+  &:hover, &:focus-visible {
+    outline: 0;
+    box-shadow: var(--tb-home-card-shadow), 0 4px 12px -4px rgba(20, 52, 58, 0.14);
+  }
+}
+
+.tb-chat-pill-m {
+  flex: none;
+  margin-left: 2px;
+  font: 400 13px/20px var(--tb-font, Roboto, sans-serif);
+  font-variant-numeric: tabular-nums;
+  color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+}
+
+.tb-chat-pill-t {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@container (max-width: 560px) {
+  .tb-ai-attn {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tb-chat-pill {
+    width: 100%;
+    max-width: none;
+  }
+}

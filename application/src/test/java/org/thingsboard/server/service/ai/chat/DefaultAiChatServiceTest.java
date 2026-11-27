@@ -156,6 +156,22 @@ class DefaultAiChatServiceTest {
     }
 
     @Test
+    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenStopChatCalled() {
+        // GIVEN
+        UUID chatId = UUID.randomUUID();
+        given(tbAiService.process(any(), same(user), eq(false))).willReturn(null);
+
+        // WHEN
+        service.stopChat(chatId, user);
+
+        // THEN
+        assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_STOP.equals(operation.type())
+                && Objects.equals(new ChatOperationRequest(chatId, null), operation.payload())), same(user), same(tokenProvider));
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
     void shouldProcessStreamAndDelegateToTransportWithTurnContext_whenSendChatMessageWithClientContextCalled() {
         // GIVEN
         UUID chatId = UUID.randomUUID();

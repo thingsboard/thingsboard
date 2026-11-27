@@ -5,7 +5,6 @@ import { PageComponent } from '@shared/components/page.component';
 import {
   AddonType,
   addonTypeTranslationMap,
-  createManageSubscriptionUrl,
   pePackOfferInfoMap,
   pePackOffers,
   PlanUiType,
@@ -16,20 +15,20 @@ import {
 } from '@shared/models/subscription.models';
 import { ActivatedRoute } from '@angular/router';
 import { AdminService } from '@core/http/admin.service';
-import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionUpdateLicenseParams } from '@core/auth/auth.actions';
-import { getCurrentAuthState, selectUserSettingsProperty } from '@core/auth/auth.selectors';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { interval, Subscription } from 'rxjs';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { FormControl, FormGroupDirective, NgForm } from '@angular/forms';
 import { SystemSetupService } from '@core/http/system-setup.service';
 import {
-  LicenseHandOffCase,
-  LicenseHandOffDialogComponent,
-  LicenseHandOffDialogData
-} from '@home/pages/admin/license-hand-off-dialog.component';
+  LicenseActionsService,
+  licenseLimitCritical,
+  licenseLimitWarn,
+  licenseMeterWidth
+} from '@home/components/license/license-actions.service';
 import { select } from '@ngrx/store';
 import { take } from 'rxjs/operators';
 import { resolveSendErrorMessage } from '@core/utils';
@@ -126,7 +125,7 @@ export class LicenseManagementComponent extends PageComponent implements OnInit,
               private systemSetupService: SystemSetupService,
               private translate: TranslateService,
               private dateAgoPipe: DateAgoPipe,
-              private dialog: MatDialog) {
+              private licenseActions: LicenseActionsService) {
     super();
   }
 
@@ -144,8 +143,7 @@ export class LicenseManagementComponent extends PageComponent implements OnInit,
     if ($event) {
       $event.stopPropagation();
     }
-    const url = createManageSubscriptionUrl(this.subscriptionInfo);
-    this.openPortalLinkMaybeShowDialog(LicenseHandOffCase.MANAGE_LICENSE, null, null, url);
+    this.licenseActions.manageLicense(this.subscriptionInfo);
   }
 
   refreshLicenseInfo($event?: Event) {
@@ -181,24 +179,15 @@ export class LicenseManagementComponent extends PageComponent implements OnInit,
   }
 
   itemLimitWarn(count: number, max: number): boolean {
-    if (count && max) {
-      return (count / max) >= 0.85;
-    }
-    return false;
+    return licenseLimitWarn(count, max);
   }
 
   itemLimitCritical(count: number, max: number): boolean {
-    if (count && max) {
-      return count >= max;
-    }
-    return false;
+    return licenseLimitCritical(count, max);
   }
 
   itemMeterWidth(count: number, max: number): number {
-    if (count > 0 && max > 0) {
-      return Math.min(count / max, 1) * 100;
-    }
-    return 0;
+    return licenseMeterWidth(count, max);
   }
 
   itemLimitClass(itemType: UsageItemType, count: number, max: number): string {
@@ -219,65 +208,28 @@ export class LicenseManagementComponent extends PageComponent implements OnInit,
     if ($event) {
       $event.stopPropagation();
     }
-    switch (itemType) {
-      case UsageItemType.DEVICES:
-        this.addDevices();
-        break;
-      case UsageItemType.AI_CREDITS:
-        this.addAiCredits();
-        break;
-      case UsageItemType.EDGES:
-        this.addEdges();
-        break;
-      case UsageItemType.PROD_INSTANCES:
-        this.addInstances();
-        break;
-      case UsageItemType.AGENTS:
-        this.addAgents();
-        break;
-    }
+    this.licenseActions.addItems(this.subscriptionInfo, itemType);
   }
 
   upgradePlanForItems($event: Event, itemType: UsageItemType): void {
     if ($event) {
       $event.stopPropagation();
     }
-    let targetPlan: PlanUiType;
-    if (itemType === UsageItemType.DEVICES) {
-      if (this.subscriptionInfo.planUiType === PlanUiType.TbCommercialSmall) {
-        targetPlan = PlanUiType.TbPilot;
-      } else if (this.subscriptionInfo.planUiType === PlanUiType.TbNonCommercial) {
-        targetPlan = PlanUiType.TbBusiness;
-      } else if (this.subscriptionInfo.planUiType === PlanUiType.TbPilot) {
-        targetPlan = PlanUiType.TbStartup;
-      } else {
-        targetPlan = PlanUiType.TbBusiness;
-      }
-    } else{
-      targetPlan = PlanUiType.TbPilot;
-    }
-    this.upgradePlan(itemType, null, targetPlan);
+    this.licenseActions.upgradePlanForItems(this.subscriptionInfo, itemType);
   }
 
   addAddOn($event: Event, addonType: AddonType) {
     if ($event) {
       $event.stopPropagation();
     }
-    if (addonType === AddonType.EDGE) {
-      this.addEdge();
-    } else if (addonType === AddonType.TRENDZ) {
-      this.addTrendz();
-    } else if (addonType === AddonType.PROFESSIONAL_UPGRADE) {
-      this.addProfessionalUpgrade();
-    }
+    this.licenseActions.addAddOn(this.subscriptionInfo, addonType);
   }
 
   upgradePlanForAddon($event: Event, addonType: AddonType): void {
     if ($event) {
       $event.stopPropagation();
     }
-    const targetPlan = PlanUiType.TbPilot;
-    this.upgradePlan(null, addonType, targetPlan);
+    this.licenseActions.upgradePlanForAddon(this.subscriptionInfo, addonType);
   }
 
   async pasteKey() {
@@ -356,82 +308,6 @@ export class LicenseManagementComponent extends PageComponent implements OnInit,
         communityGrantLicense: subscriptionInfo.communityGrantLicense
       }
     ));
-  }
-
-  private addDevices() {
-    this.addLicenseItem(UsageItemType.DEVICES, null, { extraDeviceCount: 100 });
-  }
-
-  private addEdges() {
-    this.addLicenseItem(UsageItemType.EDGES, null, { extraEdgeCount: 1 });
-  }
-
-  private addInstances() {
-    this.addLicenseItem(UsageItemType.PROD_INSTANCES, null, { extraInstanceCount: 1 });
-  }
-
-  private addAiCredits() {
-    this.addLicenseItem(UsageItemType.AI_CREDITS, null, { extraAiCreditsCount: 5 });
-  }
-
-  private addAgents() {
-    this.addLicenseItem(UsageItemType.AGENTS, null, { extraAgentCount: 1 });
-  }
-
-  private addEdge() {
-    this.addLicenseItem(null, AddonType.EDGE, { edgeEnabled: true });
-  }
-
-  private addTrendz() {
-    this.addLicenseItem(null, AddonType.TRENDZ, { trendzEnabled: true });
-  }
-
-  private addProfessionalUpgrade() {
-    this.addLicenseItem(null, AddonType.PROFESSIONAL_UPGRADE, { professionalUpgradeEnabled: true });
-  }
-
-  private addLicenseItem(itemType: UsageItemType, addonType: AddonType, items: any) {
-    const url = createManageSubscriptionUrl(this.subscriptionInfo, items);
-    const handOffCase = !!itemType ? LicenseHandOffCase.ADD_ITEMS : LicenseHandOffCase.ADD_ADDON;
-    this.openPortalLinkMaybeShowDialog(handOffCase, itemType, addonType, url);
-  }
-
-  private upgradePlan(itemType: UsageItemType, addonType: AddonType, targetPlan: PlanUiType): void {
-    const url = `${this.subscriptionInfo.licenseServerEndpoint}/?changeSubscriptionPlan=true&subscriptionId=${this.subscriptionInfo.subscriptionId}&planUiType=${targetPlan}`;
-    const handOffCase = !!itemType ? LicenseHandOffCase.UPGRADE_PLAN_FOR_ITEMS : LicenseHandOffCase.UPGRADE_PLAN_FOR_ADDON;
-    this.openPortalLinkMaybeShowDialog(handOffCase, itemType, addonType, url);
-  }
-
-  private openPortalLinkMaybeShowDialog(handOffCase: LicenseHandOffCase,
-                                        itemType: UsageItemType, addonType: AddonType, url: string): void {
-    this.store.pipe(select(selectUserSettingsProperty('notDisplayLicenseHandOff'))).pipe(
-      take(1)
-    ).subscribe((settings: boolean) => {
-      if (!settings) {
-        this.dialog.open<LicenseHandOffDialogComponent, LicenseHandOffDialogData, boolean>(LicenseHandOffDialogComponent,
-          {
-            disableClose: true,
-            autoFocus: false,
-            panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-            data: {
-              case: handOffCase,
-              isPerpetual: this.subscriptionInfo.perpetual,
-              isCeGrant: this.isCeGrant,
-              itemType,
-              addonType,
-              planName: this.subscriptionInfo.subscriptionPlanName
-            }
-          }).afterClosed().subscribe(
-          (result) => {
-            if (result) {
-              window.open(url, '_blank');
-            }
-          }
-        );
-      } else {
-        window.open(url, '_blank');
-      }
-    });
   }
 
   private refreshAgoTextIfNeeded(): void {

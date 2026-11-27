@@ -24,7 +24,8 @@ import {
   TemplateNotificationDialogData
 } from '@home/pages/notification/template/template-notification-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { Observable } from 'rxjs';
@@ -39,6 +40,8 @@ import { Authority } from '@shared/models/authority.enum';
 export class TemplateTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationTemplate> = new EntityTableConfig<NotificationTemplate>();
+
+  private panelService = inject(AiAssistantPanelService);
 
   constructor(private store: Store<AppState>,
               private notificationService: NotificationService,
@@ -114,7 +117,8 @@ export class TemplateTableConfigResolver  {
 
   private editTemplate($event: Event, template: NotificationTemplate, isCopy = false) {
     $event?.stopPropagation();
-    this.notificationTemplateDialog(template, false, isCopy).subscribe((res) => res ? this.config.updateData() : null);
+    this.panelService.focusWhile({type: AiAssistantViewType.NOTIFICATION_TEMPLATE, entityId: (isCopy ? undefined : template)?.id}, template?.name,
+      this.notificationTemplateDialog(template, false, isCopy)).subscribe((res) => res ? this.config.updateData() : null);
   }
 
   private notificationTemplateDialog(template: NotificationTemplate, isAdd = false, isCopy = false): Observable<NotificationTemplate> {

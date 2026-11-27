@@ -145,7 +145,6 @@ export enum MenuId {
   dashboard_all = 'dashboard_all',
   dashboard_groups = 'dashboard_groups',
   dashboard_shared = 'dashboard_shared',
-  ai_solution_creator = 'ai_solution_creator',
   device_all = 'device_all',
   device_groups = 'device_groups',
   device_shared = 'device_shared',
@@ -178,6 +177,7 @@ export enum MenuId {
   secrets = 'secrets',
   ai_models = 'ai_models',
   iot_hub = 'iot_hub',
+  ai_assistant = 'ai_assistant',
   reporting = 'reporting',
   report_templates = 'report_templates',
   report_scheduling = 'report_scheduling',
@@ -1118,18 +1118,6 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
-    MenuId.ai_solution_creator,
-    {
-      id: MenuId.ai_solution_creator,
-      name: 'solution-creator.ai-solution-creator',
-      type: 'link',
-      path: '/ai-solution-creator',
-      icon: 'mdi:creation',
-      outlinedIcon: 'mdi:creation-outline',
-      isNew: true,
-    }
-  ],
-  [
     MenuId.device_all,
     {
       id: MenuId.device_all,
@@ -1551,6 +1539,18 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       outlinedIcon: 'mdi:hub-outline',
       isNew: true
     }
+  ],
+  [
+    MenuId.ai_assistant,
+    {
+      id: MenuId.ai_assistant,
+      name: 'ai-assistant.ai-assistant',
+      type: 'link',
+      path: '/ai-assistant',
+      icon: 'auto_awesome',
+      outlinedIcon: 'mdi:creation-outline',
+      isNew: true
+    }
   ]
 ]);
 
@@ -1577,15 +1577,15 @@ const menuFilters = new Map<MenuId, MenuFilter>([
           userPermissionsService.hasSharedReadGroupsPermission(EntityType.DASHBOARD)
   ],
   [
-    MenuId.ai_solution_creator, (authState, userPermissionsService) =>
-        authState.aiEnabled &&
-        authState.authUser.authority === Authority.TENANT_ADMIN &&
-        userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)
-  ],
-  [
     MenuId.iot_hub, (authState, userPermissionsService) =>
           authState.authUser.authority === Authority.TENANT_ADMIN &&
           userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL)
+  ],
+  [
+    MenuId.ai_assistant, (authState, userPermissionsService) =>
+        authState.aiEnabled &&
+        authState.authUser.authority === Authority.TENANT_ADMIN &&
+        userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)
   ],
   [
     MenuId.device_all, (_authState, userPermissionsService) =>
@@ -2007,8 +2007,8 @@ export const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
     Authority.TENANT_ADMIN,
     [
       {id: MenuId.home},
+      {id: MenuId.ai_assistant},
       {id: MenuId.iot_hub},
-      {id: MenuId.ai_solution_creator},
       {
         id: MenuId.monitor,
         pages: [

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit, ChangeDetectorRef,
   Component, ComponentRef,
@@ -347,6 +348,7 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
 
   action(event: MouseEvent): void {
     event.stopPropagation();
+    this.notification.onAction?.();
     if (this.snackBarRef) {
       this.snackBarRef.dismissWithAction();
     } else {

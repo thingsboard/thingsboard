@@ -36,7 +36,8 @@ public class AlarmDataAdapter {
     public static PageData<AlarmData> createAlarmData(EntityDataPageLink pageLink,
                                                       List<Map<String, Object>> rows,
                                                       int totalElements, Collection<EntityId> orderedEntityIds) {
-        Map<UUID, EntityId> entityIdMap = orderedEntityIds.stream().collect(Collectors.toMap(EntityId::getId, Function.identity()));
+        Map<UUID, EntityId> entityIdMap = orderedEntityIds == null ? Collections.emptyMap()
+                : orderedEntityIds.stream().collect(Collectors.toMap(EntityId::getId, Function.identity()));
         int totalPages = pageLink.getPageSize() > 0 ? (int) Math.ceil((float) totalElements / pageLink.getPageSize()) : 1;
         int startIndex = pageLink.getPageSize() * pageLink.getPage();
         boolean hasNext = pageLink.getPageSize() > 0 && totalElements > startIndex + rows.size();
@@ -101,7 +102,7 @@ public class AlarmDataAdapter {
             alarm.setPropagateRelationTypes(Collections.emptyList());
         }
         UUID entityUuid = (UUID) row.get(ModelConstants.ENTITY_ID_COLUMN);
-        EntityId entityId = entityIdMap.get(entityUuid);
+        EntityId entityId = entityIdMap.isEmpty() ? alarm.getOriginator() : entityIdMap.get(entityUuid);
         Object originatorNameObj = row.get(ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY);
         String originatorName = originatorNameObj != null ? originatorNameObj.toString() : null;
         Object originatorLabelObj = row.get(ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);

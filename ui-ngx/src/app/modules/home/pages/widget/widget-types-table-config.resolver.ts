@@ -19,7 +19,8 @@ import { WidgetService } from '@app/core/http/widget.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@app/core/auth/auth.selectors';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { Authority } from '@shared/models/authority.enum';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { Direction } from '@shared/models/page/sort-order';
@@ -56,6 +57,7 @@ export class WidgetTypesTableConfigResolver  {
               private iotHubActions: IotHubActionsService) {
 
     this.config.entityType = EntityType.WIDGETS_BUNDLE;
+    this.config.aiReloadEntityType = EntityType.WIDGET_TYPE;
     this.config.entityComponent = WidgetTypeComponent;
     this.config.entityTabsComponent = WidgetTypeTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.WIDGET_TYPE);
@@ -143,6 +145,20 @@ export class WidgetTypesTableConfigResolver  {
         onAction: ($event) => this.importWidgetType($event)
       }
     ];
+    if (this.aiAvailable()) {
+      this.config.aiAssistantConfig = {
+        view: {listView: AiAssistantViewType.WIDGET_TYPE_LIST, entityView: AiAssistantViewType.WIDGET_TYPE},
+        initialPromptPlaceholder: this.translate.instant('widget.ai-assistant-initial-prompt-placeholder')
+      };
+      this.config.addActionDescriptors.push({
+        name: this.translate.instant('ai-assistant.configure-with-ai'),
+        icon: 'mdi:creation',
+        isEnabled: () => true,
+        onAction: ($event) => this.configureWithAi($event)
+      });
+    } else {
+      this.config.aiAssistantConfig = null;
+    }
     if (authUser.authority === Authority.TENANT_ADMIN && this.userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL))  {
       this.config.addActionDescriptors.push(
         {
@@ -187,6 +203,20 @@ export class WidgetTypesTableConfigResolver  {
         }
       }
     );
+  }
+
+  private aiAvailable(): boolean {
+    const authState = getCurrentAuthState(this.store);
+    return authState.aiEnabled && authState.authUser?.authority === Authority.TENANT_ADMIN
+      && this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL);
+  }
+
+  configureWithAi($event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(this.router.createUrlTree(['resources/widgets-library/widget-types', WidgetDataType.static],
+      {queryParams: {action: 'aiAssistant'}}));
   }
 
   addWidgetFromIotHub() {

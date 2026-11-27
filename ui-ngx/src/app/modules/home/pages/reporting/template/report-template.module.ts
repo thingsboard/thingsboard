@@ -30,6 +30,7 @@ import {
 } from '@home/pages/reporting/template/report-template-header-footer.component';
 import { NotificationBellModule } from '@home/components/notification/notification-bell.module';
 
+import { AiModule } from '@home/components/ai/ai.module';
 @NgModule({
   declarations: [
     ReportTemplateFilterComponent,
@@ -46,6 +47,7 @@ import { NotificationBellModule } from '@home/components/notification/notificati
     CommonModule,
     SharedModule,
     HomeComponentsModule,
+    AiModule,
     NotificationBellModule,
     HomeDialogsModule,
     ReportTemplateComponentsModule,

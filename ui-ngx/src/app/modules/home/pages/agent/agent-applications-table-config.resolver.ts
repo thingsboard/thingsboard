@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   agentEntityUrl,
@@ -53,9 +53,14 @@ import {
   AgentAppInstallWizardResult,
   isAgentAppUpgradeResult
 } from '@home/components/agent/wizard/agent-app-install-wizard.component';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { AgentId } from '@shared/models/id/agent-id';
 
 @Injectable()
 export class AgentApplicationsTableConfigResolver {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   private readonly config: EntityTableConfig<AgentApplicationInfo> = new EntityTableConfig<AgentApplicationInfo>();
   private agentId: string;
@@ -110,6 +115,8 @@ export class AgentApplicationsTableConfigResolver {
         this.config.tableTitle = agent.name + ': ' + this.translate.instant('agent.applications');
         this.config.backNavigationUrl = agentTabsBackUrl(route) ?? agentsListUrl(route, this.agentId);
         this.config.componentsData = { agentId: this.agentId, agent };
+        this.config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.AGENT_APPLICATION_LIST,
+          AiAssistantViewType.AGENT_APPLICATION, new AgentId(this.agentId));
         this.config.columns = this.configureColumns();
         this.config.cellActionDescriptors = this.configureCellActions();
         this.config.entitiesFetchFunction = pageLink =>

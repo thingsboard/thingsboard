@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 export interface NotificationState {
   notification: NotificationMessage;
   hideNotification: HideNotification;
@@ -19,6 +20,8 @@ export class NotificationMessage {
   verticalPosition?: NotificationVerticalPosition;
   panelClass?: string | string[];
   modern?: boolean;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 export class HideNotification {

@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { createFeatureSelector, createSelector, select, Store } from '@ngrx/store';
 
 import { AppState } from '../core.state';
 import { AuthState } from './auth.models';
 import { take } from 'rxjs/operators';
 import { AuthUser } from '@shared/models/user.model';
-import { UserSettings } from '@shared/models/user-settings.models';
+import { AiTourStep, UserSettings } from '@shared/models/user-settings.models';
 import { getDescendantProp } from '@core/utils';
 
 export const selectAuthState = createFeatureSelector< AuthState>(
@@ -69,12 +70,6 @@ export const selectMobileQrEnabled = createSelector(
   (state: AuthState) => state.mobileQrEnabled
 );
 
-export const selectHomeDashboardParams = createSelector(
-  selectPersistDeviceStateToTelemetry,
-  selectMobileQrEnabled,
-  (persistDeviceStateToTelemetry, mobileQrEnabled) => ({persistDeviceStateToTelemetry, mobileQrEnabled})
-);
-
 export const selectUserSettings = createSelector(
   selectAuthState,
   (state: AuthState) => state.userSettings
@@ -90,6 +85,20 @@ export const selectOpenedMenuSections = createSelector(
   (state: AuthState) => state.userSettings.openedMenuSections
 );
 
+export const selectAiTour = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.userSettings?.aiTour ?? {}
+);
+
+export const selectAiTourStepSeen = (step: AiTourStep) => createSelector(
+  selectAiTour,
+  aiTour => !!aiTour[step]
+);
+
+export const selectHomeCards = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.userSettings?.homeCards ?? {}
+);
 
 export const getCurrentAuthState = (store: Store<AppState>): AuthState => {
   let state: AuthState;

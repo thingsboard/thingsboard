@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { Injectable } from '@angular/core';
 
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
@@ -98,6 +99,12 @@ export class DashboardsTableConfigResolver {
           config.tableTitle = this.translate.instant('dashboard.dashboards');
         }
         config.columns = this.configureColumns(authUser, config);
+        if (getCurrentAuthState(this.store).aiEnabled && this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)) {
+          config.aiAssistantConfig = {
+            view: {listView: AiAssistantViewType.DASHBOARD_LIST, entityView: AiAssistantViewType.DASHBOARD},
+            initialPromptPlaceholder: this.translate.instant('dashboard.ai-assistant-initial-prompt-placeholder')
+          };
+        }
         this.configureEntityFunctions(config);
         config.cellActionDescriptors = this.configureCellActions(config);
         config.groupActionDescriptors = this.configureGroupActions(config);
@@ -136,17 +143,6 @@ export class DashboardsTableConfigResolver {
     config.entityAdded = dashboard => {
       this.openDashboard(null, dashboard, config);
     };
-
-    if (getCurrentAuthState(this.store).aiEnabled &&
-      this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL) &&
-      this.userPermissionsService.hasGenericPermission(Resource.DASHBOARD, Operation.CREATE)) {
-      config.headerButtonDescriptors.push({
-        name: this.translate.instant('ai-assistant.configure-with-ai'),
-        icon: 'mdi:creation',
-        isEnabled: () => true,
-        onAction: ($event) => this.generateWithAi($event, config)
-      });
-    }
   }
 
   configureColumns(authUser: AuthUser, config: EntityTableConfig<DashboardInfo>): Array<EntityColumn<DashboardInfo>> {
@@ -205,7 +201,7 @@ export class DashboardsTableConfigResolver {
   }
 
   configureAddActions(config: EntityTableConfig<DashboardInfo>): Array<HeaderActionDescriptor> {
-    return [
+    const actions: Array<HeaderActionDescriptor> = [
       {
         name: this.translate.instant('dashboard.create-new-dashboard'),
         icon: 'insert_drive_file',
@@ -219,6 +215,16 @@ export class DashboardsTableConfigResolver {
         onAction: ($event) => this.importDashboard($event, config)
       }
     ];
+    if (getCurrentAuthState(this.store).aiEnabled &&
+      this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)) {
+      actions.push({
+        name: this.translate.instant('ai-assistant.configure-with-ai'),
+        icon: 'mdi:creation',
+        isEnabled: () => true,
+        onAction: ($event) => this.generateWithAi($event, config)
+      });
+    }
+    return actions;
   }
 
   generateWithAi($event: Event, config: EntityTableConfig<DashboardInfo>) {

@@ -1,0 +1,33 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (shown()) {
+  <section class="tb-release" data-home-card="productRelease" [attr.aria-label]="'home.release.available' | translate">
+    <span class="tb-release-mark" aria-hidden="true">
+      <img src="/assets/license/tb-license-mark.svg" alt width="56" height="56">
+      <span class="tb-release-badge"><mat-icon>arrow_upward</mat-icon></span>
+    </span>
+    <div class="tb-release-body">
+      <h2 class="tb-release-title">{{ 'home.release.title' | translate: {version: update().latestVersion} }}</h2>
+      <p class="tb-release-line">
+        {{ 'home.release.read-notes' | translate }}
+        <a [href]="update().latestVersionReleaseNotesUrl" target="_blank" rel="noopener noreferrer">{{ 'home.release.notes' | translate }}</a>
+      </p>
+      <div class="tb-release-phone">
+        <a mat-flat-button color="primary" class="tb-release-upgrade" [href]="update().upgradeInstructionsUrl" target="_blank"
+           rel="noopener noreferrer">{{ 'home.release.upgrade' | translate }}</a>
+      </div>
+    </div>
+    <div class="tb-release-actions">
+      <a mat-flat-button color="primary" class="tb-release-upgrade" [href]="update().upgradeInstructionsUrl" target="_blank"
+         rel="noopener noreferrer">{{ 'home.release.upgrade' | translate }}</a>
+      <button mat-icon-button type="button" class="tb-release-hide" [matTooltip]="'home.release.hide' | translate"
+              [attr.aria-label]="'home.release.hide' | translate" (click)="hide()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </section>
+}

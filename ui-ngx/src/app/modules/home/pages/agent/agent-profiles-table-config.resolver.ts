@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   checkBoxCell,
@@ -30,9 +30,13 @@ import {
 import { AgentProfileCreateDialogService } from '@home/pages/agent/agent-profile-create-dialog.service';
 import { DialogService } from '@core/services/dialog.service';
 import { of } from 'rxjs';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 
 @Injectable()
 export class AgentProfilesTableConfigResolver {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   private readonly config: EntityTableConfig<AgentProfileInfo> = new EntityTableConfig<AgentProfileInfo>();
 
@@ -112,6 +116,7 @@ export class AgentProfilesTableConfigResolver {
         this.config.deleteEnabled = (profile) => authUser.authority === Authority.TENANT_ADMIN && profile && !profile.default;
         this.config.entitySelectionEnabled = (profile) => profile && !profile.default;
         this.config.detailsReadonly = () => authUser.authority !== Authority.TENANT_ADMIN;
+        this.config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.AGENT_PROFILE_LIST, AiAssistantViewType.AGENT_PROFILE);
         return this.config;
       })
     );

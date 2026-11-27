@@ -1,0 +1,166 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="cardDefinition()">
+  <ng-container homeCardActions>
+    @if (managed() && updatedAgo()) {
+      <span class="tb-license-updated">
+        <span [matTooltip]="'home.license.updated-tooltip' | translate">{{ 'subscription.updated-ago' | translate: {ago: updatedAgo()} }}</span>
+        <button mat-icon-button type="button" class="tb-license-refresh" [disabled]="refreshing()"
+                [matTooltip]="'action.update' | translate" [attr.aria-label]="'action.update' | translate" (click)="refresh()">
+          <mat-icon [class.spinning]="refreshing()">refresh</mat-icon>
+        </button>
+      </span>
+    }
+  </ng-container>
+  @if (info(); as license) {
+    <div class="tb-license-band" [class]="kind()">
+      <span class="tb-license-mark" [class.with-hue]="markHue()" [class.development]="license.development">
+        <img src="/assets/license/tb-license-mark.svg" alt width="72" height="72">
+        @if (license.offline) {
+          <i class="tb-license-offline" [matTooltip]="'subscription.offline-mode' | translate">
+            <mat-icon>cloud_off</mat-icon>
+          </i>
+        }
+      </span>
+      <div class="tb-license-id">
+        <small>{{ (license.development ? 'home.license.development-mode' : license.perpetual ? 'subscription.perpetual-license' : 'subscription.subscription') | translate }}</small>
+        <b>{{ license.subscriptionPlanName }}</b>
+        @if (license.development) {
+          <span>{{ 'home.license.development-line' | translate }}</span>
+        } @else if (license.perpetual) {
+          @if (license.endTs) {
+            <span>{{ 'subscription.updates-and-support-until' | translate: {date: license.endTs | date: 'd MMMM yyyy'} }}</span>
+          }
+        } @else if (license.upcomingInvoiceDate) {
+          <span [innerHTML]="('subscription.next-charge-and-due-date' | translate: {
+                  total: license.upcomingInvoiceAmountDue | tbCurrency: {short: true},
+                  date: license.upcomingInvoiceDate | date: 'd MMMM',
+                  dueDate: license.endTs | date: 'd MMMM'}) | safe: 'html'"></span>
+        }
+      </div>
+      @if (managed()) {
+        <div class="tb-license-manage">
+          <button mat-stroked-button type="button" class="tb-license-button" (click)="manageLicense()">
+            {{ 'subscription.manage-license' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+    <div class="tb-license-body" [class.offer]="offer()">
+      @if (limitGroups().length) {
+        <div class="tb-license-limits">
+          @for (group of limitGroups(); track group.id) {
+            <div class="tb-license-head"><mat-icon>{{ group.icon }}</mat-icon>{{ group.label | translate }}</div>
+            @for (row of group.rows; track row.itemType) {
+              <div class="tb-license-limit" [class]="row.tone">
+                <span class="tb-license-limit-name">{{ row.label | translate }}</span>
+                @if (row.max) {
+                  <span class="tb-license-limit-counts" [matTooltip]="'home.license.of-limit' | translate: {percent: row.percent}">
+                    {{ row.used | shortNumber: {roundDown: true} }} / {{ row.max | shortNumber: {roundDown: true} }}
+                    @if (row.tone) {
+                      <span class="tb-home-sr-only">{{ (row.tone === 'critical' ? 'home.license.at-limit' : 'home.license.of-limit') | translate: {percent: row.percent} }}</span>
+                    }
+                  </span>
+                } @else {
+                  <span class="tb-license-limit-counts none">{{ 'subscription.not-included' | translate }}</span>
+                }
+                <span class="tb-license-meter"><i [style.width.%]="row.width"></i></span>
+                @if (row.action === 'add') {
+                  <button mat-button color="primary" type="button" class="tb-license-button" (click)="limitAction(row)">
+                    <mat-icon>add</mat-icon>{{ row.addLabel | translate }}
+                  </button>
+                } @else if (row.action === 'upgrade') {
+                  <button mat-button color="primary" type="button" class="tb-license-button" (click)="limitAction(row)">
+                    <mat-icon>arrow_upward</mat-icon>{{ 'subscription.upgrade-plan' | translate }}
+                  </button>
+                } @else if (row.max) {
+                  <span class="tb-license-pct">{{ row.percent }}%</span>
+                } @else {
+                  <span class="tb-license-pct"></span>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+      @switch (offer()) {
+        @case ('pe-pack') {
+          <div class="tb-license-pack">
+            <div class="tb-license-pack-head">
+              <img src="/assets/license/tb-pro-mark.svg" alt width="56" height="56">
+              <div class="tb-license-pack-id">
+                <b>{{ 'subscription.pe-pack' | translate }}</b>
+                <span>{{ 'subscription.pe-pack-desc' | translate }}</span>
+              </div>
+              <button mat-flat-button color="primary" type="button" class="tb-license-button" (click)="addProfessionalPack()">
+                {{ 'subscription.add-to-license' | translate }}
+              </button>
+            </div>
+            <ng-container *ngTemplateOutlet="offers; context: {$implicit: pePackOffers}"></ng-container>
+          </div>
+        }
+        @case ('production') {
+          <div class="tb-license-pack">
+            <div class="tb-license-pack-head bare">
+              <div class="tb-license-pack-id">
+                <b>{{ 'home.license.go-to-production' | translate }}</b>
+              </div>
+              <button mat-flat-button color="primary" type="button" class="tb-license-button" (click)="seePlans()">
+                {{ 'home.license.see-plans' | translate }}
+              </button>
+            </div>
+            <ng-container *ngTemplateOutlet="offers; context: {$implicit: productionOffers}"></ng-container>
+          </div>
+        }
+        @default {
+          <div class="tb-license-addons-group">
+            <div class="tb-license-head"><mat-icon>extension</mat-icon>{{ 'subscription.add-ons' | translate }}</div>
+            <ul class="tb-license-addons">
+              @for (addon of addons(); track addon.type) {
+                <li>
+                  <span class="tb-license-addon-name">{{ addon.label | translate }}</span>
+                  @switch (addon.state) {
+                    @case ('included') {
+                      <span class="tb-license-addon-state included"><mat-icon>check_circle</mat-icon>{{ 'subscription.included' | translate }}</span>
+                    }
+                    @case ('add') {
+                      <button mat-button color="primary" type="button" class="tb-license-button" (click)="addonAction(addon)">
+                        <mat-icon>add</mat-icon>{{ 'subscription.add-to-license' | translate }}
+                      </button>
+                    }
+                    @case ('upgrade') {
+                      <button mat-button color="primary" type="button" class="tb-license-button" (click)="addonAction(addon)">
+                        <mat-icon>arrow_upward</mat-icon>{{ 'subscription.upgrade-plan' | translate }}
+                      </button>
+                    }
+                    @case ('not-included') {
+                      <span class="tb-license-addon-state">{{ 'subscription.not-included' | translate }}</span>
+                    }
+                    @default {
+                      <span class="tb-license-addon-state">{{ 'home.license.not-in-license' | translate }}</span>
+                    }
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    </div>
+  }
+</tb-home-card>
+
+<ng-template #offers let-items>
+  <ul class="tb-license-pack-grid">
+    @for (item of items; track item.icon) {
+      <li>
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span><b>{{ item.title | translate }}</b><small>{{ item.text | translate }}</small></span>
+      </li>
+    }
+  </ul>
+</ng-template>

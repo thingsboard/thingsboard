@@ -1,12 +1,16 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter, switchMap, tap } from 'rxjs/operators';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import {
+  afterLoadCustomMenuConfig,
   beforeSaveCustomMenuConfig,
   CustomMenuConfig,
   CustomMenuInfo,
@@ -73,6 +77,9 @@ export class CustomMenuConfigComponent extends PageComponent implements OnInit, 
     return !this.readonly && this.visibleMenuItemsControls().length > 1;
   }
 
+  private aiAssistantPanelService = inject(AiAssistantPanelService);
+  private destroyRef = inject(DestroyRef);
+
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
               private router: Router,
@@ -99,6 +106,21 @@ export class CustomMenuConfigComponent extends PageComponent implements OnInit, 
          this.computeMaxIconNameBlockWidth();
     });
     this.computeMaxIconNameBlockWidth();
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      filter(event => event.kind === 'MENU' && event.menuId === this.customMenu.id.id),
+      tap(event => {
+        if (event.deleted) {
+          this.forcePristine = true;
+          this.goBack();
+        }
+      }),
+      filter(event => !event.deleted && !this.isDirty),
+      switchMap(() => this.customMenuService.getCustomMenuConfig(this.customMenu.id.id)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(config => {
+      this.customMenuConfig = afterLoadCustomMenuConfig(config, this.customMenu.scope);
+      this.cancel();
+    });
   }
 
   ngOnDestroy() {

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { EntityId } from '@shared/models/id/entity-id';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -71,6 +73,7 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
               private broadcast: BroadcastService,
               private translate: TranslateService,
               private dialogService: DialogService,
+              private panelService: AiAssistantPanelService,
               protected store: Store<AppState>) {
     super(store, injector, cd);
     if (isDefinedAndNotNull(this.route.snapshot.data.entityGroup) && isUndefinedOrNull(this.route.snapshot.data.entitiesTableConfig)) {
@@ -123,6 +126,9 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
   }
 
   ngOnDestroy() {
+    if (this.entitiesTableConfig?.aiAssistantConfig?.view?.entityView) {
+      this.panelService.teardown();
+    }
     super.ngOnDestroy();
   }
 
@@ -173,6 +179,18 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     this.broadcast.broadcast('updateBreadcrumb');
     this.isReadOnly = this.entitiesTableConfig.detailsReadonly(this.entity);
     this.headerTitle = this.entitiesTableConfig.entityTitle(this.entity);
+    this.updateAiAssistant();
+  }
+
+  private updateAiAssistant(): void {
+    const config = this.entitiesTableConfig?.aiAssistantConfig;
+    if (!config?.view?.entityView || !this.entity?.id) {
+      return;
+    }
+    this.panelService.setEnabled(true);
+    this.panelService.setConfig(config);
+    this.panelService.setClientContextForView({type: config.view.entityView, entityId: this.entity.id as EntityId});
+    this.panelService.setViewName(this.headerTitle);
   }
 
   private deleteEntity($event: Event, entity: BaseData<HasId>) {

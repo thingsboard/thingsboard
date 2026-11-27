@@ -1,16 +1,11 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { computed, DestroyRef, inject, Injectable, OnDestroy, signal } from '@angular/core';
-import { Subject } from 'rxjs';
-import { distinctUntilChanged, map } from 'rxjs/operators';
+import { computed, DestroyRef, effect, inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { defer, Observable, Subject } from 'rxjs';
+import { distinctUntilChanged, filter, finalize, map } from 'rxjs/operators';
+import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  AiAssistantPanelConfig,
-  AiAssistantViewType,
-  AiChatClientContext,
-  AiChatView,
-  ChatInfo
-} from '@shared/models/ai-chat.models';
+import { AiAssistantPanelConfig, AiAssistantViewType, AiChatClientContext, aiClientOs, AiChatView, ChatInfo, AiPromptMessage } from '@shared/models/ai-chat.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
 import { LocalStorageService } from '@core/local-storage/local-storage.service';
@@ -18,11 +13,33 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectAuthUser } from '@core/auth/auth.selectors';
 
+export interface AiCustomizationSaved {
+  kind: 'MAIL_TEMPLATES' | 'TRANSLATION' | 'MENU' | 'MOBILE_QR_CODE' | 'TWO_FACTOR' | 'PROFILE' | 'ACCOUNT_SECURITY' | 'ACCOUNT_NOTIFICATIONS' | 'MAIL_SERVER';
+  locale?: string;
+  menuId?: string;
+  deleted?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AiAssistantPanelService implements OnDestroy {
 
-  private _open = signal(false);
+  private _editorDraftProvider: (() => unknown | null) | null = null;
+
+  private static readonly WITHOUT_PANEL = ['/home', '/ai-assistant'];
+
+  private static readonly OPEN_KEY = 'tb-ai-panel-open';
+  private static readonly CHATS_KEY = 'tb-ai-panel-chats';
+
+  private _open = signal(AiAssistantPanelService.readSession(AiAssistantPanelService.OPEN_KEY) === 'true');
   readonly open = this._open.asReadonly();
+
+  private openSync = effect(() => AiAssistantPanelService.writeSession(AiAssistantPanelService.OPEN_KEY, this._open() ? 'true' : null));
+
+  private _restored = signal(this._open());
+  readonly restored = this._restored.asReadonly();
+
+  private _suppressed = signal(false);
+  readonly suppressed = this._suppressed.asReadonly();
 
   private _enabled = signal(false);
   readonly enabled = this._enabled.asReadonly();
@@ -41,41 +58,166 @@ export class AiAssistantPanelService implements OnDestroy {
   private _chats = signal<ChatInfo[] | null>(null);
   readonly chats = this._chats.asReadonly();
 
-  private _lastChatIdByContext = new Map<string, string>();
+  private _lastChatIdByContext = AiAssistantPanelService.readChats();
 
   private static readonly AUTO_APPROVE_STORAGE_KEY = 'aiAssistantAutoApproveChats';
 
   private localStorage = inject(LocalStorageService);
   private store = inject(Store<AppState>);
   private destroyRef = inject(DestroyRef);
+  private router = inject(Router);
+
+  private routeWatch = (() => {
+    this._suppressed.set(AiAssistantPanelService.withoutPanel(this.router.url));
+    this.router.events.pipe(
+      filter((event): event is NavigationStart => event instanceof NavigationStart),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(event => {
+      const suppressed = AiAssistantPanelService.withoutPanel(event.url);
+      this._suppressed.set(suppressed);
+      if (suppressed) {
+        this._open.set(false);
+      }
+    });
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(event => {
+      const suppressed = AiAssistantPanelService.withoutPanel(event.urlAfterRedirects);
+      this._suppressed.set(suppressed);
+      const openHere = this._openOnArrival && !suppressed;
+      if (!suppressed) {
+        this._openOnArrival = false;
+      }
+      if (openHere) {
+        this._open.set(true);
+      }
+    });
+  })();
+
+  private static readSession(key: string): string | null {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private static writeSession(key: string, value: string | null): void {
+    try {
+      if (value === null) {
+        sessionStorage.removeItem(key);
+      } else {
+        sessionStorage.setItem(key, value);
+      }
+    } catch {
+      return;
+    }
+  }
+
+  private static readChats(): Map<string, string> {
+    try {
+      const stored = JSON.parse(AiAssistantPanelService.readSession(AiAssistantPanelService.CHATS_KEY) ?? '{}');
+      return new Map(Object.entries(stored).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+    } catch {
+      return new Map();
+    }
+  }
+
+  private storeChats(): void {
+    AiAssistantPanelService.writeSession(AiAssistantPanelService.CHATS_KEY,
+      this._lastChatIdByContext.size ? JSON.stringify(Object.fromEntries(this._lastChatIdByContext)) : null);
+  }
+
+  private static withoutPanel(url: string): boolean {
+    const path = (url || '/').split(/[?#]/)[0];
+    return path === '/' || AiAssistantPanelService.WITHOUT_PANEL.some(page => path === page || path.startsWith(page + '/'));
+  }
 
   private _autoApproveUserId: string | null = null;
-  private _autoApproveChats = signal<Set<string>>(new Set());
 
   private _autoApproveUserSync = this.store.select(selectAuthUser).pipe(
     map(user => user?.userId ?? null),
     distinctUntilChanged(),
     takeUntilDestroyed(this.destroyRef)
   ).subscribe(userId => {
+    if (this._autoApproveUserId !== null && userId !== this._autoApproveUserId) {
+      this.resetUserState();
+    }
     this._autoApproveUserId = userId;
-    this._autoApproveChats.set(this.loadAutoApproveChats(userId));
   });
+
+  private resetUserState(): void {
+    this._chats.set(null);
+    this._sentClientContextByChat.clear();
+    this._lastChatIdByContext.clear();
+    this._carried = null;
+    this._handOff = null;
+    this.storeChats();
+  }
 
   private _updatedData$ = new Subject<Array<EntityId>>();
   readonly updatedData$ = this._updatedData$.asObservable();
 
   private _teardownTimer: NodeJS.Timeout;
 
-  toggle(): void {
-    if (!this._enabled()) {
-      return;
+  private static readonly CARRY_MS = 15000;
+  private _carried: {chatId: string; from: string | null; at: number} | null = null;
+
+  private static readonly FROM_AI_PAGE = 'ai-assistant-page';
+
+  private _openOnArrival = false;
+
+  private _handOff: AiPromptMessage | null = null;
+
+  handOff(prompt: AiPromptMessage): void {
+    this._handOff = prompt;
+  }
+
+  takeHandOff(): AiPromptMessage | null {
+    const prompt = this._handOff;
+    this._handOff = null;
+    return prompt;
+  }
+
+  carryChat(chatId: string): void {
+    this._carried = {chatId, from: this.contextKey(), at: Date.now()};
+  }
+
+  carryChatToPage(chatId: string): void {
+    this._carried = {chatId, from: AiAssistantPanelService.FROM_AI_PAGE, at: Date.now()};
+    this._openOnArrival = true;
+  }
+
+  hasCarriedChat(): boolean {
+    return !!this._carried;
+  }
+
+  takeCarriedChat(): string | undefined {
+    const carried = this._carried;
+    const key = this.contextKey();
+    const fromPage = carried?.from === AiAssistantPanelService.FROM_AI_PAGE;
+    if (!carried || (key === null && !fromPage) || key === carried.from) {
+      return undefined;
     }
+    this._carried = null;
+    if (Date.now() - carried.at > AiAssistantPanelService.CARRY_MS) {
+      return undefined;
+    }
+    if (key !== null) {
+      this._lastChatIdByContext.set(key, carried.chatId);
+      this.storeChats();
+    }
+    return carried.chatId;
+  }
+
+  toggle(): void {
+    this._restored.set(false);
     this._open.update(open => !open);
   }
 
   setChats(chats: ChatInfo[]): void {
     this._chats.set(chats);
-    this.pruneAutoApproveChats(chats);
   }
 
   addChat(chat: ChatInfo): void {
@@ -94,54 +236,23 @@ export class AiAssistantPanelService implements OnDestroy {
         this._lastChatIdByContext.delete(key);
       }
     }
-    this.setAutoApprove(chatId, false);
+    this.storeChats();
   }
 
-  isAutoApprove(chatId: string | undefined): boolean {
-    return !!chatId && this._autoApproveChats().has(chatId);
+  updateChatAutoApprove(chatId: string, autoApprove: boolean): void {
+    this._chats.update(list => list?.map(c => c.id === chatId ? {...c, autoApprove} : c) ?? null);
   }
 
-  setAutoApprove(chatId: string, enabled: boolean): void {
-    this._autoApproveChats.update(chats => {
-      const next = new Set(chats);
-      if (enabled) {
-        next.add(chatId);
-      } else {
-        next.delete(chatId);
+  takeStoredAutoApproveChats(): string[] {
+    const key = `${AiAssistantPanelService.AUTO_APPROVE_STORAGE_KEY}_${this._autoApproveUserId ?? 'anonymous'}`;
+    try {
+      const ids = this.localStorage.getItem(key);
+      if (ids !== null) {
+        this.localStorage.removeItem(key);
       }
-      return next;
-    });
-    this.persistAutoApproveChats();
-  }
-
-  private pruneAutoApproveChats(chats: ChatInfo[]): void {
-    const valid = new Set(chats.map(c => c.id));
-    const current = this._autoApproveChats();
-    const pruned = new Set([...current].filter(id => valid.has(id)));
-    if (pruned.size !== current.size) {
-      this._autoApproveChats.set(pruned);
-      this.persistAutoApproveChats();
-    }
-  }
-
-  private autoApproveStorageKey(userId: string | null): string {
-    return `${AiAssistantPanelService.AUTO_APPROVE_STORAGE_KEY}_${userId ?? 'anonymous'}`;
-  }
-
-  private loadAutoApproveChats(userId: string | null): Set<string> {
-    try {
-      const ids = this.localStorage.getItem(this.autoApproveStorageKey(userId));
-      return new Set(Array.isArray(ids) ? ids as string[] : []);
+      return Array.isArray(ids) ? ids as string[] : [];
     } catch {
-      return new Set();
-    }
-  }
-
-  private persistAutoApproveChats(): void {
-    try {
-      this.localStorage.setItem(this.autoApproveStorageKey(this._autoApproveUserId), [...this._autoApproveChats()]);
-    } catch {
-      // ignore storage write errors (e.g. private mode quota)
+      return [];
     }
   }
 
@@ -159,6 +270,7 @@ export class AiAssistantPanelService implements OnDestroy {
       case AiAssistantViewType.ALARM_RULE:
       case AiAssistantViewType.ALARM_RULE_LIST:
       case AiAssistantViewType.ALARM_LIST:
+      case AiAssistantViewType.ALARM:
         return 'ALARM_RULE';
       case AiAssistantViewType.CALCULATED_FIELD:
       case AiAssistantViewType.CALCULATED_FIELD_LIST:
@@ -169,11 +281,50 @@ export class AiAssistantPanelService implements OnDestroy {
       case AiAssistantViewType.DEVICE_GROUP:
       case AiAssistantViewType.DEVICE_GROUP_LIST:
         return 'DEVICE_GROUP';
+      case AiAssistantViewType.ASSET:
+      case AiAssistantViewType.ASSET_LIST:
+        return 'ASSET';
+      case AiAssistantViewType.ASSET_GROUP:
+      case AiAssistantViewType.ASSET_GROUP_LIST:
+        return 'ASSET_GROUP';
+      case AiAssistantViewType.ENTITY_VIEW:
+      case AiAssistantViewType.ENTITY_VIEW_LIST:
+        return 'ENTITY_VIEW';
+      case AiAssistantViewType.ENTITY_VIEW_GROUP:
+      case AiAssistantViewType.ENTITY_VIEW_GROUP_LIST:
+        return 'ENTITY_VIEW_GROUP';
+      case AiAssistantViewType.DASHBOARD_GROUP:
+      case AiAssistantViewType.DASHBOARD_GROUP_LIST:
+        return 'DASHBOARD_GROUP';
+      case AiAssistantViewType.DEVICE_PROFILE:
+      case AiAssistantViewType.DEVICE_PROFILE_LIST:
+        return 'DEVICE_PROFILE';
+      case AiAssistantViewType.ASSET_PROFILE:
+      case AiAssistantViewType.ASSET_PROFILE_LIST:
+        return 'ASSET_PROFILE';
+      case AiAssistantViewType.CUSTOMER:
+      case AiAssistantViewType.CUSTOMER_LIST:
+        return 'CUSTOMER';
+      case AiAssistantViewType.USER:
+      case AiAssistantViewType.USER_LIST:
+        return 'USER';
+      case AiAssistantViewType.RULE_CHAIN:
+      case AiAssistantViewType.RULE_CHAIN_LIST:
+        return 'RULE_CHAIN';
+      case AiAssistantViewType.INTEGRATION:
+      case AiAssistantViewType.INTEGRATION_LIST:
+        return 'INTEGRATION';
+      case AiAssistantViewType.CONVERTER:
+      case AiAssistantViewType.CONVERTER_LIST:
+        return 'CONVERTER';
       case AiAssistantViewType.NOTIFICATION_INBOX:
       case AiAssistantViewType.SENT_NOTIFICATION_LIST:
       case AiAssistantViewType.NOTIFICATION_TEMPLATE_LIST:
       case AiAssistantViewType.NOTIFICATION_RECIPIENT_LIST:
       case AiAssistantViewType.NOTIFICATION_RULE_LIST:
+      case AiAssistantViewType.NOTIFICATION_TEMPLATE:
+      case AiAssistantViewType.NOTIFICATION_RULE:
+      case AiAssistantViewType.NOTIFICATION_RECIPIENT:
         return 'NOTIFICATION';
       default:
         return view.type;
@@ -190,6 +341,7 @@ export class AiAssistantPanelService implements OnDestroy {
     } else {
       this._lastChatIdByContext.delete(key);
     }
+    this.storeChats();
   }
 
   lastChatIdForContext(): string | undefined {
@@ -198,10 +350,12 @@ export class AiAssistantPanelService implements OnDestroy {
   }
 
   close(): void {
+    this._restored.set(false);
     this._open.set(false);
   }
 
   openPanel(): void {
+    this._restored.set(false);
     this._open.set(true);
   }
 
@@ -212,6 +366,17 @@ export class AiAssistantPanelService implements OnDestroy {
     }
   }
 
+  private _viewName = signal<string | null>(null);
+  readonly viewName = this._viewName.asReadonly();
+
+  setViewName(name: string | null): void {
+    if (this._focus) {
+      this._focus.previousName = name?.trim() || null;
+      return;
+    }
+    this._viewName.set(name?.trim() || null);
+  }
+
   setConfig(config: AiAssistantPanelConfig | null): void {
     this._config.set(config);
   }
@@ -220,12 +385,39 @@ export class AiAssistantPanelService implements OnDestroy {
     this._detailsOpen.set(open);
   }
 
+  private _focus: {context: AiChatClientContext; previous: AiChatClientContext; previousName: string | null} | null = null;
+
   setClientContext(ctx: AiChatClientContext | null): void {
+    if (this._focus && ctx) {
+      this._focus.previous = ctx;
+      return;
+    }
+    this._focus = null;
     this._clientContext.set(ctx);
   }
 
   setClientContextForView(view: AiChatView): void {
-    this.setClientContext({view, timeZone: getDefaultTimezone()});
+    this.setClientContext({view, timeZone: getDefaultTimezone(), os: aiClientOs()});
+  }
+
+  focusWhile<T>(view: AiChatView, name: string | null | undefined, until: Observable<T>): Observable<T> {
+    return defer(() => {
+      const previous = this._clientContext();
+      if (!previous || !view.entityId?.id) {
+        return until;
+      }
+      const focus = {context: {view, timeZone: getDefaultTimezone(), os: aiClientOs()}, previous, previousName: this._viewName()};
+      this._focus = focus;
+      this._clientContext.set(focus.context);
+      this._viewName.set(name?.trim() || null);
+      return until.pipe(finalize(() => {
+        if (this._focus === focus) {
+          this._focus = null;
+          this._clientContext.set(focus.previous);
+          this._viewName.set(focus.previousName);
+        }
+      }));
+    });
   }
 
   getSentClientContext(chatId: string): AiChatClientContext | undefined {
@@ -240,19 +432,47 @@ export class AiAssistantPanelService implements OnDestroy {
     this._updatedData$.complete();
   }
 
+  private _whiteLabelingSaved$ = new Subject<'GENERAL' | 'LOGIN'>();
+  readonly whiteLabelingSaved$ = this._whiteLabelingSaved$.asObservable();
+
+  emitWhiteLabelingSaved(target: 'GENERAL' | 'LOGIN'): void {
+    this._whiteLabelingSaved$.next(target);
+  }
+
+  private _customizationSaved$ = new Subject<AiCustomizationSaved>();
+  readonly customizationSaved$ = this._customizationSaved$.asObservable();
+
+  emitCustomizationSaved(event: AiCustomizationSaved): void {
+    this._customizationSaved$.next(event);
+  }
+
+  setEditorDraftProvider(provider: (() => unknown | null) | null): void {
+    this._editorDraftProvider = provider;
+  }
+
+  editorDraft(): unknown | null {
+    try {
+      return this._editorDraftProvider ? this._editorDraftProvider() : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   emitUpdatedData(affectedEntities: Array<EntityId>): void {
     this._updatedData$.next(affectedEntities);
   }
 
   teardown(): void {
+    this._editorDraftProvider = null;
     this._enabled.set(false);
     this._detailsOpen.set(false);
+    this._focus = null;
     this._clientContext.set(null);
+    this._viewName.set(null);
     this._sentClientContextByChat.clear();
     this._chats.set(null);
     this._teardownTimer = setTimeout(() => {
       this._config.set(null);
-      this._open.set(false);
     });
   }
 }

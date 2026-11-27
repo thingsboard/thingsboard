@@ -70,8 +70,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @DaoSqlTest
 public class AlarmServiceTest extends AbstractServiceTest {
@@ -727,6 +729,75 @@ public class AlarmServiceTest extends AbstractServiceTest {
         PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, mergedUserPermissions, toQuery(pageLink), Collections.singletonList(customer.getId()));
         Assert.assertEquals(1, customerAlarms.getData().size());
         Assert.assertEquals(customerAlarm, new AlarmInfo(customerAlarms.getData().get(0)));
+    }
+
+    @Test
+    public void testFindAlarmDataByQueryWithoutEntityFilter() {
+        Customer customer = new Customer();
+        customer.setTitle("TestCustomer");
+        customer.setTenantId(tenantId);
+        customer = customerService.saveCustomer(customer);
+
+        Device tenantDevice = new Device();
+        tenantDevice.setName("TestTenantDevice");
+        tenantDevice.setType("default");
+        tenantDevice.setTenantId(tenantId);
+        tenantDevice = deviceService.saveDevice(tenantDevice);
+
+        Device customerDevice = new Device();
+        customerDevice.setName("TestCustomerDevice");
+        customerDevice.setType("default");
+        customerDevice.setTenantId(tenantId);
+        customerDevice.setCustomerId(customer.getId());
+        customerDevice = deviceService.saveDevice(customerDevice);
+
+        long ts = System.currentTimeMillis();
+        AlarmInfo tenantAlarm = alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.builder()
+                .tenantId(tenantId)
+                .originator(tenantDevice.getId())
+                .type(TEST_ALARM)
+                .severity(AlarmSeverity.CRITICAL)
+                .startTs(ts).build()).getAlarm();
+        AlarmInfo clearedAlarm = alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.builder()
+                .tenantId(tenantId)
+                .originator(tenantDevice.getId())
+                .type("Cleared Alarm")
+                .severity(AlarmSeverity.MAJOR)
+                .startTs(ts).build()).getAlarm();
+        alarmService.clearAlarm(tenantId, clearedAlarm.getOriginator(), clearedAlarm.getId(), System.currentTimeMillis(), null, true);
+        await().atMost(1, TimeUnit.SECONDS).until(() -> System.currentTimeMillis() > tenantAlarm.getCreatedTime() + 1);
+        AlarmInfo customerAlarm = alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.builder()
+                .tenantId(tenantId)
+                .customerId(customer.getId())
+                .originator(customerDevice.getId())
+                .type(TEST_ALARM)
+                .severity(AlarmSeverity.MAJOR)
+                .startTs(ts).build()).getAlarm();
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(10);
+        pageLink.setStatusList(List.of(AlarmSearchStatus.ACTIVE));
+        AlarmDataQuery query = new AlarmDataQuery(null, pageLink, null, null, null, Collections.emptyList());
+
+        PageData<AlarmData> tenantAlarms = alarmService.findAlarmDataByQuery(tenantId, null, mergedUserPermissions, query);
+        Assert.assertEquals(2, tenantAlarms.getTotalElements());
+        Assert.assertEquals(List.of(customerAlarm.getId(), tenantAlarm.getId()), tenantAlarms.getData().stream().map(AlarmData::getId).toList());
+        Assert.assertEquals(List.of(customerDevice.getId(), tenantDevice.getId()), tenantAlarms.getData().stream().map(AlarmData::getEntityId).toList());
+
+        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQuery(tenantId, customer.getId(), mergedUserPermissions, query);
+        Assert.assertEquals(List.of(customerAlarm.getId()), customerAlarms.getData().stream().map(AlarmData::getId).toList());
+
+        pageLink.setSeverityList(List.of(AlarmSeverity.CRITICAL));
+        PageData<AlarmData> criticalAlarms = alarmService.findAlarmDataByQuery(tenantId, null, mergedUserPermissions, query);
+        Assert.assertEquals(List.of(tenantAlarm.getId()), criticalAlarms.getData().stream().map(AlarmData::getId).toList());
+
+        pageLink.setSeverityList(null);
+        pageLink.setPageSize(1);
+        PageData<AlarmData> firstPage = alarmService.findAlarmDataByQuery(tenantId, null, mergedUserPermissions, query);
+        Assert.assertEquals(1, firstPage.getData().size());
+        Assert.assertEquals(2, firstPage.getTotalElements());
+        Assert.assertTrue(firstPage.hasNext());
     }
 
     private AlarmDataQuery toQuery(AlarmDataPageLink pageLink) {

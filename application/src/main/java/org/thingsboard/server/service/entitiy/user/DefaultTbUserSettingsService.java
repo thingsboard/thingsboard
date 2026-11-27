@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.user;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultTbUserSettingsService implements TbUserSettingsService {
 
-    private static final int MAX_DASHBOARD_INFO_LIST_SIZE = 10;
+    private static final int MAX_DASHBOARD_INFO_LIST_SIZE = 50;
     private static final Predicate<HasTitle> EMPTY_TITLE = i -> StringUtils.isEmpty(i.getTitle());
 
     private final UserSettingsService settingsService;

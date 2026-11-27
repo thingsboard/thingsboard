@@ -175,6 +175,8 @@ import { TbComponentOutletDirective } from '@shared/components/directives/compon
 import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
 import { MarkedOptionsService } from '@shared/components/marked-options.service';
 import { TbPopoverService } from '@shared/components/popover.service';
+import { TourPopupComponent } from '@shared/components/tour/tour-popup.component';
+import { TourPopupService } from '@shared/components/tour/tour-popup.service';
 import { HELP_MARKDOWN_COMPONENT_TOKEN, SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 import { TbMarkdownComponent } from '@shared/components/markdown.component';
 import { ProtobufContentComponent } from '@shared/components/protobuf-content.component';
@@ -327,6 +329,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
     { provide: MatPaginatorIntl, useClass: CustomPaginatorIntl },
     TbPopoverService,
+    TourPopupService,
     ImportExportService,
     {
       provide: MAT_SELECT_CONFIG,
@@ -357,6 +360,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     CountryData
   ],
   declarations: [
+    TourPopupComponent,
     FooterComponent,
     LogoComponent,
     FooterFabButtonsComponent,
@@ -624,6 +628,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DynamicMatDialogModule
   ],
   exports: [
+    TourPopupComponent,
     FooterComponent,
     LogoComponent,
     FooterFabButtonsComponent,

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { PageComponent } from '@shared/components/page.component';
 import {
+  AfterViewInit,
   Component,
   ElementRef,
   Inject,
@@ -16,7 +17,7 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
-import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
+import { detailsToWidgetInfo, toWidgetTypeDetails, WidgetInfo } from '@home/models/widget-component.models';
 import {
   migrateWidgetTypeToDynamicForms,
   TargetDeviceType,
@@ -30,7 +31,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { deepClone } from '@core/utils';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { AuthUser } from '@shared/models/user.model';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Hotkey } from 'angular2-hotkeys';
@@ -51,7 +52,7 @@ import {
 import { forkJoin, mergeMap, of, Subscription, throwError } from 'rxjs';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
-import { catchError, map, tap } from 'rxjs/operators';
+import { buffer, catchError, debounceTime, map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
 import { HttpClient, HttpStatusCode } from '@angular/common/http';
 import { loadModulesCompleter } from '@shared/models/js-function.models';
@@ -64,6 +65,13 @@ import { BreadcrumbService } from '@core/services/breadcrumb.service';
 import { HomeService } from '@core/services/home.service';
 import Timeout = NodeJS.Timeout;
 import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
+
+const AI_RELOAD_DEBOUNCE_MS = 1000;
 
 // @dynamic
 @Component({
@@ -73,7 +81,7 @@ import { WhiteLabelingService } from '@core/http/white-labeling.service';
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class WidgetEditorComponent extends PageComponent implements OnInit, OnDestroy, HasDirtyFlag {
+export class WidgetEditorComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy, HasDirtyFlag {
 
   @ViewChild('topPanel', {static: true})
   topPanelElmRef: ElementRef;
@@ -179,6 +187,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
               private customTranslate: CustomTranslatePipe,
               private http: HttpClient,
               private breadcrumbService: BreadcrumbService,
+              private panelService: AiAssistantPanelService,
+              private userPermissionsService: UserPermissionsService,
               public wl: WhiteLabelingService,
               public homeService: HomeService) {
     super(store);
@@ -206,10 +216,106 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       const config = JSON.parse(this.widget.defaultConfig);
       this.widget.defaultConfig = JSON.stringify(config);
     }
+    if (!this.widgetTypeDetails && this.route.snapshot.queryParamMap.get('action') === 'aiAssistant') {
+      this.clearWidgetForAi();
+    }
     this.origWidget = deepClone(this.widget);
     if (!this.widgetTypeDetails) {
       this.isDirty = true;
     }
+    this.updateAiClientContext();
+  }
+
+  private clearWidgetForAi() {
+    this.widget.widgetName = null;
+    this.widget.templateHtml = '';
+    this.widget.templateCss = '';
+    this.widget.controllerScript = '';
+    this.widget.resources = [];
+    this.widget.settingsForm = [];
+    this.widget.dataKeySettingsForm = [];
+    this.widget.latestDataKeySettingsForm = [];
+    this.widget.settingsDirective = '';
+    this.widget.dataKeySettingsDirective = '';
+    this.widget.latestDataKeySettingsDirective = '';
+    this.widget.hasBasicMode = false;
+    this.widget.basicModeDirective = '';
+  }
+
+  get aiAssistantAvailable(): boolean {
+    return getCurrentAuthState(this.store).aiEnabled && this.authUser.authority === Authority.TENANT_ADMIN
+      && this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL);
+  }
+
+  private setupAiAssistant() {
+    if (!this.aiAssistantAvailable) {
+      return;
+    }
+    this.panelService.setEnabled(true);
+    this.panelService.setEditorDraftProvider(() => this.aiEditorDraft());
+    this.updateAiClientContext();
+    this.rxSubscriptions.push(this.panelService.updatedData$.subscribe(affected => {
+      if (!this.widgetTypeDetails && affected.some(entityId => entityId.entityType === EntityType.WIDGET_TYPE)) {
+        this.isDirty = false;
+      }
+    }));
+    this.rxSubscriptions.push(this.panelService.updatedData$.pipe(
+      buffer(this.panelService.updatedData$.pipe(debounceTime(AI_RELOAD_DEBOUNCE_MS))),
+      map(batches => batches.flat())
+    ).subscribe(affected => {
+      const id = this.widgetTypeDetails?.id?.id;
+      if (id && affected.some(entityId => entityId.entityType === EntityType.WIDGET_TYPE && entityId.id === id)) {
+        this.reloadFromServer(id);
+      }
+    }));
+  }
+
+  private reloadFromServer(id: string) {
+    this.widgetService.getWidgetTypeById(id, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      map(details => migrateWidgetTypeToDynamicForms(details))
+    ).subscribe(details => {
+      this.setWidgetTypeDetails(details);
+      this.setAceEditorValues();
+      this.applyWidgetScript();
+      this.updateAiClientContext();
+    }, () => {});
+  }
+
+  private updateAiClientContext() {
+    if (!this.aiAssistantAvailable) {
+      return;
+    }
+    const blank = !this.widget.templateHtml?.trim() && !this.widget.controllerScript?.toString().trim();
+    const examples = blank ? ['tank', 'status'] : ['explain', 'setting', 'check'];
+    this.panelService.setConfig({
+      welcomeKey: blank ? 'widget-type-new' : undefined,
+      title: this.translate.instant('widget.ai-assistant-title'),
+      initialPromptPlaceholder: this.translate.instant('widget.ai-assistant-initial-prompt-placeholder'),
+      suggestion: this.translate.instant('widget.ai-assistant-suggestion'),
+      fill: true,
+      promptExamples: examples.map(example => ({
+        label: this.translate.instant(`widget.ai-assistant-example-${example}-label`),
+        message: this.translate.instant(`widget.ai-assistant-example-${example}-message`)
+      }))
+    });
+    if (!this.widgetTypeDetails?.id) {
+      this.panelService.setClientContextForView({type: AiAssistantViewType.NEW_WIDGET_TYPE});
+      this.panelService.setViewName(this.widget.widgetName || this.translate.instant('widget.new-widget-name'));
+      return;
+    }
+    this.panelService.setClientContextForView({
+      type: AiAssistantViewType.WIDGET_TYPE,
+      entityId: {entityType: EntityType.WIDGET_TYPE, id: this.widgetTypeDetails.id.id}
+    });
+    this.panelService.setViewName(this.widget.widgetName || this.widgetTypeDetails.name);
+  }
+
+  private aiEditorDraft(): WidgetTypeDetails | null {
+    if (!this.widgetTypeDetails?.id || this.isReadOnly || !this.isDirty) {
+      return null;
+    }
+    return toWidgetTypeDetails(this.widget, this.widgetTypeDetails.id, this.widgetTypeDetails.tenantId,
+      this.widgetTypeDetails.createdTime, this.widgetTypeDetails.version);
   }
 
   ngOnInit(): void {
@@ -220,9 +326,19 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.window.addEventListener('message', this.onWindowMessageListener);
     this.iframe.attr('data-widget', JSON.stringify(this.widget));
     this.iframe.attr('src', '/widget-editor');
+    this.setupAiAssistant();
+  }
+
+  ngAfterViewInit(): void {
+    if (this.aiAssistantAvailable && this.route.snapshot.queryParamMap.get('action') === 'aiAssistant') {
+      this.panelService.openPanel();
+    }
   }
 
   ngOnDestroy(): void {
+    if (this.aiAssistantAvailable) {
+      this.panelService.teardown();
+    }
     this.window.removeEventListener('message', this.onWindowMessageListener);
     this.aceEditors.forEach(editor => editor.destroy());
     this.aceResize$.disconnect();

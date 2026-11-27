@@ -4,13 +4,27 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div class="tb-ai-composer" [class.docked]="docked" [class.drop]="dragging()" [class.has-text]="hasText()">
+<div class="tb-ai-composer" [class.docked]="docked" [class.slim]="slim" [class.drop]="dragging()" [class.has-text]="hasText()">
   @if (attachEnabled()) {
     <input #fileInput type="file" hidden multiple [accept]="accept()" (change)="onFilesPicked($event)">
   }
   <div class="composer-field">
-    @if (attachments().length) {
+    @if (attachments().length || quote) {
       <div class="composer-files">
+        @if (quote) {
+          <span class="composer-file ref">
+            <mat-icon class="tb-mat-18">{{ quote.icon }}</mat-icon>
+            <span class="file-text">
+              <b><span class="art-name">{{ fileName(quote.name).base }}<span class="art-ext">{{ fileName(quote.name).ext }}</span></span></b>
+              <small>{{ (quote.from === quote.to ? 'ai-assistant.file.line' : 'ai-assistant.file.lines-range') | translate: {from: quote.from, to: quote.to} }}</small>
+            </span>
+            <button type="button" class="file-remove"
+                    [attr.aria-label]="'ai-assistant.remove-file' | translate: {name: quote.name}"
+                    (click)="quoteRemoved.emit()">
+              <mat-icon class="tb-mat-16">close</mat-icon>
+            </button>
+          </span>
+        }
         @for (attachment of attachments(); track attachment.key) {
           <span class="composer-file"
                 [class.up]="attachment.status === 'uploading'"
@@ -21,7 +35,7 @@
               <mat-icon class="tb-mat-18">{{ attachment.status === 'error' ? 'error_outline' : attachment.icon }}</mat-icon>
             }
             <span class="file-text">
-              <b>{{ attachment.name }}</b>
+              <b><span class="art-name">{{ fileName(attachment.name).base }}<span class="art-ext">{{ fileName(attachment.name).ext }}</span></span></b>
               <small>{{ meta(attachment) }}</small>
             </span>
             @if (attachment.status === 'uploading') {
@@ -38,26 +52,44 @@
     }
     <div class="composer-row">
       <span class="composer-chevron" aria-hidden="true"></span>
+      @if (suggestion && !hasText()) {
+        <div class="composer-ghost" aria-hidden="true"><span>{{ suggestion }}</span><kbd>Tab</kbd></div>
+        <span id="composer-suggestion" class="tb-ai-sr-only">{{ 'ai-assistant.suggestion-sr' | translate: {text: suggestion} }}</span>
+      }
       <textarea #textarea
-                rows="2"
+                [rows]="slim ? 1 : 2"
                 spellcheck="false"
                 [attr.aria-label]="'ai-assistant.ask-the-assistant' | translate"
-                [placeholder]="placeholder"
+                [attr.aria-describedby]="suggestion && !hasText() ? 'composer-suggestion' : null"
+                [placeholder]="suggestion ? '' : placeholder"
                 [formControl]="message"
                 (input)="onInput()"
                 (paste)="onPaste($event)"
                 (keydown)="onKeydown($event)"></textarea>
+      @if (slim) {
+        <kbd class="composer-slash" aria-hidden="true">/</kbd>
+      }
       <span class="composer-send-slot">
-        <button type="button" class="composer-send"
-                [class.fly]="flying()"
-                [disabled]="!canSend"
-                [attr.aria-label]="'ai-assistant.send' | translate"
-                tb-popover [tbAiTip]="sendTip"
-                (click)="send()">
-          <span class="return-glyph" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M20 4v7a4 4 0 0 1-4 4H4" pathLength="1"/><polyline points="9 10 4 15 9 20" pathLength="1"/></svg>
-          </span>
-        </button>
+        @if (canStop) {
+          <button type="button" class="composer-send composer-stop"
+                  [disabled]="stopping"
+                  [attr.aria-label]="'ai-assistant.stop' | translate"
+                  tb-popover [tbAiTip]="stopTip"
+                  (click)="stop()">
+            <mat-icon aria-hidden="true">stop</mat-icon>
+          </button>
+        } @else {
+          <button type="button" class="composer-send"
+                  [class.fly]="flying()"
+                  [disabled]="!canSend"
+                  [attr.aria-label]="'ai-assistant.send' | translate"
+                  tb-popover [tbAiTip]="sendTip"
+                  (click)="send()">
+            <span class="return-glyph" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M20 4v7a4 4 0 0 1-4 4H4" pathLength="1"/><polyline points="9 10 4 15 9 20" pathLength="1"/></svg>
+            </span>
+          </button>
+        }
       </span>
     </div>
     <div class="composer-foot">
@@ -69,16 +101,33 @@
           <mat-icon class="tb-mat-18">attach_file</mat-icon>
         </button>
       }
+      @if (showAutoApprove) {
+        <label class="composer-auto" [class.on]="autoApprove" tb-popover [tbAiTip]="autoTip">
+          <input type="checkbox" [checked]="autoApprove" (change)="toggleAutoApprove($event)">
+          <span class="track" aria-hidden="true"><span class="knob"><mat-icon>bolt</mat-icon></span></span>
+          <span class="label">{{ 'ai-assistant.auto-approve' | translate }}</span>
+        </label>
+      }
       <span class="composer-spacer"></span>
-      <button type="button" class="composer-tool"
-              [attr.aria-label]="'ai-assistant.shortcuts' | translate"
+      <tb-ai-credits composer></tb-ai-credits>
+      <button type="button" class="composer-tool" aria-haspopup="dialog"
+              [attr.aria-label]="'ai-assistant.keys.title' | translate"
               tb-popover [tbAiTip]="keysTip"
-              [tipToggle]="true">
+              (click)="openShortcuts($event)">
         <mat-icon class="tb-mat-18">keyboard</mat-icon>
       </button>
     </div>
   </div>
 </div>
+
+<ng-template #stopTip>
+  <div class="tb-ai-tip-body tip-mini">
+    <div class="tip-keyrow">
+      <span>{{ 'ai-assistant.stop' | translate }}</span>
+      <span class="tip-caps"><kbd>Esc</kbd></span>
+    </div>
+  </div>
+</ng-template>
 
 <ng-template #sendTip>
   <div class="tb-ai-tip-body tip-mini">
@@ -97,6 +146,16 @@
   </div>
 </ng-template>
 
+<ng-template #autoTip>
+  <div class="tb-ai-tip-body">
+    <div class="tip-head">
+      <b>{{ 'ai-assistant.auto-approve' | translate }}</b>
+      <span class="tip-value" [class.on]="autoApprove">{{ (autoApprove ? 'ai-assistant.auto-approve-on' : 'ai-assistant.auto-approve-off') | translate }}</span>
+    </div>
+    <p>{{ (autoApproveInChat ? 'ai-assistant.auto-approve-text' : 'ai-assistant.auto-approve-new-chat-text') | translate }}</p>
+  </div>
+</ng-template>
+
 <ng-template #keysTip>
   <div class="tb-ai-tip-body tip-keys">
     <div class="tip-head"><b>{{ 'ai-assistant.shortcuts' | translate }}</b></div>
@@ -108,6 +167,12 @@
       <span>{{ 'ai-assistant.new-line' | translate }}</span>
       <span class="tip-caps"><kbd>Shift</kbd><kbd>Enter</kbd></span>
     </div>
+    @if (suggestion && !hasText()) {
+      <div class="tip-keyrow">
+        <span>{{ 'ai-assistant.accept-suggestion' | translate }}</span>
+        <span class="tip-caps"><kbd>Tab</kbd></span>
+      </div>
+    }
     <div class="tip-keyrow">
       <span>{{ 'ai-assistant.focus-composer' | translate }}</span>
       <span class="tip-caps"><kbd>/</kbd></span>

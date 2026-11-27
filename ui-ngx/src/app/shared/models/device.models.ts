@@ -918,6 +918,7 @@ export function deviceAiAssistantConfig(store: Store<AppState>,
       entityView
     },
     initialPromptPlaceholder: translate.instant('device.ai-assistant-initial-prompt-placeholder'),
+    suggestion: translate.instant('device.ai-assistant-suggestion'),
     promptExamples: [
       {
         label: translate.instant('device.ai-assistant-example-connect-label'),

@@ -109,6 +109,8 @@ public interface AlarmService extends EntityDaoService {
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, MergedUserPermissions mergedUserPermissions,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
+    PageData<AlarmData> findAlarmDataByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions mergedUserPermissions, AlarmDataQuery query);
+
     Set<EntityId> getPropagationEntityIds(Alarm alarm);
 
     Set<EntityId> getPropagationEntityIds(Alarm alarm, List<EntityType> types);

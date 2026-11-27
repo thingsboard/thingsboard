@@ -4,7 +4,7 @@
 import { NgModule } from '@angular/core';
 
 import { AdminModule } from './admin/admin.module';
-import { HomeLinksModule } from './home-links/home-links.module';
+import { HomePageModule } from './home-page/home-page.module';
 import { ProfileModule } from './profile/profile.module';
 import { SecurityModule } from '@home/pages/security/security.module';
 import { TenantModule } from '@modules/home/pages/tenant/tenant.module';
@@ -29,7 +29,6 @@ import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
 import { EdgeModule } from '@home/pages/edge/edge.module';
 import { OtaUpdateModule } from '@home/pages/ota-update/ota-update.module';
-import { SolutionCreatorModule } from '@home/pages/ai-solution-creator/solution-creator.module';
 import { VcModule } from '@home/pages/vc/vc.module';
 import { TaskManagerModule } from '@home/pages/task-manager/task-manager.module';
 import { AssetProfileModule } from '@home/pages/asset-profile/asset-profile.module';
@@ -52,11 +51,12 @@ import { TrendzAnalyticsModule } from '@home/pages/trendz-analytics/trendz-analy
 import { TrendzSettingsModule } from '@home/pages/trendz-settings/trendz-settings.module';
 import { AgentModule } from '@home/pages/agent/agent.module';
 import { IotHubModule } from '@home/pages/iot-hub/iot-hub.module';
+import { AiAssistantModule } from '@home/pages/ai-assistant/ai-assistant.module';
 
 @NgModule({
   exports: [
     AdminModule,
-    HomeLinksModule,
+    HomePageModule,
     ProfileModule,
     SecurityModule,
     TenantProfileModule,
@@ -94,7 +94,6 @@ import { IotHubModule } from '@home/pages/iot-hub/iot-hub.module';
     IFrameViewModule,
     SchedulerModule,
     OtaUpdateModule,
-    SolutionCreatorModule,
     VcModule,
     TaskManagerModule,
     AccountModule,
@@ -105,7 +104,8 @@ import { IotHubModule } from '@home/pages/iot-hub/iot-hub.module';
     ReportingModule,
     TrendzAnalyticsModule,
     TrendzSettingsModule,
-    IotHubModule
+    IotHubModule,
+    AiAssistantModule
   ]
 })
 export class HomePagesModule { }

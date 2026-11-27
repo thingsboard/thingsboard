@@ -215,7 +215,6 @@ export type DashboardInfo = Dashboard & GroupEntityInfo<DashboardId>;
 
 export interface HomeDashboard extends Dashboard {
   hideDashboardToolbar: boolean;
-  isSystemDashboard?: boolean;
 }
 
 export interface HomeDashboardInfo {

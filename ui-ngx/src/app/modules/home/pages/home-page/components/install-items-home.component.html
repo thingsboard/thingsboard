@@ -1,0 +1,47 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="card">
+  <ng-container homeCardActions>
+    <a mat-button color="primary" class="tb-install-add" routerLink="/tenants" [queryParams]="{action: 'add'}">
+      <mat-icon>add</mat-icon>{{ 'home.install.add-tenant' | translate }}
+    </a>
+  </ng-container>
+  <div class="tb-install-counts">
+    @for (item of counts; track item.entityType) {
+      @let count = item.count();
+      @if (item.link && count) {
+        <a class="tb-home-tile" [routerLink]="item.link">
+          <span class="tb-home-tile-label">{{ item.label | translate }}</span>
+          <span class="tb-home-tile-count">{{ count | shortNumber }}</span>
+        </a>
+      } @else {
+        <div class="tb-home-tile static" [class.zero]="count === 0">
+          <span class="tb-home-tile-label">{{ item.label | translate }}</span>
+          <span class="tb-home-tile-count">{{ count === null ? '–' : (count | shortNumber) }}</span>
+        </div>
+      }
+    }
+  </div>
+  @if (withFeatures()) {
+    <div class="tb-install-head">
+      <span>{{ 'home.install.features' | translate }}</span>
+      @if (loaded()) {
+        <span class="tb-install-head-count">{{ 'home.install.features-count' | translate: {on: configured(), total: features().length} }}</span>
+      }
+    </div>
+    <div class="tb-install-features" role="list">
+      @for (feature of features(); track feature.key) {
+        <a class="tb-install-feature" role="listitem" [class.on]="feature.on" [class.pending]="feature.on === null" [routerLink]="feature.link"
+           [matTooltip]="(feature.on === null ? 'home.install.checking' : feature.on ? 'widgets.configured-features.feature-configured' : 'widgets.configured-features.feature-not-configured') | translate">
+          <mat-icon class="tb-install-feature-icon">{{ feature.on ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+          <span class="tb-install-feature-text">{{ feature.label | translate }}</span>
+          <span class="tb-home-sr-only">{{ (feature.on === null ? 'home.install.checking' : feature.on ? 'home.install.configured' : 'home.install.not-configured') | translate }}</span>
+        </a>
+      }
+    </div>
+  }
+</tb-home-card>

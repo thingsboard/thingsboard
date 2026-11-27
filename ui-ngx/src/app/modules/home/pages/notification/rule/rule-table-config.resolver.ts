@@ -26,7 +26,8 @@ import {
   RuleNotificationDialogData
 } from '@home/pages/notification/rule/rule-notification-dialog.component';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { DatePipe } from '@angular/common';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { Observable } from 'rxjs';
@@ -37,6 +38,8 @@ import { UserPermissionsService } from '@core/http/user-permissions.service';
 export class RuleTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationRule> = new EntityTableConfig<NotificationRule>();
+
+  private panelService = inject(AiAssistantPanelService);
 
   constructor(private store: Store<AppState>,
               private notificationService: NotificationService,
@@ -115,7 +118,8 @@ export class RuleTableConfigResolver  {
 
   private editRule($event: Event, rule: NotificationRule, isCopy = false): void{
     $event?.stopPropagation();
-    this.notificationRuleDialog(rule, false, isCopy).subscribe(res => res ? this.config.updateData() : null);
+    this.panelService.focusWhile({type: AiAssistantViewType.NOTIFICATION_RULE, entityId: (isCopy ? undefined : rule)?.id}, rule?.name,
+      this.notificationRuleDialog(rule, false, isCopy)).subscribe(res => res ? this.config.updateData() : null);
   }
 
   private notificationRuleDialog(rule: NotificationRule, isAdd = false, isCopy = false): Observable<NotificationRule> {

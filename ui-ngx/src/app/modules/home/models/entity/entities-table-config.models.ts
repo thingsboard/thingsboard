@@ -219,6 +219,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   hideDetailsTabsOnEdit = true;
   rowPointer = false;
   aiAssistantConfig: AiAssistantPanelConfig = null;
+  aiReloadEntityType: EntityType = null;
   actionsColumnTitle = null;
   entityTranslations: EntityTypeTranslation;
   entityResources: EntityTypeResource<T>;

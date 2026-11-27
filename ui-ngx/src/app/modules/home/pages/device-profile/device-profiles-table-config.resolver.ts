@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { Router } from '@angular/router';
 import {
   checkBoxCell,
@@ -38,6 +40,8 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 export class DeviceProfilesTableConfigResolver  {
 
   private readonly config: EntityTableConfig<DeviceProfile> = new EntityTableConfig<DeviceProfile>();
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private deviceProfileService: DeviceProfileService,
               private importExport: ImportExportService,
@@ -118,6 +122,7 @@ export class DeviceProfilesTableConfigResolver  {
   resolve(): EntityTableConfig<DeviceProfile> {
     this.config.tableTitle = this.translate.instant('device-profile.device-profiles');
     defaultEntityTablePermissions(this.userPermissionsService, this.config);
+    this.config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.DEVICE_PROFILE_LIST, AiAssistantViewType.DEVICE_PROFILE);
     return this.config;
   }
 

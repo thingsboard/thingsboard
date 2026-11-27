@@ -32,7 +32,7 @@ final class TbAiPooledConnection implements ChannelFrameListener {
 
     // Protocol version 1 is the baseline. A later feature that this ThingsBoard handles goes here, so TB AI can tell
     // before using it that this ThingsBoard understands it.
-    static final List<String> CLIENT_CAPABILITIES = List.of();
+    static final List<String> CLIENT_CAPABILITIES = List.of(ChannelProtocol.CHAT_KIT_CAPABILITY);
 
     private final TbAiChannelPool.PoolKey key;
     private final String origin;

@@ -110,10 +110,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   isDetailsOpen = false;
   detailsPanelOpened = new EventEmitter<boolean>();
 
-  get isAiAssistantOpen() { return this.panelService.open(); }
   aiEnabled = getCurrentAuthState(this.store).aiEnabled;
 
-  configureWithAiButton: HeaderActionDescriptor;
 
   replaceComponent: Type<any>;
 
@@ -228,23 +226,17 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     if (aiConfig) {
       this.panelService.setEnabled(true);
       this.panelService.setConfig(aiConfig);
-      this.configureWithAiButton = {
-        name: this.translate.instant('ai-assistant.configure-with-ai'),
-        icon: 'mdi:creation',
-        isEnabled: () => this.aiEnabled && aiConfig.showButton !== false && !this.isAiAssistantOpen,
-        onAction: ($event) => this.toggleAiAssistant($event)
-      };
       this.updateAiClientContext();
-      this.aiUpdatedData$?.unsubscribe();
-      if (entitiesTableConfig.entityType) {
-        this.aiUpdatedData$ = this.panelService.updatedData$.pipe(
-          filter(affectedEntities =>
-            affectedEntities.some(entityId => entityId.entityType === entitiesTableConfig.entityType)),
-          takeUntil(this.destroy$)
-        ).subscribe(() => {
-          this.updateData();
-        });
-      }
+    }
+    this.aiUpdatedData$?.unsubscribe();
+    if (entitiesTableConfig.entityType) {
+      this.aiUpdatedData$ = this.panelService.updatedData$.pipe(
+        filter(affectedEntities =>
+          affectedEntities.some(entityId => entityId.entityType === (entitiesTableConfig.aiReloadEntityType ?? entitiesTableConfig.entityType))),
+        takeUntil(this.destroy$)
+      ).subscribe(() => {
+        this.updateData(false);
+      });
     }
 
     this.pageMode = this.entitiesTableConfig.pageMode;
@@ -567,6 +559,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       ? {type: viewConfig.entityView, entityId: entity.id as EntityId}
       : {type: viewConfig.listView, entityId: viewConfig.listEntityId};
     this.panelService.setClientContextForView(view);
+    this.panelService.setViewName(viewConfig.entityView && entity ? this.entitiesTableConfig.entityTitle(entity) : null);
   }
 
   toggleAiAssistant($event: Event) {

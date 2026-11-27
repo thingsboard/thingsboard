@@ -1,0 +1,47 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-invite" data-ai [attr.data-step]="step()" role="dialog" aria-modal="true" aria-labelledby="tb-invite-title">
+  <div class="iv-top">
+    <div #scenes class="iv-scenes"></div>
+    <button mat-icon-button type="button" class="iv-x" [attr.aria-label]="'action.close' | translate" (click)="later()">
+      <mat-icon fontSet="material-icons-round">close</mat-icon>
+    </button>
+  </div>
+  <div class="iv-body" aria-live="polite">
+    @for (k of steps(); track k) {
+      @if (k) {
+        <div class="iv-kicker">{{ 'tour.invite.kicker' | translate: {kicker: ('tour.invite.kicker-' + person | translate), step: k, count: cards} }}</div>
+        <h2 class="iv-title" id="tb-invite-title">{{ 'tour.invite.card-' + k + '.title' | translate }}</h2>
+        <p class="iv-lead">{{ 'tour.invite.card-' + k + '.lead' | translate }}</p>
+      } @else {
+        <h2 class="iv-title tb-sr-only" id="tb-invite-title">{{ ('tour.invite.pill-' + person | translate) + ': ' + ('tour.invite.news' | translate) + ' ' + ('tour.invite.cover-title' | translate) }}</h2>
+        <p class="iv-lead">{{ 'tour.invite.cover-lead' | translate }}</p>
+      }
+      <div class="iv-foot">
+        @if (k) {
+          <span class="iv-dotsnav" [attr.aria-label]="'tour.invite.step' | translate: {step: k, count: cards}">
+            @for (n of cardNumbers; track n) {
+              <i [class.on]="n === k"></i>
+            }
+          </span>
+        } @else if (person === 'before') {
+          <p class="iv-note">{{ 'tour.invite.note' | translate }}</p>
+        }
+        <div class="iv-actions">
+          @if (k) {
+            <button mat-button type="button" (click)="back()">{{ 'tour.invite.back' | translate }}</button>
+          } @else {
+            <button mat-button type="button" (click)="later()">{{ 'tour.invite.later' | translate }}</button>
+          }
+          <button #go mat-flat-button type="button" class="iv-go" (click)="next()">
+            {{ (k === 0 ? 'tour.invite.go-' + person : k === cards ? 'tour.invite.show-around' : 'tour.invite.next') | translate }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

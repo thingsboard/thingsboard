@@ -81,7 +81,7 @@
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.controlScriptsFolder>control</pkg.controlScriptsFolder>
-        <thingsboard.ai.version>2.1.10</thingsboard.ai.version>
+        <thingsboard.ai.version>2.1.11-SNAPSHOT</thingsboard.ai.version>
         <thingsboard.client.version>4.4.0</thingsboard.client.version>
         <spring-boot.version>4.1.3</spring-boot.version>
         <netty.version>4.2.20.Final</netty.version> <!-- must match spring-boot-dependencies -->

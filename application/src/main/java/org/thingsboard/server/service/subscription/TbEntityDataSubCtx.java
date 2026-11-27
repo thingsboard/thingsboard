@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -175,6 +176,38 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
                 }
             }
         });
+    }
+
+    @Override
+    protected void onSameEntities(Map<EntityId, EntityData> newDataMap) {
+        List<EntityData> changed = new ArrayList<>();
+        for (EntityData current : data.getData()) {
+            EntityData fresh = newDataMap.get(current.getEntityId());
+            Map<String, TsValue> freshFields = fresh != null && fresh.getLatest() != null ? fresh.getLatest().get(EntityKeyType.ENTITY_FIELD) : null;
+            if (freshFields == null || freshFields.isEmpty() || current.getLatest() == null) {
+                continue;
+            }
+            if (!sameFieldValues(current.getLatest().get(EntityKeyType.ENTITY_FIELD), freshFields)) {
+                current.getLatest().put(EntityKeyType.ENTITY_FIELD, freshFields);
+                changed.add(new EntityData(current.getEntityId(), false, false, Map.of(EntityKeyType.ENTITY_FIELD, freshFields), null));
+            }
+        }
+        if (!changed.isEmpty()) {
+            sendWsMsg(new EntityDataUpdate(cmdId, null, changed, maxEntitiesPerDataSubscription));
+        }
+    }
+
+    private static boolean sameFieldValues(Map<String, TsValue> current, Map<String, TsValue> fresh) {
+        if (current == null || current.size() != fresh.size()) {
+            return false;
+        }
+        for (Map.Entry<String, TsValue> entry : fresh.entrySet()) {
+            TsValue value = current.get(entry.getKey());
+            if (value == null || !Objects.equals(value.getValue(), entry.getValue().getValue())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

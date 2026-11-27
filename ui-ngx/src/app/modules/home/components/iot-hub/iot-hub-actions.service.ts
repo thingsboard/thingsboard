@@ -29,7 +29,9 @@ import { isBuiltInItem } from './iot-hub-utils';
  */
 export type IotHubBuiltInAction = 'handled' | 'install-requested';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class IotHubActionsService {
 
   constructor(

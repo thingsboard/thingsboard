@@ -1,0 +1,421 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.tb-iot-hub-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tb-iot-hub-row-title {
+  align-self: flex-start;
+  font: 500 14px/20px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: .1px;
+  color: var(--tb-ink-60, rgba(0, 0, 0, 0.6));
+  text-decoration: none;
+  border-bottom: none;
+
+  &:not(.plain)::after {
+    content: 'chevron_right';
+    display: inline-block;
+    margin-left: -2px;
+    font-family: 'Material Icons';
+    font-size: 18px;
+    font-weight: normal;
+    line-height: 1;
+    vertical-align: bottom;
+    color: var(--tb-ink-38, rgba(0, 0, 0, 0.38));
+  }
+
+  &:not(.plain):hover, &:not(.plain):focus, &:not(.plain):active {
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+    border-bottom: none;
+
+    &::after {
+      color: inherit;
+    }
+  }
+}
+
+.tb-iot-hub-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 224px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: 2px;
+  }
+
+  &.placeholder {
+    cursor: default;
+  }
+}
+
+.tb-iot-hub-skeleton {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.09) 50%, rgba(0, 0, 0, 0.05) 100%) 0 0 / 200% 100%;
+  animation: tb-iot-hub-shimmer 1.4s ease-in-out infinite;
+}
+
+.tb-iot-hub-skeleton-line {
+  display: block;
+  border-radius: 4px;
+
+  &.name {
+    width: 62%;
+    height: 12px;
+    margin: 3px 0;
+  }
+
+  &.meta {
+    width: 38%;
+    height: 10px;
+    margin: 3px 0;
+  }
+}
+
+@keyframes tb-iot-hub-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-iot-hub-skeleton {
+    animation: none;
+  }
+}
+
+.tb-iot-hub-card-image {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  padding: 14px;
+  border-radius: 10px;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 6px 16px rgba(16, 24, 40, 0.14);
+    opacity: 0;
+    transition: transform .2s ease, opacity .25s ease;
+
+    &.loaded {
+      opacity: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tb-iot-hub-card:hover .tb-iot-hub-card-image img {
+    transform: translateY(-2px);
+  }
+}
+
+.tb-iot-hub-card-installed.mat-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  overflow: visible;
+  font-size: 18px;
+  color: #10181d;
+  background: radial-gradient(circle closest-side, #86e8a6 70%, transparent 72%);
+}
+
+.tb-iot-hub-card-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 0 2px;
+}
+
+.tb-iot-hub-card-name {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 500 13px/18px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+}
+
+.tb-iot-hub-card-meta {
+  font: 400 12px/16px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-text-muted, rgba(0, 0, 0, 0.56));
+}
+
+.tb-iot-hub-device {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 228px;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid var(--tb-line, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: 2px;
+  }
+
+  &.placeholder {
+    cursor: default;
+
+    .tb-iot-hub-device-text {
+      flex: 1;
+    }
+
+    .tb-iot-hub-skeleton-line.name {
+      width: 80%;
+    }
+
+    .tb-iot-hub-skeleton-line.meta {
+      width: 50%;
+    }
+  }
+}
+
+.tb-iot-hub-device-thumb {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 6px;
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #fff;
+    opacity: 0;
+    transition: opacity .25s ease;
+
+    &.loaded {
+      opacity: 1;
+    }
+  }
+}
+
+.tb-iot-hub-all .tb-iot-hub-device-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--tb-ink-60, rgba(0, 0, 0, 0.6));
+
+  .mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+}
+
+.tb-iot-hub-device-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  b {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font: 500 13px/18px var(--tb-font, Roboto, sans-serif);
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+  }
+
+  small {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font: 400 12px/16px var(--tb-font, Roboto, sans-serif);
+    color: var(--tb-text-muted, rgba(0, 0, 0, 0.56));
+  }
+}
+
+.tb-iot-hub-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tb-iot-hub-kind {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 14px 0 10px;
+  border: 1px solid var(--tb-line, rgba(0, 0, 0, 0.12));
+  border-radius: 16px;
+  background: var(--tb-surface, #fff);
+  font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+  text-decoration: none;
+  transition: background-color .15s ease, border-color .15s ease;
+
+  &:hover, &:focus, &:active {
+    border-bottom: 1px solid var(--tb-line, rgba(0, 0, 0, 0.12));
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: 2px;
+  }
+
+  .mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+  }
+}
+
+.tb-iot-hub-unavailable {
+  margin: 0;
+  font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+}
+
+.tb-iot-hub-find.mat-mdc-icon-button.mat-mdc-button-base {
+  --mdc-icon-button-state-layer-size: 32px;
+  --mat-icon-button-state-layer-size: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--tb-ink-60, rgba(0, 0, 0, 0.6));
+
+  .mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+}
+
+.tb-iot-hub-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 380px;
+  height: 32px;
+  padding: 0 2px 0 10px;
+  border: 1px solid var(--tb-line, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+  background: var(--tb-surface, #fff);
+
+  &:focus-within {
+    border-color: var(--tb-primary-500);
+  }
+
+  > .mat-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+  }
+
+  .tb-search-input {
+    flex: 1;
+    min-width: 0;
+    margin-left: 2px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+
+    &::-webkit-search-cancel-button {
+      display: none;
+    }
+  }
+
+  .mat-mdc-icon-button.mat-mdc-button-base {
+    --mdc-icon-button-state-layer-size: 28px;
+    --mat-icon-button-state-layer-size: 28px;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 8px;
+    color: var(--tb-ink-38, rgba(0, 0, 0, 0.38));
+
+    .mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      line-height: 18px;
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+    }
+  }
+
+  .tb-search-clear {
+    display: none !important;
+  }
+
+  &.has-text {
+    .tb-search-clear {
+      display: inline-flex !important;
+    }
+
+    .tb-search-go {
+      background: var(--tb-primary-500);
+      color: var(--tb-primary-contrast-500, #fff);
+    }
+  }
+}

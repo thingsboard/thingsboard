@@ -1,55 +1,11 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import {
-  Component,
-  computed,
-  DestroyRef,
-  effect,
-  ElementRef,
-  inject,
-  OnInit,
-  SecurityContext,
-  signal,
-  untracked,
-  ViewChild
-} from '@angular/core';
-import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
-import { EMPTY, Observable, of, Subject, throwError, timer } from 'rxjs';
-import { catchError, concatMap, finalize, retry, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
-import { AiChatService } from '@core/http/ai-chat.service';
-import {
-  AiAssistantPromptExample,
-  AiChatClientContext,
-  AiPromptMessage,
-  ApprovalResult,
-  ChatEvent,
-  ChatInfo,
-  ChatTitleGeneratedEvent,
-  SendChatMessageRequest,
-  ToolExecutionRequestedEvent,
-  ToolExecutionResult
-} from '@shared/models/ai-chat.models';
-import { DialogService } from '@core/services/dialog.service';
-import { TranslateService } from '@ngx-translate/core';
-import { MatDialog } from '@angular/material/dialog';
-import { AiRenameDialogComponent, AiRenameDialogData } from '@home/components/ai/ai-rename-dialog.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { DAY, WEEK } from '@shared/models/time/time.models';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { isEqual, isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
+import { Component, computed, effect, ElementRef, inject, NgZone, signal, untracked, ViewChild } from '@angular/core';
+import { MatTooltip } from '@angular/material/tooltip';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
-import { DomSanitizer } from '@angular/platform-browser';
-import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
-import { MatButton } from '@angular/material/button';
-import { EntityId } from '@shared/models/id/entity-id';
-
-export interface ChatGroup {
-  label: string;
-  chats: ChatInfo[];
-}
+import { AiChatsService } from '@core/services/ai-chats.service';
+import { AiChatComponent } from '@home/components/ai/ai-chat.component';
+import { AiAssistantContextService } from '@home/components/ai/ai-assistant-context.service';
 
 @Component({
   selector: 'tb-ai-assistant-panel',
@@ -58,144 +14,254 @@ export interface ChatGroup {
   standalone: false,
   host: {
     '[class.open]': 'isOpen',
+    '[class.suppressed]': 'panelService.suppressed()',
+    '[class.restored]': 'panelService.restored()',
     '[attr.inert]': 'isOpen ? null : ""',
-    '(transitionend)': 'onSlideEnd($event)'
+    '[class.split]': 'split()',
+    '(transitionend)': 'onSlideEnd($event)',
+    '(window:resize)': 'fit()',
+    '(click)': 'onClick($event)',
+    '(keydown.escape)': '$event.stopPropagation()'
   }
 })
-export class AiAssistantPanelComponent implements OnInit {
+export class AiAssistantPanelComponent {
 
   panelService = inject(AiAssistantPanelService);
 
-  @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
+  @ViewChild(AiChatComponent) chat: AiChatComponent;
+
+  @ViewChild('gripTip', {read: MatTooltip}) gripTip: MatTooltip;
+
+  private zone = inject(NgZone);
+
+  private static readonly PAGE_REFLOW_MS = 50;
+
+  resizing = signal(false);
 
   get isOpen() { return this.panelService.open(); }
 
-  slideDone = signal<boolean>(false);
+  readonly defaultWidth = 364;
 
-  loading = signal<boolean>(false);
+  readonly minWidth = 320;
 
-  isCreatingNew = signal<boolean>(false);
+  readonly maxWidth = 480;
 
-  messages = signal<ChatMessage[]>([]);
+  private static readonly SPLIT_MAX = 880;
+  private static readonly SPLIT_MIN = 540;
+  private static readonly PAGE_MIN = 560;
+  private static readonly SHEET_MAX_WINDOW = 1100;
 
-  completedExecutions = signal<Record<string, ToolExecutionResult>>({});
+  width = signal(this.defaultWidth);
+
+  room = signal(0);
+
+  splitWidth = computed(() => {
+    const room = this.room();
+    return Math.min(AiAssistantPanelComponent.SPLIT_MAX, Math.floor(room / 2), room - AiAssistantPanelComponent.PAGE_MIN);
+  });
+
+  splitAvailable = computed(() => this.room() > 0 && window.innerWidth > AiAssistantPanelComponent.SHEET_MAX_WINDOW
+    && this.splitWidth() >= AiAssistantPanelComponent.SPLIT_MIN);
+
+  split = computed(() => this.width() > this.maxWidth);
+
+  private wanted = this.defaultWidth;
+
+  private panelWidth = this.defaultWidth;
 
   chatId = signal<string | undefined>(undefined);
 
-  subTitle = computed(() => {
-    return this.panelService.config()?.subTitle ?? this.translate.instant('ai-assistant.sub-title');
-  });
+  private context = inject(AiAssistantContextService);
 
-  activePlaceholder = computed(() => {
-    const config = this.panelService.config();
-    if (this.messages().length) {
-      return config?.followUpPromptPlaceholder ?? this.translate.instant('ai-assistant.follow-up-prompt-placeholder');
-    }
-    return config?.initialPromptPlaceholder ?? '';
-  });
+  clientContext = this.context.clientContext;
 
-  promptExamples = computed<AiAssistantPromptExample[]>(() => this.panelService.config()?.promptExamples ?? []);
+  welcome = this.context.welcome;
 
-  autoApprove = computed(() => this.panelService.isAutoApprove(this.chatId()));
-
-  selectedChatTitle = computed(() => {
-    const id = this.chatId();
-    if (!id) return null;
-    return (this.panelService.chats() ?? []).find(c => c.id === id)?.title ?? null;
-  });
-
-  groupedChats = computed<ChatGroup[]>(() => {
-    const chats = this.panelService.chats() ?? [];
-    if (!chats.length) return [];
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const yesterday = today - DAY;
-    const lastWeek = today - WEEK;
-
-    const groups: ChatGroup[] = [
-      {label: 'ai-assistant.today', chats: []},
-      {label: 'ai-assistant.yesterday', chats: []},
-      {label: 'ai-assistant.last-7-days', chats: []},
-      {label: 'ai-assistant.older', chats: []}
-    ];
-
-    for (const chat of chats) {
-      if (chat.createdTime >= today) {
-        groups[0].chats.push(chat);
-      } else if (chat.createdTime >= yesterday) {
-        groups[1].chats.push(chat);
-      } else if (chat.createdTime >= lastWeek) {
-        groups[2].chats.push(chat);
-      } else {
-        groups[3].chats.push(chat);
-      }
-    }
-
-    return groups.filter(g => g.chats.length > 0);
-  });
-
-  private aiChat = inject(AiChatService);
-  private dialog = inject(DialogService);
-  private translate = inject(TranslateService);
-  private matDialog = inject(MatDialog);
-  private store = inject(Store<AppState>);
-  private destroyRef = inject(DestroyRef);
-  private sanitizer = inject(DomSanitizer);
+  private chats = inject(AiChatsService);
   private elementRef = inject(ElementRef<HTMLElement>);
 
-  private loadChat$ = new Subject<string>();
-  private cancelMessage$ = new Subject<void>();
-  private sessionAffectedEntities: EntityId[] = [];
-  private messageCancelled = false;
-  private resumeOnOpen = false;
+  private static readonly WIDTH_KEY = 'tbAiPanelWidth';
 
-  private static readonly RESUME_ATTEMPTS = 4;
-  private static readonly RESUME_DELAY_MS = 2000;
-
-  private openEffect = effect(() => {
-    if (this.panelService.open()) {
-      this.dropChatFromOtherContext();
-      this.loadChats();
-      const chatId = untracked(() => this.chatId());
-      if (this.resumeOnOpen && chatId) {
-        this.resumeOnOpen = false;
-        this.loadChat$.next(chatId);
-      }
-    } else {
-      this.slideDone.set(false);
-      this.suspendOnClose();
-    }
-  });
+  private static readonly APPLIED_WIDTH_KEY = 'tb-ai-panel-applied-width';
 
   private lastContextKey: string | null = null;
 
-  // Realign the open chat when the context changes in place while the panel stays open
-  // (e.g. switching between dashboards). List/entity toggles collapse to the same key, so they
-  // do not trigger this. Guarded on a non-null key to avoid reacting to teardown clearing context.
+  private dockedEffect = effect(onCleanup => {
+    const docked = this.panelService.open() && !this.panelService.suppressed();
+    document.documentElement.classList.toggle('tb-ai-docked', docked);
+    onCleanup(() => document.documentElement.classList.remove('tb-ai-docked'));
+  });
+
+  private openEffect = effect(() => {
+    if (this.panelService.open()) {
+      untracked(() => {
+        const carried = this.panelService.hasCarriedChat();
+        if (!carried) {
+          this.dropChatFromOtherContext();
+        }
+        this.chats.load().subscribe(() => {
+          if (carried) {
+            const chatId = this.panelService.takeCarriedChat();
+            if (chatId && this.chats.find(chatId)) {
+              this.chatId.set(chatId);
+              return;
+            }
+          }
+          this.selectLastChat();
+        });
+      });
+    }
+  });
+
   private contextSwitchEffect = effect(() => {
     const key = this.panelService.contextKey();
     if (this.panelService.open() && this.lastContextKey !== null && key !== null && key !== this.lastContextKey) {
-      this.reset();
-      this.loadChats();
+      untracked(() => {
+        const carried = this.panelService.takeCarriedChat();
+        if (carried && carried === this.chatId()) {
+          return;
+        }
+        this.chatId.set(undefined);
+        this.selectLastChat();
+      });
     }
     this.lastContextKey = key;
   });
 
-  ngOnInit() {
-    this.loadChat$.pipe(
-      switchMap(id => this.aiChat.getChatMessages(id, {ignoreLoading: true, ignoreErrors: true}).pipe(
-        catchError(err => {
-          this.messages.set([]);
-          this.completedExecutions.set({});
-          setTimeout(() => this.showErrorMessage(err), 0);
-          return EMPTY;
-        })
-      )),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(messages => {
-      this.showHistory(messages);
-      this.resumeTurn(this.chatId());
+  constructor() {
+    let stored = 0;
+    try {
+      stored = Number(localStorage.getItem(AiAssistantPanelComponent.WIDTH_KEY)) || 0;
+    } catch {
+      stored = 0;
+    }
+    this.wanted = stored || this.defaultWidth;
+    this.panelWidth = Math.min(this.wanted, this.maxWidth);
+    let applied = 0;
+    try {
+      applied = Number(sessionStorage.getItem(AiAssistantPanelComponent.APPLIED_WIDTH_KEY)) || 0;
+    } catch {
+      applied = 0;
+    }
+    if (applied) {
+      this.width.set(applied);
+      document.documentElement.style.setProperty('--tb-ai-panel-w', applied + 'px');
+    }
+    setTimeout(() => this.fit());
+  }
+
+  fit(): void {
+    this.room.set(this.elementRef.nativeElement.parentElement?.clientWidth ?? window.innerWidth);
+    this.show(this.wanted);
+  }
+
+  toggleSplit(): void {
+    if (this.split()) {
+      this.setWidth(this.panelWidth, true);
+    } else if (this.splitAvailable()) {
+      this.panelWidth = this.width();
+      this.setWidth(this.splitWidth(), true);
+    }
+  }
+
+  private widest(): number {
+    return this.splitAvailable() ? this.splitWidth() : Math.min(this.maxWidth, Math.max(this.minWidth, Math.round(this.room() / 2) || this.maxWidth));
+  }
+
+  private show(width: number): number {
+    const value = Math.round(Math.min(this.widest(), Math.max(this.minWidth, width)));
+    this.width.set(value);
+    document.documentElement.style.setProperty('--tb-ai-panel-w', value + 'px');
+    try {
+      sessionStorage.setItem(AiAssistantPanelComponent.APPLIED_WIDTH_KEY, String(value));
+    } catch {
+      return value;
+    }
+    return value;
+  }
+
+  setWidth(width: number, keep = false): void {
+    this.room.set(this.elementRef.nativeElement.parentElement?.clientWidth ?? window.innerWidth);
+    const value = this.show(width);
+    if (keep) {
+      this.wanted = value;
+      if (value <= this.maxWidth) {
+        this.panelWidth = value;
+      }
+      try {
+        if (value === this.defaultWidth) {
+          localStorage.removeItem(AiAssistantPanelComponent.WIDTH_KEY);
+        } else {
+          localStorage.setItem(AiAssistantPanelComponent.WIDTH_KEY, String(value));
+        }
+      } catch {
+        return;
+      }
+    }
+  }
+
+  onGripKey(event: KeyboardEvent): void {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.setWidth(this.width() + (event.key === 'ArrowLeft' ? 16 : -16), true);
+    } else if (event.key === 'Home' || event.key === 'End') {
+      event.preventDefault();
+      this.setWidth(event.key === 'Home' ? this.widest() : this.minWidth, true);
+    }
+  }
+
+  startResize(event: PointerEvent): void {
+    event.preventDefault();
+    this.gripTip?.hide(0);
+    this.resizing.set(true);
+    const grip = event.target as HTMLElement;
+    const host = this.elementRef.nativeElement as HTMLElement;
+    const root = document.documentElement;
+    const startX = event.clientX;
+    const startWidth = this.width();
+    this.room.set(host.parentElement?.clientWidth ?? window.innerWidth);
+    const widest = this.widest();
+    let current = startWidth;
+    let frame = 0;
+    let pageTimer: ReturnType<typeof setTimeout> | undefined;
+    let pageAt = 0;
+    const reflowPage = () => {
+      pageTimer = undefined;
+      pageAt = performance.now();
+      root.style.setProperty('--tb-ai-panel-w', current + 'px');
+    };
+    const paint = () => {
+      frame = 0;
+      host.style.width = current + 'px';
+      if (!pageTimer) {
+        pageTimer = setTimeout(reflowPage, Math.max(0, AiAssistantPanelComponent.PAGE_REFLOW_MS - (performance.now() - pageAt)));
+      }
+    };
+    grip.setPointerCapture(event.pointerId);
+    document.body.classList.add('tb-ai-resizing');
+    this.zone.runOutsideAngular(() => {
+      const move = (e: PointerEvent) => {
+        current = Math.round(Math.min(widest, Math.max(this.minWidth, startWidth + (startX - e.clientX))));
+        if (!frame) {
+          frame = requestAnimationFrame(paint);
+        }
+      };
+      const up = () => {
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        cancelAnimationFrame(frame);
+        clearTimeout(pageTimer);
+        document.body.classList.remove('tb-ai-resizing');
+        host.style.width = '';
+        this.zone.run(() => {
+          this.resizing.set(false);
+          this.setWidth(current, current !== startWidth);
+        });
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
     });
   }
 
@@ -203,354 +269,47 @@ export class AiAssistantPanelComponent implements OnInit {
     this.panelService.close();
   }
 
-  // Credit subscription and focus wait for the slide so they do not stutter it.
+  onClick(event: MouseEvent): void {
+    const chatId = this.chatId();
+    const link = (event.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+    if (!chatId || !link || link.target === '_blank' || link.origin !== window.location.origin
+      || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    this.panelService.carryChat(chatId);
+  }
+
+  onChatId(chatId: string | undefined): void {
+    this.chatId.set(chatId);
+    this.panelService.setLastChatId(chatId);
+  }
+
   onSlideEnd(event: TransitionEvent): void {
     if (event.target !== this.elementRef.nativeElement || event.propertyName !== 'transform' || !this.isOpen) {
       return;
     }
-    this.slideDone.set(true);
-    this.promptInput?.focus();
-  }
-
-  onApprovalAction(event: ApprovalResult): void {
-    const chatId = this.chatId();
-    if (event.autoApprove && chatId) {
-      this.panelService.setAutoApprove(chatId, true);
-    }
-    this.aiChat.resolveToolApproval(
-      {executionId: event.executionId, approved: event.approved},
-      {ignoreLoading: true, ignoreErrors: true}
-    ).subscribe();
-  }
-
-  setMenuWidth(triggerEl: MatButton): void {
-    const width = triggerEl._elementRef.nativeElement.offsetWidth;
-    document.documentElement.style.setProperty('--chat-menu-dynamic-width', `${width}px`);
-  }
-
-  selectChat(chat: ChatInfo): void {
-    this.messageCancelled = true;
-    this.cancelMessage$.next();
-    this.isCreatingNew.set(false);
-    this.chatId.set(chat.id);
-    this.panelService.setLastChatId(chat.id);
-    this.loadChat$.next(chat.id);
-  }
-
-  useExample(example: AiAssistantPromptExample): void {
-    this.promptInput?.setValue(example.message);
-  }
-
-  sendMsgFromUser(prompt: AiPromptMessage): void {
-    const userMessage: ChatMessage = prompt.resources.length
-      ? {from: 'USER', content: prompt.message, resources: prompt.resources}
-      : {from: 'USER', content: prompt.message};
-    this.messages.update(list => [...list, userMessage]);
-    this.sendMessage(prompt).subscribe({
-      error: (err) => {
-        if (this.isConnectionLost(err) && this.chatId()) {
-          this.showErrorToast(this.translate.instant('ai-assistant.connection-lost'));
-          this.resumeTurn(this.chatId(), true);
-          return;
-        }
-        this.messages.update(list => list.filter(message => message !== userMessage));
-        setTimeout(() => {
-          this.showErrorMessage(err);
-        }, 0);
-      },
-      complete: () => {
-        if (!this.messageCancelled && this.sessionAffectedEntities.length) {
-          this.panelService.emitUpdatedData(this.sessionAffectedEntities);
-        }
-      }
-    });
-  }
-
-  reset(createNew?: boolean): void {
-    this.cancelActiveMessage();
-    this.isCreatingNew.set(!!createNew);
-    this.chatId.set(undefined);
-    this.messages.set([]);
-  }
-
-  private cancelActiveMessage(): void {
-    this.messageCancelled = true;
-    this.cancelMessage$.next();
-    this.stopLoadingState();
-    this.promptInput?.reset();
-  }
-
-  // Keeps the open chat so reopening shows it right away. A reply interrupted by closing keeps running on the
-  // server, so reopening reloads the chat and follows that reply.
-  private suspendOnClose(): void {
-    this.resumeOnOpen = this.loading();
-    this.cancelActiveMessage();
+    this.chat?.focus();
   }
 
   private dropChatFromOtherContext(): void {
     const chatId = this.chatId();
     if (chatId && chatId !== this.panelService.lastChatIdForContext()) {
-      this.reset();
+      this.chatId.set(undefined);
     }
   }
 
-  renameChat(): void {
-    const chatId = this.chatId();
-    if (!chatId) return;
-    this.matDialog.open<AiRenameDialogComponent, AiRenameDialogData, string>(AiRenameDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        title: this.translate.instant('ai-assistant.rename-chat-title'),
-        value: this.selectedChatTitle() || this.translate.instant('ai-assistant.new-chat')
-      }
-    }).afterClosed().subscribe(newTitle => {
-      if (newTitle && newTitle !== this.selectedChatTitle()) {
-        this.aiChat.updatedChat(chatId, {title: newTitle}, {ignoreLoading: true, ignoreErrors: true}).subscribe({
-          next: () => {
-            this.panelService.updateChatTitle(chatId, newTitle);
-          },
-          error: (err) => {
-            this.showErrorMessage(err);
-          }
-        });
-      }
-    });
-  }
-
-  deleteChat(): void {
-    const chatId = this.chatId();
-    if (!chatId) return;
-    const chatTitle = this.selectedChatTitle() || this.translate.instant('ai-assistant.new-chat');
-    this.dialog.confirm(
-      this.translate.instant('ai-assistant.delete-chat-title', {name: chatTitle}),
-      this.translate.instant('ai-assistant.delete-chat-text'),
-      this.translate.instant('action.no'),
-      this.translate.instant('ai-assistant.delete-chat-confirm')
-    ).subscribe(value => {
-      if (value) {
-        this.aiChat.deleteChat(chatId, {ignoreLoading: true, ignoreErrors: true}).subscribe(() => {
-          this.panelService.removeChat(chatId);
-          this.reset();
-        });
-      }
-    });
-  }
-
-  private loadChats(): void {
-    const chats = this.panelService.chats();
-    if (chats !== null) {
-      this.selectLastChat(chats);
+  private selectLastChat(): void {
+    if (this.chatId()) {
       return;
     }
-    this.aiChat.listChats({ignoreLoading: true, ignoreErrors: true}).subscribe(chats => {
-      this.panelService.setChats(chats);
-      this.selectLastChat(chats);
-    });
-  }
-
-  private selectLastChat(chats: ChatInfo[]): void {
-    if (!this.chatId() && !this.isCreatingNew()) {
-      const lastId = this.panelService.lastChatIdForContext();
-      const lastChat = lastId ? chats.find(c => c.id === lastId) : null;
-      if (lastChat) {
-        this.selectChat(lastChat);
-      }
-    }
-  }
-
-  private sendMessage(prompt: AiPromptMessage): Observable<ChatEvent> {
-    this.initLoadingState();
-    this.sessionAffectedEntities = [];
-    this.messageCancelled = false;
-
-    const startOrContinue$ = this.chatId()
-      ? of(null)
-      : this.aiChat.createChat({title: 'New chat'}, {ignoreLoading: true, ignoreErrors: true}).pipe(
-        tap(chatId => {
-          this.isCreatingNew.set(false);
-          this.chatId.set(chatId);
-          this.panelService.setLastChatId(chatId);
-          this.panelService.addChat({id: chatId, title: 'New chat', createdTime: Date.now()});
-        })
-      );
-
-    const request: SendChatMessageRequest = {
-      message: prompt.message,
-      clientContext: this.resolveClientContextToSend()
-    };
-    if (prompt.resources.length) {
-      request.resources = prompt.resources.map(resource => resource.id);
-    }
-
-    return startOrContinue$.pipe(
-      switchMap(() => this.aiChat.sendChatMessage(this.chatId(), request, {ignoreLoading: true, ignoreErrors: true})),
-      tap(() => {
-        if (request.clientContext) {
-          this.panelService.markClientContextSent(this.chatId(), request.clientContext);
-        }
-      }),
-      takeUntil(this.cancelMessage$),
-      concatMap(chatMsg => this.handleChatEvent(chatMsg)),
-      finalize(() => this.stopLoadingState())
-    );
-  }
-
-  private resolveClientContextToSend(): AiChatClientContext | undefined {
-    const currentContext = this.panelService.clientContext();
-    if (!currentContext) {
-      return undefined;
-    }
-    const chatId = this.chatId();
-    const alreadySent = chatId ? this.panelService.getSentClientContext(chatId) : undefined;
-    return (!chatId || !isEqual(currentContext, alreadySent)) ? currentContext : undefined;
-  }
-
-  private showHistory(messages: ChatMessage[]): void {
-    const completed: Record<string, ToolExecutionResult> = {};
-    for (const message of messages) {
-      if (message.from === 'APPROVAL' && (message as ApprovalChatMessage).result) {
-        const result = (message as ApprovalChatMessage).result;
-        completed[result.executionId] = result;
-      }
-    }
-    this.completedExecutions.set(completed);
-    this.messages.set(messages);
-  }
-
-  // Follows the reply still running in the chat, if any: after a reload, a reopened panel or a lost connection.
-  // The server replays the whole reply, so what the history already shows of it is dropped first.
-  private resumeTurn(chatId: string, afterConnectionLoss = false): void {
-    if (!chatId) {
+    const carried = this.panelService.takeCarriedChat();
+    if (carried && this.chats.find(carried)) {
+      this.chatId.set(carried);
       return;
     }
-    let resumed = false;
-    this.messageCancelled = false;
-    this.sessionAffectedEntities = [];
-    const attempt$ = timer(afterConnectionLoss ? AiAssistantPanelComponent.RESUME_DELAY_MS : 0).pipe(
-      tap(() => {
-        if (afterConnectionLoss) {
-          this.initLoadingState();
-        }
-      }),
-      switchMap(() => this.aiChat.resumeChat(chatId, {ignoreLoading: true, ignoreErrors: true}))
-    );
-    attempt$.pipe(
-      retry({
-        count: afterConnectionLoss ? AiAssistantPanelComponent.RESUME_ATTEMPTS : 0,
-        delay: (error, attempt) => this.isConnectionLost(error)
-          ? timer(attempt * AiAssistantPanelComponent.RESUME_DELAY_MS)
-          : throwError(() => error)
-      }),
-      takeUntil(this.cancelMessage$),
-      concatMap(event => {
-        if (event.event === 'turnResumed') {
-          resumed = true;
-          this.initLoadingState();
-          this.dropRunningReply();
-          return of(event);
-        }
-        return this.handleChatEvent(event);
-      }),
-      finalize(() => {
-        if (resumed || afterConnectionLoss) {
-          this.stopLoadingState();
-        }
-      })
-    ).subscribe({
-      error: () => {
-        if (afterConnectionLoss) {
-          this.showErrorToast(this.translate.instant('ai-assistant.reconnect-failed'));
-        }
-      },
-      complete: () => {
-        if (this.messageCancelled || this.chatId() !== chatId) {
-          return;
-        }
-        if (this.sessionAffectedEntities.length) {
-          this.panelService.emitUpdatedData(this.sessionAffectedEntities);
-        }
-        if (resumed || afterConnectionLoss) {
-          this.aiChat.getChatMessages(chatId, {ignoreLoading: true, ignoreErrors: true})
-            .pipe(takeUntil(this.cancelMessage$))
-            .subscribe(messages => this.showHistory(messages));
-        }
-      }
-    });
-  }
-
-  private dropRunningReply(): void {
-    this.messages.update(list => {
-      const lastUser = list.map(message => message.from).lastIndexOf('USER');
-      return lastUser >= 0 ? list.slice(0, lastUser + 1) : list;
-    });
-  }
-
-  private isConnectionLost(error: any): boolean {
-    return error instanceof HttpErrorResponse && error.status === 0;
-  }
-
-  private handleChatEvent(chatMsg: ChatEvent): Observable<ChatEvent> {
-    switch (chatMsg.event) {
-      case 'assistantMessage':
-        this.messages.update(list => [...list, {from: 'AI', content: chatMsg.data.message}]);
-        return of(chatMsg);
-      case 'toolExecutionRequested':
-        return this.handleToolApproval(chatMsg);
-      case 'toolExecutionResult':
-        this.completedExecutions.update(map => ({...map, [chatMsg.data.executionId]: chatMsg.data}));
-        if (chatMsg.data.affectedEntities?.length) {
-          this.sessionAffectedEntities.push(...chatMsg.data.affectedEntities);
-        }
-        return of(chatMsg);
-      case 'chatTitleGenerated':
-        this.handleChatTitleGenerated(chatMsg);
-        return of(chatMsg);
-      default:
-        if (chatMsg.event === 'error') {
-          this.showErrorToast(this.sanitizer.sanitize(SecurityContext.HTML, chatMsg.data?.message) ?? chatMsg.data?.message);
-        }
-        return of(chatMsg);
+    const lastId = this.panelService.lastChatIdForContext();
+    if (lastId && this.chats.find(lastId)) {
+      this.chatId.set(lastId);
     }
-  }
-
-  private handleChatTitleGenerated(chatMsg: ChatTitleGeneratedEvent): void {
-    const chatId = this.chatId();
-    const title = chatMsg.data.title;
-    if (!chatId || !title) return;
-    this.panelService.updateChatTitle(chatId, title);
-  }
-
-  private handleToolApproval(chatMsg: ToolExecutionRequestedEvent): Observable<ChatEvent> {
-    if (!chatMsg.data.needsApproval) {
-      return of(chatMsg);
-    }
-    this.messages.update(list => [...list, {from: 'APPROVAL', data: chatMsg.data}]);
-    return of(chatMsg);
-  }
-
-  private initLoadingState(): void {
-    this.loading.set(true);
-  }
-
-  private stopLoadingState(): void {
-    this.loading.set(false);
-  }
-
-  showErrorMessage(error: any): void {
-    const responseType = isNotEmptyStr(error?.error) ? 'text' : undefined;
-    const message = parseHttpErrorMessage(error, this.translate, responseType, this.sanitizer).message;
-    this.showErrorToast(message);
-  }
-
-  private showErrorToast(message: string): void {
-    this.store.dispatch(new ActionNotificationShow({
-      message,
-      target: 'aiAssistant',
-      modern: true,
-      type: 'error',
-      verticalPosition: 'bottom',
-      horizontalPosition: 'center'
-    }));
   }
 }

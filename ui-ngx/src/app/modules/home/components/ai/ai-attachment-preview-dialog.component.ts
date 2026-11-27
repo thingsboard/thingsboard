@@ -17,7 +17,12 @@ import { AiResourceService } from '@core/http/ai-resource.service';
 import { AiResourceInfo } from '@shared/models/ai-chat.models';
 
 export interface AiAttachmentPreviewDialogData {
-  resource: AiResourceInfo;
+  resource?: AiResourceInfo;
+  name?: string;
+  url?: string;
+  vector?: boolean;
+  download?: () => void;
+  downloadPng?: () => Promise<void>;
 }
 
 interface AiAttachmentPreview {
@@ -34,6 +39,7 @@ interface AiAttachmentPreview {
 export class AiAttachmentPreviewDialogComponent extends DialogComponent<AiAttachmentPreviewDialogComponent> {
 
   readonly preview$: Observable<AiAttachmentPreview>;
+  readonly title: string;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -43,13 +49,18 @@ export class AiAttachmentPreviewDialogComponent extends DialogComponent<AiAttach
               private translate: TranslateService,
               private sanitizer: DomSanitizer) {
     super(store, router, dialogRef);
-    this.preview$ = this.aiResourceService.getUrl(data.resource.id).pipe(
+    this.title = data.resource?.name ?? data.name;
+    this.preview$ = data.url ? of({url: data.url}) : this.aiResourceService.getUrl(data.resource.id).pipe(
       map(url => ({url})),
       catchError(error => of({error: this.errorMessage(error)}))
     );
   }
 
   download(): void {
+    if (this.data.download) {
+      this.data.download();
+      return;
+    }
     this.aiResourceService.download(this.data.resource).subscribe({
       error: error => this.store.dispatch(new ActionNotificationShow({
         message: this.errorMessage(error),
@@ -60,6 +71,17 @@ export class AiAttachmentPreviewDialogComponent extends DialogComponent<AiAttach
         horizontalPosition: 'center'
       }))
     });
+  }
+
+  downloadPng(): void {
+    this.data.downloadPng().catch(() => this.store.dispatch(new ActionNotificationShow({
+      message: this.translate.instant('ai-assistant.file.png-failed'),
+      target: 'aiAttachmentPreview',
+      modern: true,
+      type: 'error',
+      verticalPosition: 'bottom',
+      horizontalPosition: 'center'
+    })));
   }
 
   close(): void {

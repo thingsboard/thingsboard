@@ -1,0 +1,47 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@let current = view();
+<section class="k-credits-out" role="alert" [attr.aria-label]="current.title">
+  <div class="k-credits-out-head">
+    <span class="k-credits-out-mark" aria-hidden="true"><mat-icon fontSet="material-icons-round">{{ current.icon }}</mat-icon></span>
+    <div class="k-credits-out-text">
+      <b>{{ current.title }}</b>
+      <span>{{ current.text }}</span>
+    </div>
+    <button mat-icon-button type="button" class="k-credits-out-close" [matTooltip]="'action.close' | translate"
+            [attr.aria-label]="'action.close' | translate" (click)="dismissed.emit()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  @if (current.action !== 'none' || current.usage) {
+    <div class="k-credits-out-actions">
+      @switch (current.action) {
+        @case ('request') {
+          @if (state() === 'sent') {
+            <span class="k-credits-out-sent" role="status"><mat-icon fontSet="material-icons-round">check_circle</mat-icon>{{ 'ai-assistant.limit-out.sent' | translate }}</span>
+          } @else {
+            <button mat-flat-button color="primary" type="button" [disabled]="state() === 'sending'" (click)="request()">
+              {{ current.requestLabel | translate }}
+            </button>
+            @if (state() === 'failed') {
+              <span class="k-credits-out-failed" role="status">{{ 'ai-assistant.limit-out.failed' | translate }}</span>
+            }
+          }
+        }
+        @case ('license') {
+          <a mat-flat-button color="primary" routerLink="/license">{{ 'ai-assistant.limit-out.manage-license' | translate }}</a>
+        }
+        @case ('pricing') {
+          <a mat-flat-button color="primary" [href]="pricingUrl" target="_blank" rel="noopener">{{ 'subscription.upgrade-plan' | translate }}</a>
+        }
+      }
+      @if (current.usage) {
+        <a mat-button routerLink="/usage" class="k-credits-out-usage">{{ 'ai-assistant.limit-out.view-usage' | translate }}</a>
+      }
+    </div>
+  }
+</section>

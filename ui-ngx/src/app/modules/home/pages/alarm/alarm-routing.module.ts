@@ -24,7 +24,6 @@ import { EntityDebugSettingsService } from '@home/components/entity/debug/entity
 import { UtilsService } from '@core/services/utils.service';
 import { AlarmRulesTableConfig } from '@home/components/alarm-rules/alarm-rules-table-config';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
-import { AiAssistantAlarmButtonComponent } from '@home/components/alarm/ai-assistant-alarm-button.component';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 export const AlarmRulesTableConfigResolver: ResolveFn<AlarmRulesTableConfig> =
@@ -74,8 +73,7 @@ const routes: Routes = [
       auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       breadcrumb: {
         menuId: MenuId.alarms_center
-      },
-      routerTabsHeaderComponent: AiAssistantAlarmButtonComponent
+      }
     },
     children: [
       {

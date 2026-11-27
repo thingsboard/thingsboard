@@ -218,6 +218,13 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
+    public PageData<AlarmData> findAlarmDataByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions mergedUserPermissions, AlarmDataQuery query) {
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateEntityDataPageLink(query.getPageLink());
+        return alarmDao.findAlarmDataByQuery(tenantId, customerId, mergedUserPermissions, query);
+    }
+
+    @Override
     @Transactional
     public AlarmApiCallResult delAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId) {
         return delAlarm(tenantId, originator, alarmId, true);

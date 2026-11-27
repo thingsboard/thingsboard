@@ -1,0 +1,788 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+import { AiQuestion } from '@shared/models/solution-creator.models';
+
+export type { AiAction, AiActionStatus } from '@shared/models/ai-chat.models';
+
+export type AiSpinKind = 'think' | 'gen' | 'install' | 'listen' | 'stop';
+
+export interface AiActionWords {
+  key: string;
+  params?: Record<string, string>;
+  kind: AiSpinKind;
+}
+
+export type AiWorkMoment = 'reading-request' | 'going-through-results' | 'applying-change' | 'reading-what-to-change';
+
+export interface AiWorkState {
+  moment: AiWorkMoment;
+  since: number;
+  headline?: string;
+}
+const HIDDEN_TOOLS = new Set(['read_current_time']);
+
+const TOOL_WORDS: Record<string, string> = {
+  create_solution: 'create-solution',
+  install_solution: 'install-solution',
+  read_entity: 'read-entity',
+  read_timeseries_keys: 'read-telemetry-keys',
+  read_attributes: 'read-attributes',
+  discover_attribute_keys: 'read-attributes',
+  save_attributes: 'save-attributes',
+  delete_attributes: 'delete-attributes',
+  read_entity_relations: 'read-relations',
+  read_device_credentials: 'read-credentials',
+  save_device_credentials: 'save-credentials',
+  test_converter: 'test-converter',
+  read_converter_library: 'read-converter-library',
+  create_dashboard: 'create-dashboard',
+  update_dashboard: 'update-dashboard',
+  add_dashboard_state: 'add-dashboard-state',
+  update_dashboard_state: 'update-dashboard-state',
+  add_dashboard_entity_alias: 'add-entity-alias',
+  update_dashboard_entity_alias: 'update-entity-alias',
+  read_dashboard_entity_alias: 'read-entity-alias',
+  add_dashboard_filter: 'add-dashboard-filter',
+  update_dashboard_filter: 'update-dashboard-filter',
+  read_dashboard_filter: 'read-dashboard-filter',
+  read_dashboard_overview: 'read-dashboard',
+  update_dashboard_widget: 'update-widget',
+  place_dashboard_widgets: 'place-widgets',
+  read_dashboard_widget: 'read-widget',
+  read_dashboard_html_page: 'read-dashboard-page',
+  search_iot_hub_devices: 'search-iot-hub',
+  search_iot_hub: 'search-iot-hub',
+  read_iot_hub_item: 'read-iot-hub-item',
+  list_installed_iot_hub_items: 'list-installed-iot-hub-items',
+  install_iot_hub_item: 'install-iot-hub-item',
+  update_group_members: 'update-group-members',
+  change_owner: 'change-owner',
+  share_entity_group: 'share-group',
+  grant_role: 'grant-role',
+  read_access: 'read-access',
+  check_dashboard_access: 'check-dashboard-access',
+  read_transport_endpoints: 'read-connection-settings',
+  read_api_usage: 'read-api-usage',
+  read_audit_logs: 'read-audit-logs',
+  read_tasks: 'read-tasks',
+  save_image: 'save-image',
+  read_platform_settings: 'read-platform-settings',
+  save_relations: 'save-relations',
+  read_versions: 'read-versions',
+  read_gateway_status: 'read-gateway-status',
+  read_ota: 'read-ota',
+  read_edges: 'read-edges',
+  read_edge_events: 'read-edge-events',
+  read_edge_instructions: 'read-edge-instructions',
+  save_edge: 'save-edge',
+  assign_to_edge: 'assign-to-edge',
+  sync_edge: 'sync-edge',
+  read_rule_chain_templates: 'read-rule-chain-templates',
+  set_rule_chain_template: 'set-rule-chain-template',
+  read_agents: 'read-agents',
+  read_agent_instructions: 'read-agent-instructions',
+  save_agent: 'save-agent',
+  install_agent_application: 'install-agent-application',
+  run_agent_operation: 'run-agent-operation',
+  read_agent_profiles: 'read-agent-profiles',
+  save_agent_profile: 'save-agent-profile',
+  save_agent_app_profile: 'save-agent-app-profile',
+  run_agent_bulk_action: 'run-agent-bulk-action',
+  wait_agent_operation: 'wait-agent-operation',
+  read_white_labeling: 'read-white-labeling',
+  read_website_brand: 'read-website-brand',
+  save_white_labeling: 'save-white-labeling',
+  read_mail_templates: 'read-mail-templates',
+  save_mail_template: 'save-mail-template',
+  read_custom_translation: 'read-custom-translation',
+  save_custom_translation: 'save-custom-translation',
+  read_custom_menus: 'read-custom-menus',
+  read_security_settings: 'read-security-settings',
+  read_mobile_center: 'read-mobile-center',
+  save_mobile_app: 'save-mobile-app',
+  save_mobile_bundle: 'save-mobile-bundle',
+  save_mobile_qr_code: 'save-mobile-qr-code',
+  read_scheduler_events: 'read-scheduler-events',
+  save_scheduler_event: 'save-scheduler-event',
+  create_report_template: 'create-report-template',
+  update_report_template: 'update-report-template',
+  add_report_components: 'add-report-components',
+  update_report_component: 'update-report-component',
+  move_report_component: 'move-report-component',
+  save_report_entity_alias: 'save-report-alias',
+  save_report_filter: 'save-report-filter',
+  test_report_template: 'test-report-template',
+  read_reports: 'read-reports',
+  save_scheduled_report: 'save-scheduled-report',
+  generate_report: 'generate-report',
+  read_widgets: 'read-widgets',
+  read_widget: 'read-widget-type',
+  create_widget: 'create-widget',
+  build_widget: 'build-widget',
+  update_widget: 'update-widget-type',
+  check_widget: 'check-widget',
+  save_widgets_bundle: 'save-widgets-bundle',
+  read_scada_symbols: 'read-scada-symbols',
+  build_scada_symbol: 'build-scada-symbol',
+  create_scada_symbol: 'copy-scada-symbol',
+  update_scada_symbol: 'update-scada-symbol',
+  check_scada_symbol: 'check-scada-symbol',
+  create_scada_symbol_widget: 'create-scada-symbol-widget',
+  save_two_factor_settings: 'save-two-factor-settings',
+  save_oauth2_domain: 'save-oauth2-domain',
+  read_my_account: 'read-my-account',
+  save_my_profile: 'save-my-profile',
+  save_my_two_factor: 'save-my-two-factor',
+  update_api_key: 'update-api-key',
+  read_mail_server: 'read-mail-server',
+  save_mail_server: 'save-mail-server',
+  save_custom_menu: 'save-custom-menu',
+  save_ota_package: 'save-ota-package',
+  assign_ota_package: 'assign-ota-package',
+  save_platform_settings: 'save-platform-settings',
+  read_device_connect_commands: 'read-connection-settings',
+  search_web: 'search-web',
+  send_notification: 'send-notification',
+  read_notifications: 'read-notifications',
+  mark_notifications_read: 'mark-notifications-read',
+  save_notification_settings: 'save-notification-settings',
+  save_notification_preferences: 'save-notification-preferences'
+};
+
+const GENERATING_TOOLS: Record<string, string> = {
+  set_dashboard_html_page: 'lay-out-dashboard',
+  reprocess_calculated_field: 'recalculate-history',
+  commit_version: 'commit-version',
+  restore_version: 'restore-version',
+  research_device_connectivity: 'research-device'
+};
+
+const SAVED_KINDS: Record<string, [string, string]> = {
+  save_device: ['device', ''],
+  save_calculated_field: ['calculated-field', ''],
+  save_alarm_rule: ['alarm-rule', 'alarmRule'],
+  save_notification_target: ['notification-target', 'target'],
+  save_notification_template: ['notification-template', 'template'],
+  save_notification_rule: ['notification-rule', 'rule'],
+  save_customer: ['customer', ''],
+  save_user: ['user', ''],
+  save_entity_group: ['entity-group', ''],
+  save_role: ['role', ''],
+  save_entity_view: ['entity-view', ''],
+  save_asset: ['asset', ''],
+  save_asset_profile: ['asset-profile', ''],
+  save_device_profile: ['device-profile', ''],
+  save_converter: ['converter', ''],
+  save_integration: ['integration', ''],
+  save_secret: ['secret', ''],
+  save_ai_model: ['ai-model', ''],
+  save_resource: ['resource', '']
+};
+
+const SEARCHED_TYPES: Record<string, string> = {
+  DEVICE: 'search-devices',
+  ASSET: 'search-assets',
+  DASHBOARD: 'search-dashboards',
+  CUSTOMER: 'search-customers',
+  USER: 'search-users'
+};
+
+const DELETED_TARGETS: Record<string, string> = {
+  CALCULATED_FIELD: 'delete-calculated-field',
+  ALARM_RULE: 'delete-alarm-rule',
+  NOTIFICATION_RULE: 'delete-notification-rule',
+  NOTIFICATION_TARGET: 'delete-notification-target',
+  NOTIFICATION_TEMPLATE: 'delete-notification-template',
+  NOTIFICATION_REQUEST: 'delete-sent-notification',
+  NOTIFICATION: 'delete-inbox-notification',
+  DASHBOARD: 'delete-dashboard',
+  DASHBOARD_WIDGET: 'delete-widget',
+  DASHBOARD_STATE: 'delete-dashboard-state',
+  DASHBOARD_ENTITY_ALIAS: 'delete-entity-alias',
+  DASHBOARD_FILTER: 'delete-dashboard-filter',
+  DEVICE: 'delete-device',
+  CUSTOMER: 'delete-customer',
+  USER: 'delete-user',
+  ENTITY_GROUP: 'delete-entity-group',
+  ROLE: 'delete-role',
+  GROUP_PERMISSION: 'delete-grant',
+  ALARM: 'delete-alarm',
+  ASSET: 'delete-asset',
+  OTA_PACKAGE: 'delete-ota-package',
+  EDGE: 'delete-edge',
+  AGENT: 'delete-agent',
+  AGENT_PROFILE: 'delete-agent-profile',
+  AGENT_APP_PROFILE: 'delete-agent-app-profile',
+  IMAGE: 'delete-image',
+  ENTITY_VIEW: 'delete-entity-view',
+  ASSET_PROFILE: 'delete-asset-profile',
+  DEVICE_PROFILE: 'delete-device-profile',
+  INTEGRATION: 'delete-integration',
+  CONVERTER: 'delete-converter',
+  SECRET: 'delete-secret',
+  AI_MODEL: 'delete-ai-model',
+  RESOURCE: 'delete-resource',
+  CUSTOM_MENU: 'delete-custom-menu',
+  MOBILE_APP: 'delete-mobile-app',
+  MOBILE_BUNDLE: 'delete-mobile-bundle',
+  SCHEDULER_EVENT: 'delete-scheduler-event',
+  REPORT_TEMPLATE: 'delete-report-template',
+  REPORT_COMPONENT: 'delete-report-component',
+  REPORT_ENTITY_ALIAS: 'delete-report-alias',
+  REPORT_FILTER: 'delete-report-filter',
+  REPORT: 'delete-report',
+  WIDGET_TYPE: 'delete-widget-type',
+  WIDGETS_BUNDLE: 'delete-widgets-bundle'
+};
+
+const ACTION_PREFIX = 'ai-assistant.action.';
+
+export const isHiddenAiAction = (tool: string): boolean => HIDDEN_TOOLS.has(tool);
+
+export const SUGGEST_PROMPTS_TOOL = 'suggest_next_prompts';
+
+export const ASK_USER_TOOL = 'ask_user';
+
+export const PROPOSE_PLAN_TOOL = 'propose_plan';
+
+export const CITE_SOURCES_TOOL = 'cite_sources';
+
+export interface AiSource {
+  url: string;
+  title: string;
+  from: string;
+  quote?: string;
+  icon: string;
+  external: boolean;
+}
+
+const humanize = (segment: string): string => {
+  const words = decodeURIComponent(segment).replace(/\.[a-z]+$/i, '').replace(/[-_]+/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : '';
+};
+
+export function aiSourcesOf(args: unknown): AiSource[] {
+  const sources = (args as {sources?: unknown})?.sources;
+  if (!Array.isArray(sources)) {
+    return [];
+  }
+  return sources.flatMap(source => {
+    if (typeof source?.url !== 'string' || typeof source?.title !== 'string') {
+      return [];
+    }
+    let url: URL;
+    try {
+      url = new URL(source.url);
+    } catch {
+      return [];
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+      return [];
+    }
+    const host = url.hostname.replace(/^www\./, '');
+    const product = host === 'thingsboard.io' || host.endsWith('.thingsboard.io') || host.endsWith('thingsboard.cloud');
+    const path = url.pathname.split('/').filter(segment => segment.length > 2).slice(0, 2).map(humanize).filter(Boolean);
+    return [{
+      url: url.href,
+      title: source.title.trim(),
+      from: [host, ...path].join(' › '),
+      quote: typeof source.quote === 'string' && source.quote.trim() ? source.quote.trim() : undefined,
+      icon: !product ? 'public' : /pricing/i.test(url.pathname) ? 'sell' : 'menu_book',
+      external: !product
+    }];
+  }).slice(0, 3);
+}
+
+export const UPDATE_PLAN_TOOL = 'update_plan';
+
+export const HAND_OVER_TOOL = 'hand_over';
+
+export const CHECK_CONNECTION_TOOL = 'check_connection';
+
+const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file', 'create_file', CITE_SOURCES_TOOL, 'show_records',
+  HAND_OVER_TOOL]);
+
+export interface AiHandOverValue {
+  label: string;
+  value: string;
+  secret: boolean;
+  icon: string;
+}
+
+export interface AiHandOverStep {
+  title: string;
+  detail?: string;
+  markdown?: string;
+  values: AiHandOverValue[];
+  file?: string;
+  done: boolean;
+}
+
+export interface AiHandOverOption {
+  id: string;
+  label: string;
+  icon?: string;
+  text: string;
+  steps?: AiHandOverStep[];
+}
+
+export interface AiHandOver {
+  title: string;
+  text?: string;
+  choice?: {question: string; icon: string; value: string; options: AiHandOverOption[]};
+  steps: AiHandOverStep[];
+  waitFor?: 'message' | 'uplink' | 'gateway';
+  intervalSeconds?: number;
+  quiet?: string;
+  test?: AiHandOverTest;
+  paste?: {label: string; icon: string; intro: string};
+}
+
+export interface AiHandOverTest {
+  hint?: string;
+  commands: {os: 'macos' | 'windows' | 'linux'; command: string}[];
+  outcomes: {output: string; meaning: string; ok: boolean}[];
+  sample?: Record<string, unknown>;
+  accessToken?: string;
+}
+
+function handOverTestOf(value: any): AiHandOverTest | undefined {
+  const commands = (Array.isArray(value?.commands) ? value.commands : [])
+    .filter(item => ['macos', 'windows', 'linux'].includes(item?.os) && text(item?.command))
+    .slice(0, 3)
+    .map(item => ({os: item.os, command: item.command.trim()}));
+  if (!commands.length) {
+    return undefined;
+  }
+  const outcomes = (Array.isArray(value.outcomes) ? value.outcomes : [])
+    .filter(item => text(item?.output) && text(item?.meaning))
+    .slice(0, 4)
+    .map(item => ({output: text(item.output), meaning: text(item.meaning), ok: item.ok === true}));
+  let sample: Record<string, unknown> | undefined;
+  try {
+    const parsed = typeof value.sample === 'string' ? JSON.parse(value.sample) : value.sample;
+    sample = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    sample = undefined;
+  }
+  const accessToken = text(value.accessToken);
+  return {hint: text(value.hint), commands, outcomes, ...(sample && accessToken ? {sample, accessToken} : {})};
+}
+
+const text = (value: unknown): string | undefined => typeof value === 'string' && value.trim() ? value.trim() : undefined;
+
+const ICON_NAME = /^[a-z0-9_]{2,40}$/;
+
+const iconOf = (value: unknown, fallback: string): string => typeof value === 'string' && ICON_NAME.test(value) ? value : fallback;
+
+export function aiHandOverOf(args: unknown): AiHandOver | null {
+  const values = (args ?? {}) as Record<string, any>;
+  const title = text(values.title);
+  if (!title) {
+    return null;
+  }
+  const steps = handOverStepsOf(values.steps);
+  const options: AiHandOverOption[] = (Array.isArray(values.choice?.options) ? values.choice.options : [])
+    .filter(option => text(option?.id) && text(option?.label))
+    .slice(0, 4)
+    .map(option => ({id: text(option.id), label: text(option.label), icon: typeof option.icon === 'string' && ICON_NAME.test(option.icon) ? option.icon : undefined,
+      text: text(option.text) ?? '', steps: handOverStepsOf(option.steps)}));
+  const choice = options.length >= 2 ? {
+    question: text(values.choice.question) ?? '',
+    icon: iconOf(values.choice.icon, 'tune'),
+    value: options.some(option => option.id === values.choice.value) ? values.choice.value : options[0].id,
+    options
+  } : undefined;
+  const waitFor = ['message', 'uplink', 'gateway'].includes(values.waitFor) ? values.waitFor : undefined;
+  const interval = Number(values.intervalSeconds);
+  return {title, text: text(values.text), choice, steps, waitFor,
+    intervalSeconds: Number.isFinite(interval) && interval > 0 ? interval : undefined, quiet: text(values.quiet),
+    test: handOverTestOf(values.test), paste: handOverPasteOf(values.paste)};
+}
+
+function handOverPasteOf(value: any): AiHandOver['paste'] {
+  const label = text(value?.label);
+  const intro = text(value?.intro);
+  return label && intro ? {label, intro, icon: iconOf(value.icon, 'terminal')} : undefined;
+}
+
+function handOverStepsOf(list: unknown): AiHandOverStep[] {
+  return (Array.isArray(list) ? list : [])
+    .filter(step => text(step?.title))
+    .slice(0, 6)
+    .map(step => ({
+      title: text(step.title),
+      detail: text(step.detail),
+      markdown: text(step.markdown),
+      file: text(step.file),
+      done: step.done === true,
+      values: (Array.isArray(step.values) ? step.values : [])
+        .filter(value => text(value?.label) && typeof value?.value === 'string' && value.value)
+        .slice(0, 4)
+        .map(value => ({label: text(value.label), value: value.value, secret: value.secret === true,
+          icon: iconOf(value.icon, value.secret === true ? 'key' : /^https?:\/\//.test(value.value) ? 'link' : 'label')}))
+    }));
+}
+
+export interface AiConnectionCheck {
+  dataArriving: boolean;
+  failedStep?: string;
+  name?: string;
+  note?: string;
+  readings: {key: string; value: string}[];
+  keyCount: number;
+  gateway: boolean;
+}
+
+export function aiConnectionCheckOf(result: unknown): AiConnectionCheck | null {
+  let values: any = result;
+  if (typeof result === 'string') {
+    try {
+      values = JSON.parse(result);
+    } catch {
+      return null;
+    }
+  }
+  if (!values || typeof values !== 'object' || !values.steps) {
+    return null;
+  }
+  const readings: {key: string; value: string}[] = [];
+  const add = (telemetry: unknown) => Object.entries(telemetry && typeof telemetry === 'object' ? telemetry : {})
+    .map(([key, item]) => ({key, value: String((item as any)?.value ?? '')}))
+    .filter(reading => !/^\s*[{[]/.test(reading.value))
+    .forEach(reading => readings.push(reading));
+  const gateway = values.gateway === true;
+  if (!gateway) {
+    add(values.telemetry);
+  }
+  (Array.isArray(values.devices) ? values.devices : []).forEach(device => add(device?.telemetry));
+  return {dataArriving: values.steps.dataArriving === true, failedStep: text(values.failedStep), name: text(values.name),
+    note: text(values.note), readings: readings.slice(0, 6), keyCount: new Set(readings.map(reading => reading.key)).size, gateway};
+}
+
+export const isKitCardTool = (tool: string): boolean => KIT_CARD_TOOLS.has(tool);
+
+const PLAN_NEEDS = new Set(['device', 'account', 'computer', 'phone']);
+
+export interface AiPlanStep {
+  text: string;
+  by: 'agent' | 'user';
+  needs?: string;
+  optional?: boolean;
+  makes?: {type: string; name: string}[];
+}
+
+export interface AiPlanProgress {
+  done: number[];
+  now?: number;
+  skipped: number[];
+}
+
+export function aiPlanOf(args: unknown): AiPlanStep[] {
+  const steps = (args as {steps?: unknown})?.steps;
+  if (!Array.isArray(steps)) {
+    return [];
+  }
+  return steps
+    .filter(step => typeof step?.text === 'string' && step.text.trim())
+    .slice(0, 8)
+    .map(step => ({
+      text: step.text.trim(),
+      by: step.by === 'user' ? 'user' : 'agent',
+      needs: step.by === 'user' && PLAN_NEEDS.has(step.needs) ? step.needs : undefined,
+      optional: step.optional === true,
+      makes: Array.isArray(step.makes)
+        ? step.makes.filter(made => typeof made?.type === 'string' && typeof made?.name === 'string' && made.name.trim()).slice(0, 4)
+        : []
+    }));
+}
+
+export function aiPlanProgressOf(args: unknown): AiPlanProgress {
+  const values = (args ?? {}) as {done?: unknown; now?: unknown; skipped?: unknown};
+  const numbers = (list: unknown): number[] => Array.isArray(list) ? list.filter(item => Number.isInteger(item) && item > 0) : [];
+  return {
+    done: numbers(values.done),
+    now: Number.isInteger(values.now) && (values.now as number) > 0 ? values.now as number : undefined,
+    skipped: numbers(values.skipped)
+  };
+}
+
+export function aiQuestionsOf(args: unknown): AiQuestion[] {
+  const questions = (args as {questions?: unknown})?.questions;
+  if (!Array.isArray(questions)) {
+    return [];
+  }
+  return questions
+    .filter(question => typeof question?.question === 'string' && question.question.trim())
+    .slice(0, 3)
+    .map((question, index) => ({
+      id: typeof question.id === 'string' && question.id ? question.id : 'q' + index,
+      question: question.question.trim(),
+      why: typeof question.why === 'string' ? question.why : undefined,
+      options: (Array.isArray(question.options) ? question.options : [])
+        .filter(option => typeof option?.label === 'string' && option.label.trim())
+        .slice(0, 6)
+        .map(option => ({label: option.label.trim(), hint: typeof option.hint === 'string' ? option.hint : undefined})),
+      recommended: Array.isArray(question.recommended) ? question.recommended.filter(label => typeof label === 'string') : undefined,
+      multiple: question.multiple === true,
+      secret: question.secret === true && !(Array.isArray(question.options) && question.options.length)
+    }));
+}
+
+const MAX_PROMPTS = 4;
+
+export interface AiPrompt {
+  text: string;
+  icon?: string;
+}
+
+export function aiTurnPrompts(messages: Array<{from: string; data?: any}>): AiPrompt[] {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.from === 'USER') {
+      return [];
+    }
+    if (message.from === 'ACTION' && message.data?.tool === SUGGEST_PROMPTS_TOOL) {
+      return aiPromptsOf(message.data.arguments);
+    }
+  }
+  return [];
+}
+
+export function aiPromptsOf(args: unknown): AiPrompt[] {
+  const prompts = (args as {prompts?: unknown})?.prompts;
+  if (!Array.isArray(prompts)) {
+    return [];
+  }
+  return prompts
+    .filter(prompt => typeof prompt?.text === 'string' && prompt.text.trim())
+    .map(prompt => ({text: prompt.text.trim(), icon: typeof prompt.icon === 'string' && /^[a-z0-9_]+$/.test(prompt.icon) ? prompt.icon : undefined}))
+    .slice(0, MAX_PROMPTS);
+}
+
+export const WIDGET_PART_WORDS: Record<string, string> = {
+  html: 'HTML', css: 'CSS', js: 'JavaScript', resources: 'resources', settingsForm: 'settings form',
+  dataKeySettingsForm: 'data key settings form', latestDataKeySettingsForm: 'latest data key settings form', defaultConfig: 'default configuration'
+};
+
+export const SCADA_SYMBOL_PART_WORDS: Record<string, string> = {
+  svg: 'SVG', metadata: 'metadata', functions: 'functions', behavior: 'behaviors', properties: 'properties'
+};
+
+export function widgetParts(values: Record<string, any>): string[] {
+  const parts = Array.isArray(values.sections) ? values.sections.map(String) : [];
+  return parts.length ? parts : typeof values.section === 'string' ? [values.section] : ['overview'];
+}
+
+function joinWords(words: string[]): string {
+  return words.length < 2 ? words.join('') : words.slice(0, -1).join(', ') + ' and ' + words[words.length - 1];
+}
+
+export function aiActionWords(tool: string, args: unknown): AiActionWords {
+  const values = (args && typeof args === 'object' ? args : {}) as Record<string, any>;
+  if (GENERATING_TOOLS[tool]) {
+    return {key: ACTION_PREFIX + GENERATING_TOOLS[tool], kind: 'gen'};
+  }
+  if (SAVED_KINDS[tool]) {
+    const [kind, nested] = SAVED_KINDS[tool];
+    return {key: ACTION_PREFIX + (hasId(nested ? values[nested] : values) ? 'update-' : 'create-') + kind, kind: 'think'};
+  }
+  switch (tool) {
+    case 'add_dashboard_widgets':
+      return {key: ACTION_PREFIX + (Array.isArray(values.widgets) && values.widgets.length === 1 ? 'add-widget' : 'add-widgets'), kind: 'think'};
+    case 'add_scada_connectors':
+      return {key: ACTION_PREFIX + 'add-scada-connectors', kind: 'think'};
+    case 'read_widget': {
+      const parts = widgetParts(values).filter(part => part !== 'overview');
+      return parts.length && !parts.includes('all')
+        ? {key: ACTION_PREFIX + 'read-widget-parts', params: {parts: joinWords(parts.map(part => WIDGET_PART_WORDS[part] ?? part))}, kind: 'think'}
+        : {key: ACTION_PREFIX + 'read-widget-type', kind: 'think'};
+    }
+    case 'read_scada_symbol': {
+      const parts = widgetParts(values).filter(part => part !== 'overview');
+      return parts.length && !parts.includes('all')
+        ? {key: ACTION_PREFIX + 'read-scada-symbol-parts', params: {parts: joinWords(parts.map(part => SCADA_SYMBOL_PART_WORDS[part] ?? part))}, kind: 'think'}
+        : {key: ACTION_PREFIX + 'read-scada-symbol', kind: 'think'};
+    }
+    case 'read_report_template':
+      return {key: ACTION_PREFIX + (typeof values.path === 'string' && values.path ? 'read-report-component' : 'read-report-template'), kind: 'think'};
+    case 'search_entities':
+      return {key: ACTION_PREFIX + searchedWords(values), kind: 'think'};
+    case 'update_alarms':
+      return {key: ACTION_PREFIX + 'update-alarms.' + String(values.action ?? 'other').toLowerCase(), kind: 'think'};
+    case 'read_timeseries':
+      return {key: ACTION_PREFIX + telemetryWords(values), kind: 'think'};
+    case 'delete':
+      return {key: ACTION_PREFIX + (DELETED_TARGETS[values.targetType] ?? 'delete-other'), kind: 'think'};
+    case 'check_connection':
+      return {key: ACTION_PREFIX + (Number(values.waitSeconds) > 0 ? 'wait-for-data' : 'check-connection'), kind: 'think'};
+    case 'fetch_web_page': {
+      const site = siteOf(values.url);
+      return site ? {key: ACTION_PREFIX + 'read-site', params: {site}, kind: 'think'} : {key: ACTION_PREFIX + 'read-page', kind: 'think'};
+    }
+  }
+  return {key: ACTION_PREFIX + (TOOL_WORDS[tool] ?? 'other'), kind: 'think'};
+}
+
+export function aiActionDuration(ms: number): string {
+  if (ms < 1000) {
+    return `${Math.max(Math.round(ms / 100), 1) / 10} s`;
+  }
+  const seconds = Math.round(ms / 1000);
+  if (seconds < 60) {
+    return `${seconds} s`;
+  }
+  const rest = seconds % 60;
+  return rest ? `${Math.floor(seconds / 60)} min ${rest} s` : `${seconds / 60} min`;
+}
+
+export function aiWorkClock(ms: number): string {
+  const seconds = Math.round(ms / 1000);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+export function aiActionDetail(value: unknown): string {
+  if (value === undefined || value === null || value === '') {
+    return '';
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return typeof parsed === 'object' && parsed !== null ? JSON.stringify(parsed, null, 2) : value;
+    } catch {
+      return value;
+    }
+  }
+  return JSON.stringify(value, null, 2);
+}
+
+function hasId(value: unknown): boolean {
+  let object = value;
+  if (typeof value === 'string') {
+    try {
+      object = JSON.parse(value);
+    } catch {
+      return false;
+    }
+  }
+  const id = (object as {id?: unknown})?.id;
+  return !!id && (typeof id === 'string' || typeof (id as {id?: unknown}).id === 'string');
+}
+
+function searchedWords(values: Record<string, any>): string {
+  const filter = values.entityFilter ?? values;
+  const types = new Set<string>();
+  const add = (type: unknown) => typeof type === 'string' && types.add(type);
+  add(filter?.entityType);
+  add(filter?.singleEntity?.entityType);
+  if (filter?.deviceType || filter?.deviceTypes || filter?.filterType === 'deviceType') {
+    types.add('DEVICE');
+  }
+  if (filter?.assetType || filter?.assetTypes || filter?.filterType === 'assetType') {
+    types.add('ASSET');
+  }
+  (filter?.filters ?? []).forEach((relationFilter: any) => (relationFilter?.entityTypes ?? []).forEach(add));
+  if (types.size === 1) {
+    return SEARCHED_TYPES[[...types][0]] ?? 'search-tenant';
+  }
+  return 'search-tenant';
+}
+
+function telemetryWords(values: Record<string, any>): string {
+  switch (values.mode) {
+    case 'LATEST':
+      return 'read-latest-values';
+    case 'KEYS':
+      return 'read-telemetry-keys';
+    default:
+      return values.mode ? 'read-history' : 'read-latest-values';
+  }
+}
+
+function siteOf(url: unknown): string | undefined {
+  if (typeof url !== 'string') {
+    return undefined;
+  }
+  try {
+    return new URL(url).hostname.replace(/^www\./, '') || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export type AiEntityPalette = 'device' | 'path' | 'chain' | 'rule' | 'view' | 'people' | 'solution';
+
+export interface AiEntityKind {
+  icon: string;
+  palette: AiEntityPalette;
+}
+
+const ENTITY_KINDS: Record<string, AiEntityKind> = {
+  DEVICE: {icon: 'memory', palette: 'device'},
+  GATEWAY: {icon: 'lan', palette: 'device'},
+  ENTITY_VIEW: {icon: 'view_quilt', palette: 'device'},
+  EDGE: {icon: 'router', palette: 'device'},
+  SOLUTION_TEMPLATE: {icon: 'dashboard_customize', palette: 'solution'},
+  DEVICE_PROFILE: {icon: 'category', palette: 'device'},
+  ASSET: {icon: 'domain', palette: 'device'},
+  ASSET_PROFILE: {icon: 'category', palette: 'device'},
+  INTEGRATION: {icon: 'input', palette: 'path'},
+  CONVERTER: {icon: 'transform', palette: 'path'},
+  CALCULATED_FIELD: {icon: 'functions', palette: 'path'},
+  RULE_CHAIN: {icon: 'account_tree', palette: 'chain'},
+  EDGE_RULE_CHAIN: {icon: 'account_tree', palette: 'chain'},
+  AGENT: {icon: 'memory', palette: 'device'},
+  AGENT_APPLICATION: {icon: 'apps', palette: 'device'},
+  AGENT_PROFILE: {icon: 'badge', palette: 'device'},
+  AGENT_APP_PROFILE: {icon: 'inventory_2', palette: 'device'},
+  IOT_HUB: {icon: 'hub', palette: 'solution'},
+  ALARM_RULE: {icon: 'rule', palette: 'rule'},
+  ALARM: {icon: 'notification_important', palette: 'rule'},
+  NOTIFICATION_RULE: {icon: 'notifications_active', palette: 'rule'},
+  NOTIFICATION_TEMPLATE: {icon: 'description', palette: 'path'},
+  NOTIFICATION_TARGET: {icon: 'group', palette: 'people'},
+  DASHBOARD: {icon: 'dashboard', palette: 'view'},
+  DASHBOARD_WIDGET: {icon: 'widgets', palette: 'view'},
+  DASHBOARD_STATE: {icon: 'tab', palette: 'view'},
+  DASHBOARD_ENTITY_ALIAS: {icon: 'label', palette: 'view'},
+  DASHBOARD_FILTER: {icon: 'filter_list', palette: 'view'},
+  WIDGET_TYPE: {icon: 'widgets', palette: 'view'},
+  WIDGETS_BUNDLE: {icon: 'now_widgets', palette: 'view'},
+  OTA_PACKAGE: {icon: 'system_update', palette: 'device'},
+  MAIL_TEMPLATE: {icon: 'mail', palette: 'view'},
+  CUSTOM_TRANSLATION: {icon: 'translate', palette: 'view'},
+  CUSTOM_MENU: {icon: 'menu', palette: 'view'},
+  MOBILE_APP: {icon: 'smartphone', palette: 'device'},
+  MOBILE_BUNDLE: {icon: 'phonelink_setup', palette: 'device'},
+  MOBILE_QR_CODE: {icon: 'qr_code_2', palette: 'device'},
+  SCHEDULER_EVENT: {icon: 'schedule', palette: 'rule'},
+  REPORT_TEMPLATE: {icon: 'description', palette: 'view'},
+  REPORT_COMPONENT: {icon: 'view_agenda', palette: 'view'},
+  REPORT_ENTITY_ALIAS: {icon: 'label', palette: 'view'},
+  REPORT_FILTER: {icon: 'filter_list', palette: 'view'},
+  SCHEDULED_REPORT: {icon: 'event_repeat', palette: 'rule'},
+  REPORT: {icon: 'summarize', palette: 'view'},
+  TWO_FACTOR_SETTINGS: {icon: 'phonelink_lock', palette: 'people'},
+  DOMAIN: {icon: 'language', palette: 'people'},
+  MY_PROFILE: {icon: 'account_circle', palette: 'people'},
+  MY_TWO_FACTOR: {icon: 'phonelink_lock', palette: 'people'},
+  API_KEY: {icon: 'vpn_key', palette: 'people'},
+  MAIL_SERVER: {icon: 'outgoing_mail', palette: 'view'},
+  IMAGE: {icon: 'image', palette: 'view'},
+  TB_RESOURCE: {icon: 'image', palette: 'view'},
+  SCADA_SYMBOL: {icon: 'view_in_ar', palette: 'view'},
+  CUSTOMER: {icon: 'supervisor_account', palette: 'people'},
+  USER: {icon: 'account_circle', palette: 'people'},
+  TENANT: {icon: 'business', palette: 'people'},
+  ENTITY_GROUP: {icon: 'folder_shared', palette: 'people'},
+  ROLE: {icon: 'admin_panel_settings', palette: 'people'},
+  GROUP_PERMISSION: {icon: 'key', palette: 'people'}
+};
+
+export function aiEntityKind(entityType: string, alarmRule = false): AiEntityKind {
+  return ENTITY_KINDS[alarmRule ? 'ALARM_RULE' : entityType] ?? {icon: 'category', palette: 'solution'};
+}
+
+export function aiEntityIcon(entityType: string, alarmRule = false): string {
+  return aiEntityKind(entityType, alarmRule).icon;
+}

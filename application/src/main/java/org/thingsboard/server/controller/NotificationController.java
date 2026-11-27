@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestPrevie
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.AddonAccessErrorNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.AddonAccessRequestNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.AiCreditsLimitIncreaseRequestNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.EntitiesLimitIncreaseRequestNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.info.PlanUpgradeRequestNotificationInfo;
@@ -72,15 +74,20 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.translation.TranslationService;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.permission.Resource.NOTIFICATION;
@@ -113,6 +120,8 @@ public class NotificationController extends BaseController {
     private final TranslationService translationService;
     private final SystemSecurityService systemSecurityService;
     private final SubscriptionService subscriptionService;
+
+    private final Map<String, Long> aiCreditsRequests = new ConcurrentHashMap<>();
 
     @ApiOperation(value = "Get notifications (getNotifications)",
             notes = "Returns the page of notifications for current user." + NEW_LINE +
@@ -496,6 +505,53 @@ public class NotificationController extends BaseController {
             notificationCenter.sendSystemNotification(TenantId.SYS_TENANT_ID, notificationTargetId, NotificationType.PLAN_UPGRADE_REQUEST, info);
         } else {
             throw new IllegalArgumentException("Notification target for 'System administrators' not found");
+        }
+    }
+
+    @ApiOperation(value = "Send AI credits limit increase request notification to System administrators (sendAiCreditsLimitIncreaseRequest)",
+            notes = "Send AI credits limit increase request notification by Tenant Administrator to System administrators. " +
+                    "TENANT asks for a higher monthly limit of the tenant, POOL for more AI credits for the whole installation. " +
+                    "A request for the same limit is sent once a month." + TENANT_AUTHORITY_PARAGRAPH)
+    @PostMapping("/notification/aiCreditsLimitIncreaseRequest")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    public void sendAiCreditsLimitIncreaseRequest(@Parameter(description = "Limit to increase", schema = @Schema(allowableValues = {"TENANT", "POOL"}))
+                                                  @RequestParam(defaultValue = "TENANT") String limitType,
+                                                  @AuthenticationPrincipal SecurityUser user,
+                                                  HttpServletRequest request) throws Exception {
+        boolean pool = "POOL".equals(limitType);
+        if (!pool && !"TENANT".equals(limitType)) {
+            throw new IllegalArgumentException("Unsupported limit type: " + limitType);
+        }
+        long month = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1).toInstant().toEpochMilli();
+        String requestKey = user.getTenantId().getId() + ":" + limitType;
+        if (Objects.equals(aiCreditsRequests.put(requestKey, month), month)) {
+            return;
+        }
+        NotificationTarget sysAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(TenantId.SYS_TENANT_ID, UsersFilterType.SYSTEM_ADMINISTRATORS)
+                .stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Notification target for 'System administrators' not found"));
+        String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+        Tenant tenant = tenantService.findTenantById(user.getTenantId());
+        String limitDescription;
+        if (pool) {
+            limitDescription = "all AI credits of this installation's license";
+        } else {
+            long limit = tenantProfileCache.get(user.getTenantId()).getDefaultProfileConfiguration().getMaxAiCredits();
+            limitDescription = String.format("its monthly limit of %,d AI credits", limit);
+        }
+        NotificationInfo info = AiCreditsLimitIncreaseRequestNotificationInfo.builder()
+                .userEmail(user.getEmail())
+                .tenantName(tenant != null ? tenant.getName() : user.getTenantId().toString())
+                .limitDescription(limitDescription)
+                .increaseLimitActionLabel(pool ? "Add credits" : "Set new limit")
+                .increaseLimitLink(pool ? "/license" : "/tenants/" + user.getTenantId())
+                .baseUrl(baseUrl)
+                .build();
+        try {
+            notificationCenter.sendSystemNotification(TenantId.SYS_TENANT_ID, sysAdmins.getId(), NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST, info);
+        } catch (RuntimeException e) {
+            aiCreditsRequests.remove(requestKey, month);
+            throw e;
         }
     }
 

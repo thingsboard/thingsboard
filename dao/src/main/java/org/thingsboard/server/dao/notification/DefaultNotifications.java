@@ -230,6 +230,41 @@ public class DefaultNotifications {
                             </table>""")
                     .build())
             .build();
+    public static final DefaultNotification aiCreditsLimitIncreaseRequest = DefaultNotification.builder()
+            .name("AI credits limit increase request")
+            .type(NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST)
+            .subject("AI credits limit increase request")
+            .text("${userEmail} from tenant ${tenantName} has used ${limitDescription} and is requesting more AI credits.")
+            .icon("auto_awesome")
+            .button("${increaseLimitActionLabel}").link("${increaseLimitLink}")
+            .emailTemplate(DefaultEmailTemplate.builder()
+                    .subject("AI credits limit increase request")
+                    .body("""
+                            <table style="box-sizing: border-box; border-radius: 3px; width: 100%; background-color: #f6f6f6; margin: 0px auto;" cellspacing="0" cellpadding="0" bgcolor="#f6f6f6">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; margin: 0px; padding: 40px;" align="center" valign="middle">
+                            <table style="box-sizing: border-box; border: 1px solid #E0E0E0; border-radius: 3px; margin: 0px; background-color: #ffffff; max-width: 600px !important;" cellspacing="0" cellpadding="0">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; border-bottom: 1px solid #E0E0E0; margin: 0px; padding: 20px; color: #212121; font-family: Arial; font-size: 20px; line-height: 20px; font-style: normal; font-weight: bold;" valign="middle">AI credits limit increase request</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">${userEmail} from tenant ${tenantName} has used ${limitDescription} and is requesting more AI credits.</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 0 24px 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">
+                            <a style="display: inline-block; padding: 10px 16px; border-radius: 4px; background: #106CC8; color: #fff; font-family: Arial; font-size: 14px; line-height: 20px; font-weight: bold; text-decoration: none;" href="${baseUrl}${increaseLimitLink}">${increaseLimitActionLabel}</a>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>""")
+                    .build())
+            .build();
     public static final DefaultNotification apiFeatureWarningForSysadmin = DefaultNotification.builder()
             .name("API feature warning notification for sysadmin")
             .type(NotificationType.API_USAGE_LIMIT)

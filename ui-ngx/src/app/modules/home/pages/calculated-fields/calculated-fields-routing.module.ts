@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { DestroyRef, inject, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, ResolveFn, Router, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateFn, ResolveFn, Router, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { MenuId } from '@core/services/menu.models';
 import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
@@ -22,6 +22,21 @@ import { EntityDebugSettingsService } from '@home/components/entity/debug/entity
 import { UtilsService } from '@core/services/utils.service';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
+import { CalculatedFieldType } from '@shared/models/calculated-field.models';
+import { of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+
+export const calculatedFieldPageGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
+  const router = inject(Router);
+  const entityId = route.paramMap.get('entityId');
+  if (!entityId) {
+    return true;
+  }
+  return inject(CalculatedFieldsService).getCalculatedFieldById(entityId, {ignoreErrors: true, ignoreLoading: true}).pipe(
+    map(field => field?.type === CalculatedFieldType.ALARM ? router.createUrlTree(['/alarms/alarm-rules', entityId]) : true),
+    catchError(() => of(true))
+  );
+};
 
 export const CalculatedFieldsTableConfigResolver: ResolveFn<CalculatedFieldsTableConfig> =
   (_route: ActivatedRouteSnapshot,
@@ -84,6 +99,7 @@ const routes: Routes = [
       {
         path: ':entityId',
         component: EntityDetailsPageComponent,
+        canActivate: [calculatedFieldPageGuard],
         canDeactivate: [ConfirmOnExitGuard],
         data: {
           breadcrumb: {

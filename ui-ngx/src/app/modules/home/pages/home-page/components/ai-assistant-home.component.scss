@@ -1,0 +1,97 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.tb-ai-compose-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  max-width: var(--tb-home-compose-width, 760px);
+  container-type: inline-size;
+}
+
+.tb-ai-home-composer {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tb-ai-chats-btn {
+  &:hover, &:focus, &:active {
+    border-bottom: none;
+  }
+
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 50px;
+  max-width: 160px;
+  padding: 0 12px 0 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--tb-line, rgba(0, 0, 0, 0.12));
+  font: 500 14px/20px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+  text-decoration: none;
+  border-bottom: none;
+  mix-blend-mode: multiply;
+  transition: max-width .2s ease, padding .2s ease, margin .2s ease, opacity .15s ease, background-color .15s, color .15s;
+
+  .mat-icon {
+    flex: none;
+    color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+  }
+
+  .tb-ai-chats-go {
+    margin-left: -4px;
+    color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+  }
+
+  &:hover {
+    background: var(--tb-line-soft, rgba(0, 0, 0, 0.05));
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+
+    .mat-icon {
+      color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 2px;
+  }
+}
+
+.tb-ai-compose-row.open .tb-ai-chats-btn {
+  max-width: 0;
+  margin-left: -8px;
+  padding: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: max-width .2s ease, padding .2s ease, margin .2s ease, opacity .1s ease, visibility 0s .2s;
+}
+
+@container (max-width: 480px) {
+  .tb-ai-chats-btn {
+    width: 50px;
+    padding: 0;
+    justify-content: center;
+
+    .tb-ai-chats-t, .tb-ai-chats-go {
+      display: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-ai-chats-btn {
+    transition: none;
+  }
+}

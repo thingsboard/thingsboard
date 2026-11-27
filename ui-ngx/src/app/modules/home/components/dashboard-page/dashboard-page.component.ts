@@ -129,7 +129,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { catchError, distinctUntilChanged, map, skip, tap, share } from 'rxjs/operators';
+import { buffer, catchError, debounceTime, distinctUntilChanged, map, skip, tap, share } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -143,6 +143,8 @@ import { HttpStatusCode } from '@angular/common/http';
 import { HomeService } from '@core/services/home.service';
 
 // @dynamic
+const AI_RELOAD_DEBOUNCE_MS = 1000;
+
 @Component({
     selector: 'tb-dashboard-page',
     templateUrl: './dashboard-page.component.html',
@@ -239,6 +241,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   isMobileApp = this.mobileService.isMobileApp();
   isFullscreen = false;
   isEdit = false;
+
+  private editedWhileEmpty = false;
   isEditingWidget = false;
   isEditingWidgetClosed = true;
   isMobile = !this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
@@ -430,7 +434,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     ));
     if (this.aiAssistantPanelEnabled) {
       this.rxSubscriptions.push(
-        this.panelService.updatedData$.subscribe(affected => {
+        this.panelService.updatedData$.pipe(
+          buffer(this.panelService.updatedData$.pipe(debounceTime(AI_RELOAD_DEBOUNCE_MS))),
+          map(batches => batches.flat())
+        ).subscribe(affected => {
           const dashboards = affected.filter(entityId => entityId.entityType === EntityType.DASHBOARD);
           if (dashboards.length) {
             if (dashboards.some(dashboard => dashboard.id === this.currentDashboardId)) {
@@ -508,8 +515,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       });
     });
     this.dashboardResize$.observe(this.dashboardContainer.nativeElement);
-    if (!this.widgetEditMode && !this.readonly && !this.openAiAssistant && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
+    const aiAtWork = this.openAiAssistant || (this.aiAssistantPanelEnabled && (this.panelService.open() || this.panelService.hasCarriedChat()));
+    if (!this.widgetEditMode && !this.readonly && !aiAtWork && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
       this.setEditMode(true, false);
+      this.editedWhileEmpty = true;
     }
     if (this.openAiAssistant && this.aiAssistantPanelEnabled) {
       this.panelService.openPanel();
@@ -589,7 +598,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.aiAssistantPanelEnabled) {
       this.panelService.setEnabled(true);
       this.panelService.setConfig({
+        title: this.translate.instant('dashboard.ai-assistant-title'),
         initialPromptPlaceholder: this.translate.instant('dashboard.ai-assistant-initial-prompt-placeholder'),
+        suggestion: this.translate.instant('dashboard.ai-assistant-suggestion'),
         fill: true,
         promptExamples: [
           {
@@ -615,9 +626,14 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       entityId: { entityType: EntityType.DASHBOARD, id: this.currentDashboardId },
       dashboardState: this.dashboardCtx.state ?? undefined
     });
+    this.panelService.setViewName(this.dashboard?.title ? this.utils.customTranslation(this.dashboard.title, this.dashboard.title) : null);
   }
 
   private reloadDashboard(): void {
+    const emptyEdit = this.isEdit && this.editedWhileEmpty && this.dashboardUtils.isEmptyDashboard(this.dashboard);
+    if (emptyEdit) {
+      this.setEditMode(false, false);
+    }
     if (!this.currentDashboardId || this.isEdit) {
       return;
     }
@@ -641,6 +657,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         });
         this.dashboardCtx.stateController.reInit();
         this.updateBreadcrumbs.emit();
+        if (emptyEdit && !this.readonly && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
+          this.setEditMode(true, false);
+          this.editedWhileEmpty = true;
+        }
         this.runChangeDetection();
       },
       error: (err) => {
@@ -1013,18 +1033,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       && this.dashboard?.configuration?.settings?.showConfigureWithAi !== false;
   }
 
-  get showConfigureWithAi(): boolean {
-    return this.aiConfigurableForDashboard
-      && !this.isEdit
-      && !this.isFullscreen
-      && !this.panelService.open();
-  }
-
-  public toggleAiAssistant($event: Event) {
-    $event?.stopPropagation();
-    this.panelService.toggle();
-  }
-
   public configureWithAi($event: Event) {
     $event?.stopPropagation();
     this.saveDashboard(() => this.panelService.openPanel());
@@ -1324,6 +1332,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private setEditMode(isEdit: boolean, revert: boolean) {
     this.isEdit = isEdit;
+    this.editedWhileEmpty = false;
     if (this.isEdit) {
       this.dashboardCtx.stateController.preserveState();
       this.prevDashboard = deepClone(this.dashboard);

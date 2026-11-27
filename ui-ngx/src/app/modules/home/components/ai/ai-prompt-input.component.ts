@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { aiFileName } from '@home/components/ai/ai-file.models';
 import {
   AfterViewInit,
   Component,
@@ -23,10 +24,12 @@ import { FormControl } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import { AiShortcutsDialogComponent } from '@home/components/ai/ai-shortcuts-dialog.component';
 import { DomSanitizer } from '@angular/platform-browser';
 import { guid } from '@core/utils';
 import { AiResourceService } from '@core/http/ai-resource.service';
-import { AI_IMAGE_MEDIA_TYPES, AiPromptMessage, AiResourceConfig, AiResourceInfo } from '@shared/models/ai-chat.models';
+import { AI_IMAGE_MEDIA_TYPES, AiLinesQuote, AiPromptMessage, AiResourceConfig, AiResourceInfo } from '@shared/models/ai-chat.models';
 import {
   AI_SVG_EXTENSION,
   aiAttachmentKind,
@@ -36,8 +39,7 @@ import {
   isAiSvg,
   namePastedImage,
   svgToAiImage,
-  aiServerMessage
-} from '@home/components/ai/ai-attachment.models';
+  aiServerMessage, aiResourceFact } from '@home/components/ai/ai-attachment.models';
 
 interface PendingAttachment {
   key: string;
@@ -63,21 +65,66 @@ const FLY_DURATION = 520;
 })
 export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestroy {
 
+  readonly fileName = aiFileName;
+
   private aiResourceService = inject(AiResourceService);
   private translate = inject(TranslateService);
   private sanitizer = inject(DomSanitizer);
   private renderer = inject(Renderer2);
+  private dialog = inject(MatDialog);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   @Input() placeholder = '';
+
+  @Input() suggestion: string | null = null;
+
+  @Input() quote: AiLinesQuote | null = null;
+
+  @Output() quoteRemoved = new EventEmitter<void>();
 
   @Input() loading: boolean;
 
   @Input() docked = false;
 
+  @Input() slim = false;
+
+  @Input() pinned = false;
+
   @Input() dropZone: HTMLElement;
 
+  @Input() showAutoApprove = false;
+
+  @Input() autoApprove = false;
+
+  @Input() autoApproveInChat = true;
+
   @Output() messageSent = new EventEmitter<AiPromptMessage>();
+
+  @Output() autoApproveChange = new EventEmitter<boolean>();
+
+  @Input() stoppable = false;
+
+  @Input() stopping = false;
+
+  @Input() sendWhileWorking = false;
+
+  @Input() blocked = false;
+
+  @Output() stopped = new EventEmitter<void>();
+
+  get working(): boolean {
+    return this.loading && this.stoppable;
+  }
+
+  get canStop(): boolean {
+    return this.working && !(this.sendWhileWorking && this.hasContent());
+  }
+
+  stop(): void {
+    if (this.working && !this.stopping) {
+      this.stopped.emit();
+    }
+  }
 
   @ViewChild('textarea') textarea!: ElementRef<HTMLTextAreaElement>;
 
@@ -113,7 +160,11 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   get canSend(): boolean {
     const ready = this.attachments().some(attachment => attachment.status === 'ready');
-    return !this.loading && !this.uploading() && (!!this.message.value?.trim() || ready);
+    return !this.blocked && (!this.loading || this.sendWhileWorking) && !this.uploading() && (!!this.message.value?.trim() || ready || !!this.quote);
+  }
+
+  private hasContent(): boolean {
+    return this.hasText() || this.attachments().some(attachment => attachment.status === 'ready');
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -136,9 +187,18 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     this.clearAttachments(true);
   }
 
+  openShortcuts(event: MouseEvent): void {
+    const from = event.currentTarget as HTMLElement;
+    if (this.dialog.openDialogs.some(open => open.componentInstance instanceof AiShortcutsDialogComponent)) {
+      return;
+    }
+    this.dialog.open(AiShortcutsDialogComponent, {panelClass: ['tb-dialog', 'tb-ai-keys-dialog'], autoFocus: 'dialog', restoreFocus: true})
+      .afterClosed().subscribe(() => from?.focus({preventScroll: true}));
+  }
+
   @HostListener('document:keydown', ['$event'])
   onDocumentKeydown(event: KeyboardEvent): void {
-    if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) {
+    if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey || this.dialog.openDialogs.length) {
       return;
     }
     const target = event.target as HTMLElement;
@@ -146,7 +206,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
       return;
     }
     const visible = Array.from(document.querySelectorAll<HTMLTextAreaElement>('.tb-ai-composer textarea'))
-      .filter(textarea => textarea.offsetParent);
+      .filter(textarea => textarea.offsetParent && !textarea.closest('tb-ai-assistant-panel:not(.open)'));
     const field = this.textarea?.nativeElement;
     if (field && visible[visible.length - 1] === field) {
       event.preventDefault();
@@ -156,6 +216,21 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   }
 
   onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Tab' && !event.shiftKey && this.suggestion && !this.message.value) {
+      event.preventDefault();
+      this.setValue(this.suggestion);
+      return;
+    }
+    if (event.key === 'Escape' && this.working) {
+      event.preventDefault();
+      this.stop();
+      return;
+    }
+    if (event.key === 'Escape' && this.slim) {
+      event.preventDefault();
+      this.textarea?.nativeElement.blur();
+      return;
+    }
     if (event.key === 'Enter' && (!event.shiftKey || event.metaKey || event.ctrlKey)) {
       event.preventDefault();
       this.send();
@@ -170,13 +245,17 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   send(): void {
     const msg = this.message.value?.trim() ?? '';
     const ready = this.attachments().filter(attachment => attachment.status === 'ready');
-    if (this.loading || this.uploading() || (!msg && !ready.length)) {
+    if ((this.loading && !this.sendWhileWorking) || this.uploading() || (!msg && !ready.length && !this.quote)) {
       return;
     }
     this.fly();
     this.clearText();
     this.clearAttachments(false);
-    this.messageSent.emit({message: msg, resources: ready.map(attachment => attachment.resource)});
+    const sent: AiPromptMessage = {message: msg, resources: ready.map(attachment => attachment.resource)};
+    if (this.quote) {
+      sent.quote = this.quote;
+    }
+    this.messageSent.emit(sent);
   }
 
   reset(): void {
@@ -192,9 +271,16 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     this.message.setValue(value);
     this.hasText.set(!!value);
     setTimeout(() => {
-      this.textarea?.nativeElement.focus();
+      const field = this.textarea?.nativeElement;
+      field?.focus();
+      field?.setSelectionRange(field.value.length, field.value.length);
       this.resize();
     });
+  }
+
+  toggleAutoApprove(event: Event): void {
+    this.autoApprove = (event.target as HTMLInputElement).checked;
+    this.autoApproveChange.emit(this.autoApprove);
   }
 
   openFilePicker(): void {
@@ -228,7 +314,8 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     if (attachment.status === 'uploading') {
       return this.translate.instant('ai-assistant.attachment-uploading', {progress: attachment.progress});
     }
-    return `${this.translate.instant(attachment.kind)} · ${formatAiFileSize(attachment.size)}`;
+    const fact = aiResourceFact(attachment.resource?.facts, this.translate);
+    return `${this.translate.instant(attachment.kind)} · ${fact ?? formatAiFileSize(attachment.size)}`;
   }
 
   addFiles(files: File[]): void {
@@ -338,7 +425,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     if (!field) {
       return;
     }
-    const cap = this.docked ? Math.min(160, Math.round(innerHeight * 0.3)) : Math.min(220, Math.round(innerHeight * 0.4));
+    const cap = this.docked ? Math.min(160, Math.round(innerHeight * 0.3)) : Math.min(this.pinned ? 240 : 220, Math.round(innerHeight * 0.4));
     field.style.height = 'auto';
     field.style.height = Math.min(field.scrollHeight, cap) + 'px';
   }

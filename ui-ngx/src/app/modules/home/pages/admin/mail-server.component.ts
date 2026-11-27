@@ -26,7 +26,8 @@ import { Authority } from '@shared/models/authority.enum';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter, switchMap, takeUntil } from 'rxjs/operators';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { DomainSchema, domainSchemaTranslations, } from '@shared/models/oauth2.models';
 import { WINDOW } from '@core/services/window.service';
 import { ActivatedRoute } from '@angular/router';
@@ -134,6 +135,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
               private translate: TranslateService,
               private userPermissionsService: UserPermissionsService,
               private route: ActivatedRoute,
+              private aiAssistantPanelService: AiAssistantPanelService,
               public fb: FormBuilder,
               @Inject(WINDOW) private window: Window) {
     super(store);
@@ -146,7 +148,19 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     const data = this.route.snapshot.data.mailServerSettings;
     this.loginProcessingUrl = data.loginProcessingUrl;
     this.initTemplates(data.mailConfigTemplate);
-    this.adminSettings = data.adminSettings;
+    this.applySettings(data.adminSettings);
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      filter(event => event.kind === 'MAIL_SERVER' && !this.mailSettings.dirty),
+      switchMap(() => this.adminService.getAdminSettings<MailServerSettings>('mail', false, {ignoreLoading: true})),
+      takeUntil(this.destroy$)
+    ).subscribe(settings => {
+      this.applySettings(settings);
+      this.mailSettings.markAsPristine();
+    });
+  }
+
+  private applySettings(adminSettings: AdminSettings<MailServerSettings>) {
+    this.adminSettings = adminSettings;
     if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
       this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
     }

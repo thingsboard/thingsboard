@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,11 +22,26 @@ import { AppState } from '@core/core.state';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Operation, Resource } from '@shared/models/security.models';
 import { deviceAiAssistantConfig } from '@shared/models/device.models';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
 import { AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { CustomerId } from '@shared/models/id/customer-id';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { EdgeId } from '@shared/models/id/edge-id';
+
+const GROUP_LIST_VIEWS = new Map<EntityType, [AiAssistantViewType, AiAssistantViewType]>([
+  [EntityType.ASSET, [AiAssistantViewType.ASSET_GROUP_LIST, AiAssistantViewType.ASSET_GROUP]],
+  [EntityType.ENTITY_VIEW, [AiAssistantViewType.ENTITY_VIEW_GROUP_LIST, AiAssistantViewType.ENTITY_VIEW_GROUP]],
+  [EntityType.DASHBOARD, [AiAssistantViewType.DASHBOARD_GROUP_LIST, AiAssistantViewType.DASHBOARD_GROUP]],
+  [EntityType.CUSTOMER, [AiAssistantViewType.CUSTOMER_GROUP_LIST, AiAssistantViewType.CUSTOMER_GROUP]],
+  [EntityType.USER, [AiAssistantViewType.USER_GROUP_LIST, AiAssistantViewType.USER_GROUP]],
+  [EntityType.EDGE, [AiAssistantViewType.EDGE_GROUP_LIST, AiAssistantViewType.EDGE_GROUP]],
+  [EntityType.AGENT, [AiAssistantViewType.AGENT_GROUP_LIST, AiAssistantViewType.AGENT_GROUP]]
+]);
 
 @Injectable()
 export class EntityGroupsTableConfigResolver  {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private entityGroupService: EntityGroupService,
               private customerService: CustomerService,
@@ -63,10 +78,15 @@ export class EntityGroupsTableConfigResolver  {
       params
     );
 
+    const owner = config.edgeId ? new EdgeId(config.edgeId) : config.customerId ? new CustomerId(config.customerId) : undefined;
     if (config.groupType === EntityType.DEVICE) {
       config.aiAssistantConfig = deviceAiAssistantConfig(this.store, this.userPermissionsService, this.translate,
         this.userPermissionsService.hasGenericPermission(Resource.DEVICE, Operation.WRITE),
-        AiAssistantViewType.DEVICE_GROUP, AiAssistantViewType.DEVICE_GROUP_LIST);
+        AiAssistantViewType.DEVICE_GROUP, AiAssistantViewType.DEVICE_GROUP_LIST, owner);
+    }
+    const groupViews = GROUP_LIST_VIEWS.get(config.groupType);
+    if (groupViews) {
+      config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(groupViews[0], groupViews[1], owner);
     }
 
     if (config.customerId && resolveCustomer) {

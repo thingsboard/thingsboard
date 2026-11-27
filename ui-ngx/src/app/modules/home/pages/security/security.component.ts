@@ -22,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DatePipe } from '@angular/common';
 import { ClipboardService } from 'ngx-clipboard';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
   AccountTwoFaSettingProviders,
@@ -33,7 +34,7 @@ import {
   TwoFactorAuthProviderType
 } from '@shared/models/two-factor-auth.models';
 import { authenticationDialogMap } from '@home/pages/security/authentication-dialog/authentication-dialog.map';
-import { takeUntil, tap } from 'rxjs/operators';
+import { filter, takeUntil, tap } from 'rxjs/operators';
 import { Observable, of, Subject } from 'rxjs';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Operation, Resource } from '@shared/models/security.models';
@@ -88,7 +89,8 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
               private datePipe: DatePipe,
               private userPermissionsService: UserPermissionsService,
               private authService: AuthService,
-              private clipboardService: ClipboardService) {
+              private clipboardService: ClipboardService,
+              private aiAssistantPanelService: AiAssistantPanelService) {
     super(store);
   }
 
@@ -96,6 +98,17 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     this.buildTwoFactorForm();
     this.user = this.route.snapshot.data.user;
     this.twoFactorLoad(this.route.snapshot.data.providers);
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      filter(event => event.kind === 'ACCOUNT_SECURITY'),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      if (this.allowTwoFactorProviders.length) {
+        this.twoFaService.getAccountTwoFaSettings().subscribe(data => {
+          this.useByDefault = null;
+          this.processTwoFactorAuthConfig(data);
+        });
+      }
+    });
     this.buildChangePasswordForm();
     this.loadPasswordPolicy();
   }

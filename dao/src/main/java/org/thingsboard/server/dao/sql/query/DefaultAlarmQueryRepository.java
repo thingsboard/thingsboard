@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -44,6 +45,12 @@ import java.util.stream.Collectors;
 public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
     private static final Map<String, String> alarmFieldColumnMap = new HashMap<>();
+
+    private static final Set<String> ALARM_TABLE_SORT_COLUMNS = Set.of(ModelConstants.CREATED_TIME_PROPERTY, ModelConstants.ALARM_ACK_TS_PROPERTY,
+            ModelConstants.ALARM_CLEAR_TS_PROPERTY, ModelConstants.ALARM_ASSIGN_TS_PROPERTY, ModelConstants.ALARM_END_TS_PROPERTY,
+            ModelConstants.ALARM_START_TS_PROPERTY, ModelConstants.ALARM_ACKNOWLEDGED_PROPERTY, ModelConstants.ALARM_CLEARED_PROPERTY,
+            ModelConstants.ALARM_TYPE_PROPERTY, ModelConstants.ALARM_SEVERITY_PROPERTY, ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY,
+            ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY, ModelConstants.ALARM_ASSIGNEE_ID_PROPERTY);
 
     private static final String ASSIGNEE_EMAIL_KEY = "assigneeEmail";
     private static final String ASSIGNEE_LAST_NAME_KEY = "assigneeLastName";
@@ -133,20 +140,40 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     @Override
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, MergedUserPermissions mergedUserPermissions,
                                                                AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        return findAlarmData(tenantId, null, mergedUserPermissions, query, orderedEntityIds);
+    }
+
+    @Override
+    public PageData<AlarmData> findAlarmDataByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions mergedUserPermissions, AlarmDataQuery query) {
+        return findAlarmData(tenantId, customerId, mergedUserPermissions, query, null);
+    }
+
+    private PageData<AlarmData> findAlarmData(TenantId tenantId, CustomerId customerId, MergedUserPermissions mergedUserPermissions,
+                                              AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         if (!mergedUserPermissions.hasGenericPermission(Resource.ALARM, Operation.READ)) {
             return PageData.emptyPageData();
         }
+        boolean ownerScoped = orderedEntityIds == null;
         return transactionTemplate.execute(trStatus -> {
             AlarmDataPageLink pageLink = query.getPageLink();
+            boolean searchPropagatedAlarms = !ownerScoped && pageLink.isSearchPropagatedAlarms();
             SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM, mergedUserPermissions, null), citusSettings.isEnabled());
-            ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
             StringBuilder fromPart = new StringBuilder(" from alarm_info a ");
             StringBuilder wherePart = new StringBuilder(" where ");
             StringBuilder sortPart = new StringBuilder(" order by ");
             StringBuilder joinPart = new StringBuilder();
             boolean addAnd = false;
-            if (pageLink.isSearchPropagatedAlarms()) {
+            if (ownerScoped) {
+                selectPart.append(" a.originator_id as entity_id ");
+                ctx.addUuidParameter("owner_tenant_id", tenantId.getId());
+                wherePart.append(" a.tenant_id = :owner_tenant_id");
+                if (customerId != null && !customerId.isNullUid()) {
+                    ctx.addUuidParameter("owner_customer_id", customerId.getId());
+                    wherePart.append(" and a.customer_id = :owner_customer_id");
+                }
+                addAnd = true;
+            } else if (searchPropagatedAlarms) {
                 selectPart.append(" ea.entity_id as entity_id ");
                 fromPart.append(JOIN_ENTITY_ALARMS);
                 wherePart.append(buildPermissionsQuery(tenantId, ctx, mergedUserPermissions));
@@ -154,7 +181,13 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             } else {
                 selectPart.append(" a.originator_id as entity_id ");
             }
+            if (!ownerScoped) {
+                ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+            }
             EntityDataSortOrder sortOrder = pageLink.getSortOrder();
+            if (ownerScoped && (sortOrder == null || !EntityKeyType.ALARM_FIELD.equals(sortOrder.getKey().getType()))) {
+                sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime"), EntityDataSortOrder.Direction.DESC);
+            }
 
             if (sortOrder != null && EntityKeyType.ALARM_FIELD.equals(sortOrder.getKey().getType()) && ASSIGNEE_KEY.equalsIgnoreCase(sortOrder.getKey().getKey())) {
                 sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_EMAIL_KEY), sortOrder.getDirection());
@@ -180,7 +213,9 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 }
                 sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
                         .append(" ").append(sortOrder.getDirection().name());
-                if (pageLink.isSearchPropagatedAlarms()) {
+                if (ownerScoped) {
+                    sortPart.append(", a.created_time desc, a.id desc");
+                } else if (searchPropagatedAlarms) {
                     wherePart.append(" and ea.entity_id in (:entity_ids)");
                 } else {
                     addAndIfNeeded(wherePart, addAnd);
@@ -201,7 +236,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                     entityIdIdx++;
                 }
                 joinPart.append(" as e(id, priority)) e ");
-                if (pageLink.isSearchPropagatedAlarms()) {
+                if (searchPropagatedAlarms) {
                     if (textSearchQuery.isEmpty()) {
                         joinPart.append("on ea.entity_id = e.id");
                     } else {
@@ -233,7 +268,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 addAnd = true;
                 ctx.addLongParameter("startTime", startTs);
                 wherePart.append("a.created_time >= :startTime");
-                if (pageLink.isSearchPropagatedAlarms()) {
+                if (searchPropagatedAlarms) {
                     wherePart.append(" and ea.created_time >= :startTime");
                 }
             }
@@ -243,7 +278,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 addAnd = true;
                 ctx.addLongParameter("endTime", endTs);
                 wherePart.append("a.created_time <= :endTime");
-                if (pageLink.isSearchPropagatedAlarms()) {
+                if (searchPropagatedAlarms) {
                     wherePart.append(" and ea.created_time <= :endTime");
                 }
             }
@@ -253,7 +288,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 addAnd = true;
                 ctx.addStringListParameter("alarmTypes", pageLink.getTypeList());
                 wherePart.append("a.type in (:alarmTypes)");
-                if (pageLink.isSearchPropagatedAlarms()) {
+                if (searchPropagatedAlarms) {
                     wherePart.append(" and ea.alarm_type in (:alarmTypes)");
                 }
             }
@@ -294,7 +329,9 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             } else {
                 mainQuery = String.format("select * from (%s%s) a %s WHERE %s", mainQuery, wherePart, joinPart, textSearchQuery);
             }
-            String countQuery = String.format("select count(*) from (%s) result", mainQuery);
+            String countQuery = ownerScoped && textSearchQuery.isEmpty()
+                    ? String.format("select count(*) from alarm a %s", wherePart)
+                    : String.format("select count(*) from (%s) result", mainQuery);
             long queryTs = System.currentTimeMillis();
             int totalElements;
             try {
@@ -309,8 +346,11 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             String dataQuery = mainQuery + sortPart;
 
             int startIndex = pageLink.getPageSize() * pageLink.getPage();
-            if (pageLink.getPageSize() > 0) {
-                dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
+            String limitPart = pageLink.getPageSize() > 0 ? String.format(" limit %s offset %s", pageLink.getPageSize(), startIndex) : "";
+            if (ownerScoped && textSearchQuery.isEmpty() && ALARM_TABLE_SORT_COLUMNS.contains(alarmFieldColumnMap.getOrDefault(sortOrder.getKey().getKey(), sortOrder.getKey().getKey()))) {
+                dataQuery = String.format("%s%s where a.id in (select a.id from alarm a %s%s%s)%s", selectPart, fromPart, wherePart, sortPart, limitPart, sortPart);
+            } else {
+                dataQuery = dataQuery + limitPart;
             }
             queryTs = System.currentTimeMillis();
             List<Map<String, Object>> rows;

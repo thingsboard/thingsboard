@@ -1,0 +1,151 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-quick-link-dialog" role="dialog" aria-labelledby="tb-quick-link-dialog-title">
+  <div class="tb-quick-link-dialog-head">
+    <h2 id="tb-quick-link-dialog-title">{{ (editing ? 'home.quick-links.edit-web-link' : 'home.quick-links.add-title') | translate }}</h2>
+    <button mat-icon-button type="button" class="tb-quick-link-dialog-close" [matTooltip]="'action.close' | translate"
+            [attr.aria-label]="'action.close' | translate" (click)="dialogRef.close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  @if (!editing) {
+    <div class="tb-quick-link-dialog-tabs">
+      <tb-home-toggle [options]="kindOptions" [value]="kind()" [label]="'home.quick-links.link-type' | translate"
+                      (valueChange)="setKind($event)"></tb-home-toggle>
+    </div>
+  }
+  @if (kind() === 'page') {
+    <div class="tb-quick-link-dialog-body">
+      <label class="tb-quick-link-search">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <input #pageInput type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true"
+               aria-controls="tb-quick-link-pages" aria-autocomplete="list"
+               [attr.aria-activedescendant]="activePage() ? 'tb-quick-link-page-' + freeIndex(activePage()) : null"
+               [placeholder]="'home.quick-links.search-pages' | translate" [attr.aria-label]="'home.quick-links.search-pages' | translate"
+               [value]="query()" (input)="onQuery($any($event.target).value)" (keydown)="onPageKeydown($event)">
+        @if (query()) {
+          <button mat-icon-button type="button" class="tb-quick-link-clear" [attr.aria-label]="'action.clear' | translate"
+                  (click)="clearQuery()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </label>
+      <div #pageList class="tb-quick-link-pages" id="tb-quick-link-pages" role="listbox" [attr.aria-label]="'home.quick-links.pages' | translate">
+        @for (group of pageGroups().groups; track $index; let first = $first) {
+          @if (!first) {
+            <div class="tb-quick-link-pages-divider" role="separator"></div>
+          }
+          @for (page of group; track page.id) {
+            @let taken = data.used.includes(page.id);
+            @let index = freeIndex(page);
+            <div class="tb-quick-link-page" role="option" [class.taken]="taken" [class.active]="page === activePage()"
+                 [attr.id]="taken ? null : 'tb-quick-link-page-' + index" [attr.aria-disabled]="taken || null"
+                 [attr.aria-selected]="page === activePage()"
+                 (mousedown)="$event.preventDefault()" (mousemove)="!taken && active() !== index && active.set(index)"
+                 (click)="addPage(page)">
+              <tb-icon>{{ page.icon }}</tb-icon>
+              <span class="tb-quick-link-page-text">
+                <span class="tb-quick-link-page-name" [innerHTML]="page.name | highlight: query().trim() : true"></span>
+                @if (page.crumb) {
+                  <span class="tb-quick-link-page-crumb" [innerHTML]="page.crumb | highlight: query().trim() : true"></span>
+                }
+              </span>
+              @if (taken) {
+                <span class="tb-quick-link-page-added"><mat-icon>check</mat-icon>{{ 'home.quick-links.added-mark' | translate }}</span>
+              }
+            </div>
+          }
+        } @empty {
+          <div class="tb-quick-link-pages-empty">{{ 'home.quick-links.no-pages' | translate }}</div>
+        }
+        @if (pageGroups().more) {
+          <div class="tb-quick-link-pages-more">{{ 'home.crumbs-more' | translate: {more: pageGroups().more} }}</div>
+        }
+      </div>
+    </div>
+    <div class="tb-quick-link-dialog-actions">
+      <button mat-button type="button" (click)="dialogRef.close()">{{ 'action.cancel' | translate }}</button>
+    </div>
+  } @else {
+    <div class="tb-quick-link-dialog-body">
+      <div class="tb-quick-link-field">
+        <label for="tb-quick-link-url">{{ 'home.quick-links.address' | translate }}</label>
+        <input #urlInput id="tb-quick-link-url" class="tb-quick-link-input" type="url" placeholder="https://" autocomplete="off"
+               spellcheck="false" [value]="url()" (input)="onUrl($any($event.target).value)" (keydown)="onFieldKeydown($event)">
+        @if (parsed().url) {
+          <div class="tb-quick-link-where" aria-live="polite">
+            <mat-icon>public</mat-icon>
+            <span [innerHTML]="'home.quick-links.opens-host' | translate: {host: parsed().url.hostname}"></span>
+          </div>
+        } @else if (parsed().error) {
+          <div class="tb-quick-link-where error" aria-live="polite">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ (parsed().error === 'scheme' ? 'home.quick-links.only-web' : 'home.quick-links.full-address') | translate }}</span>
+          </div>
+        }
+      </div>
+      <div class="tb-quick-link-field">
+        <label for="tb-quick-link-name">{{ 'home.quick-links.name' | translate }}</label>
+        <div class="tb-quick-link-input tb-quick-link-box">
+          <tb-icon>{{ icon() }}</tb-icon>
+          <input id="tb-quick-link-name" class="tb-quick-link-bare" type="text" autocomplete="off"
+                 [placeholder]="'home.quick-links.name-placeholder' | translate"
+                 [value]="name()" (input)="onName($any($event.target).value)" (keydown)="onFieldKeydown($event)">
+        </div>
+      </div>
+      <div class="tb-quick-link-field">
+        <span class="tb-quick-link-label" id="tb-quick-link-icon-label">{{ 'home.quick-links.icon' | translate }}</span>
+        <label class="tb-quick-link-input tb-quick-link-box tb-quick-link-icon-search">
+          <mat-icon aria-hidden="true">search</mat-icon>
+          <input #iconQueryInput class="tb-quick-link-bare" type="text" autocomplete="off" spellcheck="false"
+                 aria-controls="tb-quick-link-icons" [placeholder]="'home.quick-links.search-icons' | translate"
+                 [attr.aria-label]="'home.quick-links.search-icons' | translate" [value]="iconQuery()"
+                 (input)="onIconQuery($any($event.target).value)" (keydown)="onIconQueryKeydown($event)">
+          @if (iconQuery()) {
+            <button mat-icon-button type="button" class="tb-quick-link-clear" [attr.aria-label]="'action.clear' | translate"
+                    (click)="clearIconQuery(iconQueryInput)">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </label>
+        <div #iconGrid class="tb-quick-link-icons" id="tb-quick-link-icons" role="radiogroup" aria-labelledby="tb-quick-link-icon-label"
+             (keydown)="onIconGridKeydown($event, iconQueryInput)">
+          @for (option of iconSearch().icons; track option; let i = $index) {
+            <button type="button" role="radio" class="tb-quick-link-icon-option" [attr.aria-checked]="option === icon()"
+                    [attr.title]="iconLabel(option)" [attr.aria-label]="iconLabel(option)"
+                    [tabIndex]="iconTabIndex(option, i)" (click)="pick(option)">
+              <tb-icon>{{ option }}</tb-icon>
+            </button>
+          }
+        </div>
+        @if (iconQuery().trim()) {
+          <div class="tb-quick-link-icon-status" aria-live="polite">
+            @if (iconSearch().total === null) {
+              {{ 'home.quick-links.loading-icons' | translate }}
+            } @else if (!iconSearch().total) {
+              {{ 'home.quick-links.no-icons' | translate: {query: iconQuery().trim()} }}
+            } @else if (iconSearch().total > iconSearch().icons.length) {
+              {{ 'home.quick-links.icons-more' | translate: {total: iconSearch().total, shown: iconSearch().icons.length} }}
+            } @else {
+              {{ 'home.quick-links.icons-count' | translate: {count: iconSearch().total} }}
+            }
+          </div>
+        }
+      </div>
+      <div class="tb-quick-link-note" [class.warn]="insecure()">
+        <mat-icon>{{ insecure() ? 'lock_open' : 'shield' }}</mat-icon>
+        <span>{{ (insecure() ? 'home.quick-links.insecure' : 'home.quick-links.trust') | translate }}</span>
+      </div>
+    </div>
+    <div class="tb-quick-link-dialog-actions">
+      <button mat-button type="button" (click)="dialogRef.close()">{{ 'action.cancel' | translate }}</button>
+      <button mat-flat-button color="primary" type="button" [disabled]="!canSubmit()" (click)="submit()">
+        {{ (editing ? 'action.save' : 'home.quick-links.add') | translate }}
+      </button>
+    </div>
+  }
+</div>

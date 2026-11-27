@@ -35,7 +35,7 @@ class DefaultAiChatService implements AiChatService {
     @Override
     public JsonNode createChat(JsonNode request, SecurityUser user) {
         return tbAiService.process(tokenProvider -> operations.execute(
-                new TbAiOperation(ChannelProtocol.CHAT_CREATE, new ChatOperationRequest(null, request)), user, tokenProvider), user, false);
+                new TbAiOperation(ChannelProtocol.CHAT_CREATE, new ChatOperationRequest(null, request)), user, tokenProvider), user, true);
     }
 
     @Override
@@ -51,9 +51,21 @@ class DefaultAiChatService implements AiChatService {
     }
 
     @Override
+    public JsonNode listChatStatuses(SecurityUser user) {
+        return tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.CHAT_STATUS, null), user, tokenProvider), user, false);
+    }
+
+    @Override
     public JsonNode getChatMessages(UUID chatId, SecurityUser user) {
         return tbAiService.process(tokenProvider -> operations.execute(
                 new TbAiOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, TOOL_CARDS)), user, tokenProvider), user, false);
+    }
+
+    @Override
+    public void stopChat(UUID chatId, SecurityUser user) {
+        tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.CHAT_STOP, new ChatOperationRequest(chatId, null)), user, tokenProvider), user, false);
     }
 
     @Override

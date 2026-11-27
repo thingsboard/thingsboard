@@ -1,0 +1,187 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (hood()) {
+  <p class="k-hood"><mat-icon class="tb-mat-16" aria-hidden="true">code</mat-icon><span>{{ hood() }}</span></p>
+}
+@for (block of view().blocks; track $index) {
+  @switch (block.type) {
+    @case ('hub') {
+      <div class="k-detail-recs k-detail-hub tb-list-body" role="list">
+        @for (rec of shown(hub(), 'hub'); track rec.key) {
+          <tb-ai-record role="listitem" [entityType]="rec.entityType" [alarmRule]="rec.alarmRule" [name]="rec.name" [badge]="rec.badge" [url]="rec.url"
+                        [hub]="rec.hub"></tb-ai-record>
+        }
+        @if (hub().length > LIST_SHOWN) {
+          <ng-container *ngTemplateOutlet="moreToggle; context: {key: 'hub', count: hub().length - LIST_SHOWN}"></ng-container>
+        }
+      </div>
+    }
+    @case ('records') {
+      @if (block.label) {
+        <div class="k-detail-label">{{ say(block.label) }}</div>
+      }
+      <div class="k-detail-recs k-detail-list tb-list-body" role="list">
+        @for (row of shown(block.rows, 'records' + $index); track $index) {
+          <div class="tb-rec line" [attr.data-pal]="kind(row.entityType).palette">
+            <span class="tb-rec-tile"><mat-icon aria-hidden="true">{{ kind(row.entityType).icon }}</mat-icon></span>
+            @if (recordUrl(row); as url) {
+              <a class="tb-rec-name" [routerLink]="url">{{ row.name }}</a>
+            } @else {
+              <span class="tb-rec-name">{{ row.name }}</span>
+            }
+            @if (row.meta) {
+              <span class="tb-rec-meta">{{ row.meta }}</span>
+            }
+          </div>
+        }
+        @if (block.rows.length > LIST_SHOWN) {
+          <ng-container *ngTemplateOutlet="moreToggle; context: {key: 'records' + $index, count: block.rows.length - LIST_SHOWN}"></ng-container>
+        }
+      </div>
+      @if (more(block); as rest) {
+        <div class="k-detail-more">{{ 'ai-assistant.detail.more' | translate:{count: rest} }}</div>
+      }
+    }
+    @case ('values') {
+      @if (block.label) {
+        <div class="k-detail-label">{{ say(block.label) }}</div>
+      }
+      <div class="k-tels">
+        @for (row of block.rows; track $index) {
+          <span class="k-tel" [matTooltip]="row.time ? time(row.time) : ''" [matTooltipDisabled]="!row.time" matTooltipPosition="above"><code class="k-tel-key">{{ row.key }}</code><span class="k-tel-val">{{ row.value }}</span></span>
+        }
+      </div>
+    }
+    @case ('series') {
+      <div class="k-series">
+        @for (row of block.rows; track row.key) {
+          <div class="k-series-row">
+            <code class="k-tel-key">{{ row.key }}</code>
+            <svg class="k-series-spark" viewBox="0 0 96 20" preserveAspectRatio="none" aria-hidden="true"><path [attr.d]="row.path"></path></svg>
+            <span class="k-series-meta">{{ 'ai-assistant.detail.series' | translate:{points: row.points, min: number(row.min), max: number(row.max), last: number(row.last)} }}</span>
+          </div>
+        }
+      </div>
+    }
+    @case ('keys') {
+      @if (block.label) {
+        <div class="k-detail-label">{{ say(block.label) }}</div>
+      }
+      <div class="k-tels">
+        @for (key of block.keys; track $index) {
+          <code class="k-tel-key">{{ key }}</code>
+        }
+      </div>
+    }
+    @case ('facts') {
+      <dl class="k-fields k-detail-facts">
+        @for (fact of block.rows; track $index) {
+          <dt>{{ label(fact) }}</dt>
+          <dd [class.mono]="fact.mono">
+            @if (fact.images; as pair) {
+              <span class="k-detail-images">
+                @if (pair.current) {
+                  <img tbAiFadeIn class="k-detail-img was" [src]="pair.current | image: {preview: true, ignoreLoadingImage: true} | async" alt="">
+                  <mat-icon class="tb-mat-16" aria-hidden="true">arrow_forward</mat-icon>
+                }
+                @if (pair.value) {
+                  <img tbAiFadeIn class="k-detail-img" [src]="pair.value | image: {preview: true, ignoreLoadingImage: true} | async" alt="">
+                } @else {
+                  {{ 'ai-assistant.review.not-set' | translate }}
+                }
+              </span>
+            } @else if (fact.chip; as chip) {
+              <span class="k-fact-chip">
+                @if (chip.image) {
+                  <img [src]="chip.image" alt="" aria-hidden="true">
+                } @else if (chip.icon) {
+                  <mat-icon class="tb-mat-16" aria-hidden="true">{{ chip.icon }}</mat-icon>
+                }
+                {{ factValue(fact) }}
+              </span>
+            } @else if (factLink(fact); as url) {
+              <a [routerLink]="url">{{ factValue(fact) }}</a>
+            } @else if (fact.secret && !revealed().has(view().hood?.key + $index)) {
+              <span>{{ masked(factValue(fact)) }}</span>
+              <button type="button" class="k-reveal" (click)="reveal(view().hood?.key + $index)" [attr.aria-label]="'ai-assistant.detail.show' | translate" [matTooltip]="'ai-assistant.detail.show' | translate" matTooltipPosition="above">
+                <mat-icon class="tb-mat-16" aria-hidden="true">visibility</mat-icon>
+              </button>
+            } @else {
+              {{ factValue(fact) }}
+            }
+          </dd>
+        }
+      </dl>
+    }
+    @case ('list') {
+      @if (block.label) {
+        <div class="k-detail-label">{{ say(block.label) }}</div>
+      }
+      <ul class="k-made">
+        @for (row of block.rows; track $index) {
+          <li>{{ row }}</li>
+        }
+      </ul>
+    }
+    @case ('commands') {
+      <div class="k-codetabs-slot" [attr.data-block]="$index"></div>
+    }
+    @case ('code') {
+      @if (block.title) {
+        <div class="k-detail-label">{{ ('ai-assistant.action.' + block.title) | translate }}</div>
+      }
+      <pre><code [class]="'language-' + (block.lang || block.label.toLowerCase())" [attr.data-label]="block.lang ? block.label : null">{{ block.text }}</code></pre>
+    }
+    @case ('links') {
+      <div class="k-detail-links">
+        @for (row of block.rows; track $index) {
+          <a class="k-detail-link" [href]="row.url" target="_blank" rel="noopener">
+            <span class="k-detail-link-t">{{ row.title }}</span>
+            <span class="k-detail-link-from">{{ row.from }}</span>
+            @if (row.snippet) {
+              <span class="k-detail-link-s">{{ row.snippet }}</span>
+            }
+          </a>
+        }
+      </div>
+    }
+    @case ('markdown') {
+      <div class="k-detail-md">
+        <tb-markdown usePlainMarkdown [data]="block.text"></tb-markdown>
+      </div>
+    }
+    @case ('images') {
+      <div class="k-detail-images">
+        @for (image of block.rows; track image.url) {
+          <figure>
+            <img tbAiFadeIn [src]="image.url | image: {preview: true, ignoreLoadingImage: true} | async" [alt]="image.label ? say(image.label) : ''">
+            @if (image.label) {
+              <figcaption>{{ say(image.label) }}</figcaption>
+            }
+          </figure>
+        }
+      </div>
+    }
+    @case ('note') {
+      <p class="k-detail-note">{{ say(block.text) }}</p>
+    }
+    @case ('text') {
+      <p class="k-detail-text">{{ block.text }}</p>
+    }
+    @case ('json') {
+      <div class="k-detail-label">{{ ('ai-assistant.action.' + block.label) | translate }}</div>
+      <pre class="k-detail-json"><code class="language-json">{{ block.text }}</code></pre>
+    }
+  }
+}
+
+<ng-template #moreToggle let-key="key" let-count="count">
+  <button type="button" class="tb-more" [attr.aria-expanded]="isOpen(key)" (click)="toggleMore(key)">
+    <mat-icon class="tb-mat-16" aria-hidden="true">{{ isOpen(key) ? 'expand_less' : 'expand_more' }}</mat-icon>
+    {{ isOpen(key) ? ('ai-assistant.summary.fewer' | translate) : ('ai-assistant.summary.more' | translate: {count}) }}
+  </button>
+</ng-template>

@@ -198,6 +198,12 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
     }
 
     private void handleThingsboardRuntimeException(ThingsboardRuntimeException thingsboardRuntimeException, HttpServletResponse response) throws IOException {
+        if (thingsboardRuntimeException instanceof AiCreditsExceededException aiCreditsExceeded) {
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            JacksonUtil.writeValue(response.getWriter(),
+                    ThingsboardAiCreditsExceededResponse.of(aiCreditsExceeded.getMessage(), aiCreditsExceeded.getLimitType()));
+            return;
+        }
         ThingsboardErrorCode errorCode = thingsboardRuntimeException.getErrorCode();
         HttpStatus status = errorCodeToStatus(errorCode);
         response.setStatus(status.value());

@@ -225,7 +225,6 @@ import { AlarmAssigneePanelComponent } from '@home/components/alarm/alarm-assign
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { AllEntitiesTableConfigService } from '@home/components/entity/all-entities-table-config.service';
 import { SendNotificationButtonComponent } from '@home/components/notification/send-notification-button.component';
-import { AiAssistantAlarmButtonComponent } from '@home/components/alarm/ai-assistant-alarm-button.component';
 import { GroupEntityInfoComponent } from '@home/components/group/group-entity-info.component';
 import { ManageOwnerAndGroupsDialogComponent } from '@home/components/group/manage-owner-and-groups-dialog.component';
 import { OwnerAndGroupsComponent } from '@home/components/group/owner-and-groups.component';
@@ -274,10 +273,12 @@ import {
 } from '@home/components/converter/converter-library-model-autocomplete.component';
 import { AiModule } from '@home/components/ai/ai.module';
 import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack.component';
+import { LicenseHandOffDialogComponent } from '@home/components/license/license-hand-off-dialog.component';
 
 @NgModule({
   declarations:
     [
+      LicenseHandOffDialogComponent,
       RouterTabsComponent,
       EntitiesTableComponent,
       AddEntityDialogComponent,
@@ -447,7 +448,6 @@ import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack
       ConverterTestDialogComponent,
       UpdatedPayloadPanelComponent,
       SendNotificationButtonComponent,
-      AiAssistantAlarmButtonComponent,
       EntityChipsComponent,
       DashboardViewComponent,
       ConverterLibraryComponent,
@@ -490,6 +490,7 @@ import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack
     AiModule,
   ],
   exports: [
+    LicenseHandOffDialogComponent,
     SharedHomeComponentsModule,
     RouterTabsComponent,
     EntitiesTableComponent,
@@ -639,7 +640,6 @@ import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack
     RateLimitsTextComponent,
     IntegrationWizardDialogComponent,
     SendNotificationButtonComponent,
-    AiAssistantAlarmButtonComponent,
     EntityChipsComponent,
     DashboardViewComponent,
     CancelTaskDialogComponent,

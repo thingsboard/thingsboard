@@ -1,0 +1,111 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="card" [count]="total()">
+  <ng-container homeCardActions>
+    @if (total()) {
+      <tb-home-toggle [options]="tabOptions" [value]="tab()" [label]="'home.dashboards.view' | translate" (valueChange)="setTab($event)"></tb-home-toggle>
+    }
+    @if (canAdd) {
+      <a mat-button color="primary" class="tb-home-add" routerLink="/dashboards/all" [queryParams]="{action: 'add'}">
+        <mat-icon>add</mat-icon>
+        <span class="tb-home-add-label">{{ 'home.dashboards.add' | translate }}</span>
+      </a>
+    }
+  </ng-container>
+  @if (loaded()) {
+    @if (!total()) {
+      <div class="tb-home-setup-empty">
+        <span class="tb-home-setup-empty-glyph" aria-hidden="true"><mat-icon>{{ canAdd ? 'dashboard_customize' : 'dashboard' }}</mat-icon></span>
+        @if (canAdd) {
+          <div class="tb-home-setup-empty-text">
+            <p>{{ 'home.dashboards.none' | translate }}</p>
+            <div class="tb-home-setup-empty-actions">
+              @if (canUseIotHub) {
+                <a routerLink="/iot-hub/solution-templates">{{ 'home.dashboards.from-template' | translate }}</a>
+              }
+              <a [href]="howToLink" target="_blank" rel="noopener">{{ 'home.dashboards.how-to' | translate }}<mat-icon class="tb-home-ext" aria-hidden="true">north_east</mat-icon><span class="tb-home-sr-only">{{ 'home.dashboards.opens-new-tab' | translate }}</span></a>
+            </div>
+          </div>
+        } @else {
+          <div class="tb-home-setup-empty-title">{{ 'home.dashboards.none-assigned' | translate }}</div>
+        }
+      </div>
+    } @else {
+      @if (rows().length) {
+        <table class="tb-dashboards-table">
+          <thead>
+            <tr>
+              <th class="col-star"></th>
+              <th class="col-title">{{ 'home.dashboards.name' | translate }}</th>
+              <th class="col-time">{{ 'home.dashboards.last-viewed' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr (click)="open(row)">
+                <td class="col-star">
+                  <button type="button" class="tb-dashboards-star" [class.starred]="row.starred"
+                          [matTooltip]="(row.starred ? 'home.dashboards.unstar-tip' : 'home.dashboards.star-tip') | translate"
+                          [attr.aria-label]="(row.starred ? 'home.dashboards.unstar' : 'home.dashboards.star') | translate: {title: row.title}"
+                          (click)="toggleStar(row, $event)">
+                    <mat-icon>{{ row.starred ? 'star' : 'star_border' }}</mat-icon>
+                  </button>
+                </td>
+                <td class="col-title"><a [routerLink]="row.url" (click)="$event.stopPropagation()">{{ row.title | customTranslate }}</a></td>
+                <td class="col-time">{{ row.ago }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <div class="tb-home-empty-note">{{ (tab() === 'last' ? 'home.dashboards.none-viewed' : 'home.dashboards.none-starred') | translate }}</div>
+      }
+      @if (tab() === 'starred') {
+        <div class="tb-dashboards-picker">
+          @if (picking()) {
+            <label class="tb-dashboards-search">
+              <mat-icon aria-hidden="true">search</mat-icon>
+              <input #searchInput type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true"
+                     aria-controls="tb-dashboards-star-options" aria-autocomplete="list"
+                     [attr.aria-activedescendant]="candidates().length ? 'tb-dashboards-star-option-' + active() : null"
+                     [placeholder]="'home.dashboards.search-to-star' | translate" [attr.aria-label]="'home.dashboards.search-to-star' | translate"
+                     [value]="query()" (input)="onQuery($any($event.target).value)" (keydown)="onPickerKeydown($event)" (blur)="onPickerBlur()">
+              <button mat-icon-button type="button" class="tb-dashboards-search-close" [attr.aria-label]="'action.close' | translate"
+                      (mousedown)="$event.preventDefault()" (click)="closePicker()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </label>
+            <div class="tb-dashboards-options" id="tb-dashboards-star-options" role="listbox">
+              @for (candidate of candidates(); track candidate.id; let i = $index) {
+                <div class="tb-dashboards-option" role="option" [id]="'tb-dashboards-star-option-' + i" [class.active]="i === active()"
+                     [attr.aria-selected]="i === active()" tabindex="-1" (mousedown)="$event.preventDefault()" (mousemove)="active.set(i)"
+                     (click)="pick(candidate)" (keydown.enter)="pick(candidate)">
+                  <mat-icon>star_border</mat-icon>
+                  <span class="tb-dashboards-option-label">{{ candidate.title | customTranslate }}</span>
+                  @if (candidate.ago) {
+                    <small>{{ candidate.ago }}</small>
+                  }
+                </div>
+              } @empty {
+                @if (query().trim()) {
+                  <div class="tb-dashboards-options-empty">{{ 'home.dashboards.no-match' | translate: {query: query().trim()} }}</div>
+                }
+              }
+            </div>
+          } @else {
+            <button type="button" class="tb-dashboards-picker-add" [disabled]="allStarred()" (click)="openPicker()">
+              <mat-icon>{{ allStarred() ? 'star' : 'star_border' }}</mat-icon>
+              {{ (allStarred() ? 'home.dashboards.all-starred' : 'home.dashboards.star-a-dashboard') | translate }}
+            </button>
+          }
+        </div>
+      }
+      <tb-home-list-footer [total]="listed()" [expanded]="expanded()" [link]="dashboardsLink"
+                           (expandedChange)="expanded.set($event)"></tb-home-list-footer>
+    }
+  }
+</tb-home-card>

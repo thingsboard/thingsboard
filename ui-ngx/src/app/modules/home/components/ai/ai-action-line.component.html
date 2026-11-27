@@ -1,0 +1,43 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@switch (action().status) {
+  @case ('RUNNING') {
+    <tb-ai-work-line [words]="running()" [kind]="words().kind" [since]="action().startedAt"></tb-ai-work-line>
+  }
+  @case ('STOPPED') {
+    <tb-ai-work-line [words]="running()" kind="stop" [held]="true"></tb-ai-work-line>
+  }
+  @default {
+    <div class="out">
+      <mat-icon class="mark" aria-hidden="true">{{ action().status === 'FAILURE' ? 'error_outline' : 'check' }}</mat-icon>
+      <span class="say">@if (outcomeChip(); as chip) {{{ chip.before }}@if (chip.link) {<a class="tb-chiplink" [routerLink]="chip.link"><code class="k-ent" [attr.data-pal]="chip.palette"><span class="mat-icon notranslate material-icons mat-ligature-font k-ent-ic" aria-hidden="true">{{ chip.icon }}</span>{{ chip.name }}<span class="mat-icon notranslate material-icons mat-ligature-font tb-chip-go" aria-hidden="true">chevron_right</span></code></a>} @else {<code class="k-ent" [attr.data-pal]="chip.palette"><span class="mat-icon notranslate material-icons mat-ligature-font k-ent-ic" aria-hidden="true">{{ chip.icon }}</span>{{ chip.name }}</code>}{{ chip.after }}} @else {{{ outcome() }}}</span>
+      @if (duration()) {
+        <span class="dur">{{ duration() }}</span>
+      }
+    </div>
+    @if (arrival()?.readings?.length) {
+      <div class="k-arrived">
+        @for (reading of arrival().readings; track reading.key) {
+          <span class="k-reading"><code>{{ reading.key }}</code><b>{{ reading.value }}</b></span>
+        }
+      </div>
+    }
+    @if (listing(); as hub) {
+      <div class="k-recs k-out-recs">
+        <tb-ai-record [entityType]="hub.entityType" [alarmRule]="hub.alarmRule" [name]="hub.name" [url]="hub.url" [hub]="hub.hub"></tb-ai-record>
+      </div>
+    }
+    @if (hasDetails()) {
+      <tb-ai-disclosure class="action-details" variant="details" [summary]="'ai-assistant.action.details' | translate" [key]="'action:' + action().executionId">
+        @if (records().length) {
+          <tb-ai-run-summary class="records" [entities]="records()"></tb-ai-run-summary>
+        }
+        <tb-ai-action-detail [view]="detail()" [names]="names()"></tb-ai-action-detail>
+      </tb-ai-disclosure>
+    }
+  }
+}

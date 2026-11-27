@@ -4,7 +4,7 @@
 import { Action } from '@ngrx/store';
 import { AuthUser, User } from '@shared/models/user.model';
 import { AuthPayload } from '@core/auth/auth.models';
-import { UserSettings } from '@shared/models/user-settings.models';
+import { AiTourStep, HomeCardsSettings, UserSettings } from '@shared/models/user-settings.models';
 
 export enum AuthActionTypes {
   AUTHENTICATED = '[Auth] Authenticated',
@@ -16,6 +16,8 @@ export enum AuthActionTypes {
   UPDATE_HAS_REPOSITORY = '[Auth] Change Has Repository',
   UPDATE_MOBILE_QR_ENABLED = '[Auth] Update Mobile QR Enabled',
   UPDATE_OPENED_MENU_SECTION = '[Preferences] Update Opened Menu Section',
+  UPDATE_AI_TOUR = '[Preferences] Update AI tour',
+  UPDATE_HOME_CARDS = '[Preferences] Update home cards',
   PUT_USER_SETTINGS = '[Preferences] Put user settings',
   DELETE_USER_SETTINGS = '[Preferences] Delete user settings',
   UPDATE_LICENSE_PARAMS = '[Auth] Update License Parameters',
@@ -73,6 +75,18 @@ export class ActionPreferencesUpdateOpenedMenuSection implements Action {
   constructor(readonly payload: { path: string; opened: boolean }) {}
 }
 
+export class ActionPreferencesUpdateAiTour implements Action {
+  readonly type = AuthActionTypes.UPDATE_AI_TOUR;
+
+  constructor(readonly payload: { step: AiTourStep; seen: boolean }) {}
+}
+
+export class ActionPreferencesUpdateHomeCards implements Action {
+  readonly type = AuthActionTypes.UPDATE_HOME_CARDS;
+
+  constructor(readonly payload: HomeCardsSettings) {}
+}
+
 export class ActionPreferencesPutUserSettings implements Action {
   readonly type = AuthActionTypes.PUT_USER_SETTINGS;
 
@@ -93,5 +107,5 @@ export class ActionUpdateLicenseParams implements Action {
 
 export type AuthActions = ActionAuthAuthenticated | ActionAuthUnauthenticated |
   ActionAuthLoadUser | ActionAuthUpdateUserDetails | ActionAuthUpdateLastPublicDashboardId | ActionAuthUpdateHasRepository |
-  ActionPreferencesUpdateOpenedMenuSection | ActionPreferencesPutUserSettings | ActionPreferencesDeleteUserSettings |
+  ActionPreferencesUpdateOpenedMenuSection | ActionPreferencesUpdateAiTour | ActionPreferencesUpdateHomeCards | ActionPreferencesPutUserSettings | ActionPreferencesDeleteUserSettings |
   ActionAuthUpdateAuthUser | ActionUpdateMobileQrCodeEnabled | ActionUpdateLicenseParams;

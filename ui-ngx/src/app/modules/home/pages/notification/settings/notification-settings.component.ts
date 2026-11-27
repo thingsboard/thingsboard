@@ -22,6 +22,9 @@ import { NotificationService } from '@core/http/notification.service';
 import { DialogService } from '@core/services/dialog.service';
 import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { filter, switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 type NotificationSettingRow = NotificationUserSetting & { name: string };
@@ -55,8 +58,14 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
               private notificationService: NotificationService,
               private fb: UntypedFormBuilder,
               private userPermissionsService: UserPermissionsService,
+              private aiAssistantPanelService: AiAssistantPanelService,
               ) {
     super(store);
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      filter(event => event.kind === 'ACCOUNT_NOTIFICATIONS' && !this.notificationSettings?.dirty && !!this.notificationDeliveryMethods),
+      switchMap(() => this.notificationService.getNotificationUserSettings({ignoreLoading: true})),
+      takeUntilDestroyed()
+    ).subscribe(settings => this.patchNotificationSettings(settings));
     this.notificationService.getAvailableDeliveryMethods({ignoreLoading: true}).subscribe(
       allowMethods => {
         this.notificationDeliveryMethods = allowMethods.filter(value => !this.deliveryMethods.has(value));

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -66,7 +68,17 @@ export class CustomMenuTableComponent implements OnInit {
               private viewContainerRef: ViewContainerRef) {
   }
 
+  private aiAssistantPanelService = inject(AiAssistantPanelService);
+  private destroyRef = inject(DestroyRef);
+
   ngOnInit() {
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(event => {
+      if (event.kind === 'MENU') {
+        this.customMenuTableConfig.updateData();
+      }
+    });
     this.customMenuTableConfig.tableTitle = '';
     this.customMenuTableConfig.headerComponent = CustomMenuTableHeaderComponent;
     this.customMenuTableConfig.detailsPanelEnabled = false;

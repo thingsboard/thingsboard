@@ -1,0 +1,65 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="card" [count]="total()" [class.tb-mark-all-icon]="markAllIcon()">
+  <ng-container homeCardActions>
+    @if (rows().length) {
+      <button mat-button color="primary" type="button" class="tb-notifications-mark-all"
+              [matTooltip]="markAllIcon() ? ('notification.mark-all-as-read' | translate) : ''" (click)="markAllAsRead()">
+        <mat-icon>done_all</mat-icon>
+        <span class="tb-notifications-mark-all-label">{{ 'notification.mark-all-as-read' | translate }}</span>
+      </button>
+    }
+  </ng-container>
+  @if (loaded()) {
+    @if (!rows().length) {
+      <div class="tb-home-all-clear">
+        <span class="tb-home-all-clear-glyph" aria-hidden="true"><mat-icon>check</mat-icon></span>
+        <span>{{ 'home.notifications.none' | translate }}</span>
+      </div>
+    } @else {
+      <div class="tb-notifications-list" role="list">
+        @for (row of rows(); track row.id) {
+          <div class="tb-notification" role="listitem" tabindex="0" [class.open]="openId() === row.id"
+               [attr.aria-expanded]="openId() === row.id"
+               [attr.title]="openId() === row.id ? null : ('home.notifications.show-full' | translate)"
+               (click)="toggle(row, $event)" (keydown)="onRowKeydown(row, $event)">
+            @if (row.severity) {
+              <span class="tb-notification-icon tb-notification-mark"><tb-ai-sev-mark [severity]="row.severity"></tb-ai-sev-mark></span>
+            } @else {
+              <tb-icon class="tb-notification-icon" [style.color]="row.iconColor">{{ row.icon }}</tb-icon>
+            }
+            <div class="tb-notification-content">
+              <div class="tb-notification-title" [innerHTML]="row.title"></div>
+              <div class="tb-notification-message" [innerHTML]="row.message"></div>
+              @if (openId() === row.id) {
+                <div class="tb-notification-detail">
+                  <span class="tb-notification-when">{{ row.ago }} · {{ row.when }}</span>
+                  @if (row.action) {
+                    <button mat-button color="primary" type="button" (click)="runAction(row, $event)">
+                      <mat-icon>open_in_new</mat-icon>
+                      {{ row.action }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            <div class="tb-notification-meta">
+              <span class="tb-notification-time" [attr.title]="row.when">{{ row.ago }}</span>
+              <button mat-icon-button type="button" class="tb-notification-mark-read"
+                      [matTooltip]="'notification.mark-as-read' | translate" matTooltipPosition="above"
+                      [attr.aria-label]="'notification.mark-as-read' | translate" (click)="markAsRead(row, $event)">
+                <mat-icon>check_circle_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+      <tb-home-list-footer [total]="listed()" [expanded]="expanded()" [link]="inboxLink"
+                           (expandedChange)="expanded.set($event)"></tb-home-list-footer>
+    }
+  }
+</tb-home-card>

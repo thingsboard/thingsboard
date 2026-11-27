@@ -1,0 +1,84 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="cardDefinition()" [hideable]="true" [countText]="progress()">
+  @if (loaded()) {
+    <div class="tb-sgs-bar" role="progressbar" [attr.aria-label]="cardDefinition().name | translate" aria-valuemin="0"
+         [attr.aria-valuemax]="total" [attr.aria-valuenow]="doneCount()">
+      <i [style.width.%]="doneCount() / total * 100"></i>
+    </div>
+    <div class="tb-sgs-steps">
+      @for (group of groups; track group.label) {
+        <div class="tb-sgs-group">{{ group.label | translate }}</div>
+        <ol class="tb-sgs-list">
+          @for (step of group.steps; track step.key) {
+            @let stepState = state(step);
+            <li [class.done]="stepState === 'done' || stepState === 'skipped'" [class.skipped]="stepState === 'skipped'"
+                [class.open]="open() === step">
+              <div class="tb-sgs-row">
+                <span class="tb-sgs-mark" aria-hidden="true">
+                  @if (stepState === 'done') {
+                    <mat-icon>check</mat-icon>
+                  } @else if (stepState === 'skipped') {
+                    <mat-icon>remove</mat-icon>
+                  } @else {
+                    {{ number(step) }}
+                  }
+                </span>
+                <button type="button" class="tb-sgs-title" [attr.aria-current]="open() === step ? 'step' : null"
+                        [attr.aria-expanded]="open() === step" (click)="toggle(step)">
+                  <span class="tb-sgs-title-text">{{ 'home.get-started-sys-admin.' + step.key + '.title' | translate }}</span>
+                  @switch (stepState) {
+                    @case ('done') {
+                      <span class="tb-sgs-state">{{ (step.key === 'tenant' ? 'home.get-started-sys-admin.tenants' : 'home.get-started-sys-admin.configured')
+                        | translate: {count: tenantCount()} }}</span>
+                    }
+                    @case ('skipped') {
+                      <span class="tb-sgs-state">{{ 'home.get-started-sys-admin.skipped' | translate }}</span>
+                    }
+                  }
+                </button>
+              </div>
+              @if (open() === step) {
+                <div class="tb-sgs-body">
+                  <div class="tb-sgs-head">
+                    <span class="tb-sgs-head-n">{{ 'home.get-started.step-of' | translate: {step: number(step), total: total} }}</span>
+                    <span class="tb-sgs-head-t">{{ 'home.get-started-sys-admin.' + step.key + '.title' | translate }}</span>
+                  </div>
+                  <p>{{ 'home.get-started-sys-admin.' + step.key + '.text' | translate }}
+                    <a class="tb-sgs-guide" [href]="docUrl(step)" target="_blank" rel="noopener">{{ 'home.get-started.guide' | translate }}<mat-icon aria-hidden="true">north_east</mat-icon><span class="tb-home-sr-only">{{ 'home.dashboards.opens-new-tab' | translate }}</span></a>
+                  </p>
+                  <div class="tb-sgs-actions">
+                    @if (stepState === 'done') {
+                      <a mat-stroked-button class="tb-sgs-action" [routerLink]="step.link" [queryParams]="step.queryParams">
+                        {{ 'home.get-started-sys-admin.' + step.key + '.action' | translate }}</a>
+                    } @else {
+                      <a mat-flat-button color="primary" class="tb-sgs-action" [routerLink]="step.link" [queryParams]="step.queryParams">
+                        {{ 'home.get-started-sys-admin.' + step.key + '.action' | translate }}</a>
+                    }
+                    <span class="tb-sgs-spacer"></span>
+                    @if (!step.needed && stepState !== 'done') {
+                      <button mat-button type="button" class="tb-sgs-skip" (click)="skip(step)">
+                        {{ (stepState === 'skipped' ? 'home.get-started-sys-admin.undo-skip' : 'home.get-started-sys-admin.skip') | translate }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </li>
+          }
+        </ol>
+      }
+    </div>
+    @if (finished()) {
+      <div class="tb-sgs-finish">
+        <span>{{ (doneCount() === total ? 'home.get-started-sys-admin.finished' : 'home.get-started-sys-admin.finished-skipped')
+          | translate: {count: total - doneCount()} }}</span>
+        <button mat-stroked-button type="button" class="tb-sgs-close" (click)="close()">{{ 'action.close' | translate }}</button>
+      </div>
+    }
+  }
+</tb-home-card>

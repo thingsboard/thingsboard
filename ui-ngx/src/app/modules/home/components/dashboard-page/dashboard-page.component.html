@@ -66,6 +66,7 @@
             </tb-states-component>
           } @else {
             @if (!isPublicUser()) {
+              <tb-ai-assistant-button class="gt-sm:!hidden"></tb-ai-assistant-button>
               <tb-notification-bell class="gt-sm:!hidden"></tb-notification-bell>
             }
             <tb-breadcrumb class="lt-md:flex-1"
@@ -117,6 +118,7 @@
           </button>
           <div class="flex flex-row-reverse items-center lt-md:!hidden">
             @if (!isEdit && !isPublicUser()) {
+              <tb-ai-assistant-button></tb-ai-assistant-button>
               <tb-notification-bell></tb-notification-bell>
             }
             <button [class.!hidden]="hideFullscreenButton()" mat-icon-button
@@ -162,17 +164,6 @@
               <mat-icon>edit</mat-icon></button>
             <button class="lt-lg:!hidden" mat-stroked-button (click)="toggleDashboardEditMode()">
               <mat-icon>edit</mat-icon>{{'dashboard.edit-mode' | translate}}</button>
-          }
-          @if (showConfigureWithAi) {
-            <button class="gt-md:!hidden" mat-icon-button (click)="toggleAiAssistant($event)"
-                    matTooltip="{{ 'ai-assistant.configure-with-ai' | translate }}"
-                    matTooltipPosition="below">
-              <tb-icon>mdi:creation</tb-icon>
-            </button>
-            <button class="lt-lg:!hidden" mat-stroked-button (click)="toggleAiAssistant($event)">
-              <tb-icon matButtonIcon>mdi:creation</tb-icon>
-              {{ 'ai-assistant.configure-with-ai' | translate }}
-            </button>
           }
           @if (isEdit) {
             <button class="gt-md:!hidden" mat-icon-button (click)="saveDashboard()" [disabled]="isLoading$ | async"

@@ -101,7 +101,10 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             return;
         }
         AlarmDataUpdate update;
-        if (!entitiesMap.isEmpty()) {
+        if (isOwnerScoped()) {
+            setAndMergeAlarmsData(findOwnerAlarms());
+            update = new AlarmDataUpdate(cmdId, alarms, null, maxEntitiesPerAlarmSubscription, 0);
+        } else if (!entitiesMap.isEmpty()) {
             long start = System.currentTimeMillis();
             PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(),
                     getMergedUserPermissions(), query, getOrderedEntityIds());
@@ -116,9 +119,39 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         sendWsMsg(update);
     }
 
+    public boolean isOwnerScoped() {
+        return query != null && query.getEntityFilter() == null;
+    }
+
+    private PageData<AlarmData> findOwnerAlarms() {
+        long start = System.currentTimeMillis();
+        PageData<AlarmData> result = alarmService.findAlarmDataByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), query);
+        stats.getAlarmQueryInvocationCnt().incrementAndGet();
+        stats.getAlarmQueryTimeSpent().addAndGet(System.currentTimeMillis() - start);
+        return result;
+    }
+
+    private void refreshOwnerAlarms() {
+        if (stopped) {
+            return;
+        }
+        PageData<AlarmData> fresh = findOwnerAlarms();
+        if (alarms != null && alarms.getTotalElements() == fresh.getTotalElements() && alarms.getData().equals(fresh.getData())) {
+            return;
+        }
+        setAndMergeAlarmsData(fresh);
+        sendWsMsg(new AlarmDataUpdate(cmdId, alarms, null, maxEntitiesPerAlarmSubscription, 0));
+    }
+
     public void fetchData() {
         resetInvocationCounter();
         log.trace("[{}] Fetching data: {}", cmdId, alarmInvocationAttempts);
+        if (isOwnerScoped()) {
+            data = PageData.emptyPageData();
+            entitiesMap.clear();
+            tooManyEntities = false;
+            return;
+        }
         super.fetchData();
         entitiesMap.clear();
         tooManyEntities = data.hasNext();
@@ -232,6 +265,9 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     public void cleanupOldAlarms() {
+        if (query.getPageLink().getTimeWindow() <= 0) {
+            return;
+        }
         long expTime = System.currentTimeMillis() - query.getPageLink().getTimeWindow();
         boolean shouldRefresh = false;
         for (AlarmData alarmData : alarms.getData()) {
@@ -248,7 +284,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     private boolean filter(Alarm alarm) {
         AlarmDataPageLink filter = query.getPageLink();
         long startTs = System.currentTimeMillis() - filter.getTimeWindow();
-        if (alarm.getCreatedTime() < startTs) {
+        if (filter.getTimeWindow() > 0 && alarm.getCreatedTime() < startTs) {
             //Skip update that does not match time window.
             return false;
         }
@@ -292,6 +328,11 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     public synchronized void checkAndResetInvocationCounter() {
+        if (isOwnerScoped()) {
+            resetInvocationCounter();
+            refreshOwnerAlarms();
+            return;
+        }
         boolean fetchNeeded = this.alarmInvocationAttempts > maxAlarmQueriesPerRefreshInterval;
         resetInvocationCounter();
         if (fetchNeeded) {

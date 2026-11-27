@@ -106,9 +106,6 @@
                 <mat-icon>search</mat-icon>
               </button>
             }
-            @if (aiEnabled && entitiesTableConfig.aiAssistantConfig) {
-              <ng-container *ngTemplateOutlet="headerButton; context: {$implicit: configureWithAiButton}"></ng-container>
-            }
             @for (buttonDescriptor of entitiesTableConfig.headerButtonDescriptors; track buttonDescriptor.name) {
               <ng-container *ngTemplateOutlet="headerButton; context: {$implicit: buttonDescriptor}"></ng-container>
             }

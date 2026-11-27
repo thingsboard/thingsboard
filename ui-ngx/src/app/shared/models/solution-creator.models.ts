@@ -7,13 +7,26 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
 import { CalculatedFieldType } from '@shared/models/calculated-field.models';
 import { AlarmSeverity } from '@shared/models/alarm.models';
-import { ToolExecutionRequested, ToolExecutionResult, AiResourceInfo } from '@shared/models/ai-chat.models';
+import { AiAction, ToolExecutionRequested, ToolExecutionResult, AiResourceInfo } from '@shared/models/ai-chat.models';
+
+export const NEW_SOLUTION_ID = 'new';
 
 export interface SolutionInfo {
   id: string;
+  createdTime?: number;
   solutionTitle?: string;
   installed?: boolean;
   built?: boolean;
+  pinned?: boolean;
+  status?: 'RUNNING' | 'NEEDS_YOU' | 'FAILED';
+  statusReason?: string;
+}
+
+export type SolutionOperation = 'INITIAL_CONFIGURATION' | 'DASHBOARDS_CONFIGURATION' | 'CREATE' | 'INSTALL';
+
+export interface SolutionEstimate {
+  credits: number;
+  seconds: number;
 }
 
 export interface SolutionCreatorInfo {
@@ -22,11 +35,59 @@ export interface SolutionCreatorInfo {
   states: Record<SolutionStep, SolutionStepState>;
   data: SolutionData;
   metadata?: SolutionMetadata;
+  estimates?: Partial<Record<SolutionOperation, SolutionEstimate>>;
+}
+
+export interface SolutionProgressItem {
+  type: EntityType;
+  name?: string;
+  state: 'WAIT' | 'WORKING' | 'DONE';
+  profile?: string;
+  customer?: string;
+}
+
+export interface SolutionInstallProgress {
+  running: boolean;
+  phase?: string;
+  entityResults: Partial<Record<EntityType, EntityResult[]>>;
+  stage?: 'CREATE' | 'INSTALL';
+  items?: SolutionProgressItem[];
+}
+
+export interface SolutionUpdateRequest {
+  title?: string;
+  pinned?: boolean;
+  step?: SolutionStep;
+  feedback?: {answer: string; rating?: 'UP' | 'DOWN' | 'NONE'; problem?: string; comment?: string};
+}
+
+export interface AiQuestionOption {
+  label: string;
+  hint?: string;
+}
+
+export interface AiQuestion {
+  id: string;
+  label?: string;
+  question: string;
+  why?: string;
+  options: AiQuestionOption[];
+  recommended?: string | string[];
+  multiple?: boolean;
+  secret?: boolean;
+  color?: boolean;
+}
+
+export interface AiQuestionAnswer {
+  question: AiQuestion;
+  answer: string;
+  secret?: boolean;
 }
 
 export interface DashboardsOverview {
   name: string;
   assignedTo: string;
+  overview?: string;
   description: string;
 }
 
@@ -35,6 +96,7 @@ export interface SolutionData {
   dashboardsOverview?: Array<DashboardsOverview>;
   dashboards?: Dashboard & {assignedTo: string};
   solutionTitle?: string;
+  aiSolutionTitle?: string;
   solutionDescription?: string;
   entities?: any;
 }
@@ -42,6 +104,8 @@ export interface SolutionData {
 export interface SolutionMetadata {
   installed: boolean;
   built: boolean;
+  builtTime?: number;
+  createDurationMs?: number;
   installResult?: SolutionInstallResult;
 }
 
@@ -49,6 +113,8 @@ export interface SolutionInstallResult {
   mainDashboardId?: DashboardId;
   createdEntities: Array<BaseData<EntityId>>;
   entityResults?: Record<EntityType, Array<EntityResult>>;
+  installedTime?: number;
+  durationMs?: number;
 }
 
 export interface EntityResult {
@@ -172,13 +238,42 @@ export interface SolutionStepState {
   skipInterviewAllowed?: boolean;
 }
 
-export type ChatMessage = GeneralChatMessage | ApprovalChatMessage;
+export type ChatMessage = GeneralChatMessage | ApprovalChatMessage | ActionChatMessage;
+
+export interface AiStartedFrom {
+  type: string;
+  entityId?: EntityId;
+  title?: string;
+  path?: string;
+}
 
 export interface GeneralChatMessage {
   from: 'USER' | 'AI' | 'SYSTEM' | 'GENERATE';
   content: string;
-  status?: 'INCOMPLETE';
+  references?: Array<{name: string; entityType: string; id: string}>;
+  severities?: string[];
+  readings?: Array<{key: string; values: string[]}>;
+  status?: 'INCOMPLETE' | 'STOPPED';
+  streaming?: boolean;
+  rating?: 'UP' | 'DOWN';
+  reported?: boolean;
+  startedFrom?: AiStartedFrom;
   resources?: AiResourceInfo[];
+  time?: number;
+  questions?: AiQuestion[];
+  answers?: AiQuestionAnswer[];
+  done?: boolean;
+  lead?: string;
+  note?: string;
+  entities?: EntityId[];
+  entitiesMeta?: string;
+  hint?: {lead: string; text: string};
+  chips?: Array<{id: string; icon: string; label: string}>;
+}
+
+export interface ActionChatMessage {
+  from: 'ACTION';
+  data: AiAction;
 }
 
 export interface ApprovalChatMessage {

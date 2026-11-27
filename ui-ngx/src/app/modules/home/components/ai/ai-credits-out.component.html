@@ -1,0 +1,49 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="k-credits-out" role="alert" [attr.aria-label]="'ai-assistant.credits-out.title' | translate">
+  <div class="k-credits-out-head">
+    <span class="k-credits-out-mark" aria-hidden="true"><mat-icon fontSet="material-icons-round">auto_awesome</mat-icon></span>
+    <div class="k-credits-out-text">
+      <b>{{ 'ai-assistant.credits-out.title' | translate }}</b>
+      <span>
+        @if (tenantLimit()) {
+          {{ (hasUsage() ? 'ai-assistant.credits-out.tenant-text' : 'ai-assistant.credits-out.tenant-text-plain') | translate: {limit: limitLabel(), date: (resetDate | date: 'MMMM d')} }}
+        } @else {
+          {{ 'ai-assistant.credits-out.pool-text' | translate }}
+        }
+      </span>
+    </div>
+    <button mat-icon-button type="button" class="k-credits-out-close" [matTooltip]="'action.close' | translate"
+            [attr.aria-label]="'action.close' | translate" (click)="dismissed.emit()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  @if (hasUsage()) {
+    <div class="k-credits-out-meter">
+      <span class="k-credits-out-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="percent()"><i [style.width.%]="percent()"></i></span>
+      <span class="k-credits-out-count">{{ 'ai-assistant.credits.used' | translate: {used: usedLabel(), max: limitLabel()} }}</span>
+    </div>
+  }
+  <div class="k-credits-out-actions">
+    @switch (state()) {
+      @case ('sent') {
+        <span class="k-credits-out-sent" role="status"><mat-icon fontSet="material-icons-round">check_circle</mat-icon>{{ 'ai-assistant.credits-out.sent' | translate }}</span>
+      }
+      @default {
+        <button mat-flat-button color="primary" type="button" [disabled]="state() === 'sending'" (click)="request()">
+          {{ 'ai-assistant.credits-out.request' | translate }}
+        </button>
+        @if (state() === 'failed') {
+          <span class="k-credits-out-failed" role="status">{{ 'ai-assistant.credits-out.failed' | translate }}</span>
+        }
+      }
+    }
+    @if (tenantLimit()) {
+      <a mat-button routerLink="/usage" class="k-credits-out-usage">{{ 'ai-assistant.credits-out.view-usage' | translate }}</a>
+    }
+  </div>
+</section>

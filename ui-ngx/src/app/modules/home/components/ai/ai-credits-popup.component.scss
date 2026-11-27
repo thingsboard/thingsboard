@@ -8,23 +8,22 @@
   }
 
   .popup-title {
-    font-size: 16px;
+    font-size: var(--chat-head);
     font-weight: 500;
-    line-height: 24px;
-    letter-spacing: 0.25px;
-    color: rgba(0, 0, 0, 0.87);
+    line-height: var(--chat-head-lh);
+    letter-spacing: var(--chat-text-ls);
+    color: var(--tb-ink);
   }
 
   .popup-description {
-    font-size: 14px;
-    line-height: 20px;
-    letter-spacing: 0.2px;
-    color: rgba(0, 0, 0, 0.76);
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
+    letter-spacing: var(--chat-text-ls);
+    color: var(--k-grey);
     margin: 0;
 
     strong {
       font-weight: 500;
-      letter-spacing: 0.25px;
     }
   }
 }

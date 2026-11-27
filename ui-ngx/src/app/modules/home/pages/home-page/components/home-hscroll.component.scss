@@ -1,0 +1,166 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+tb-home-hscroll {
+  display: block;
+  min-width: 0;
+}
+
+.tb-hscroll {
+  margin: 0 -20px;
+
+  .tb-hscroll-view {
+    position: relative;
+
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      z-index: 1;
+      width: 56px;
+      pointer-events: none;
+      transition: opacity .15s ease;
+    }
+
+    &::before {
+      left: 0;
+      background: linear-gradient(90deg, var(--tb-surface, #fff), transparent);
+    }
+
+    &::after {
+      right: 0;
+      background: linear-gradient(270deg, var(--tb-surface, #fff), transparent);
+    }
+  }
+
+  &.at-start .tb-hscroll-view::before, &.at-end .tb-hscroll-view::after {
+    opacity: 0;
+  }
+
+  .tb-hscroll-track {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 2px 20px;
+    scroll-padding: 0 20px;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    > * {
+      flex: none;
+      scroll-snap-align: start;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      scroll-behavior: smooth;
+    }
+  }
+
+  &.dragging .tb-hscroll-track {
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+  }
+
+  .tb-hscroll-btn {
+    position: absolute;
+    top: var(--arrow-y, 50%);
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--tb-surface, #fff);
+    color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.14), 0 4px 14px rgba(16, 24, 40, 0.2);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%);
+    transition: opacity .15s ease;
+
+    &:hover {
+      color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.16), 0 6px 18px rgba(16, 24, 40, 0.26);
+    }
+
+    &.prev {
+      left: 10px;
+    }
+
+    &.next {
+      right: 10px;
+    }
+
+    .mat-icon {
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
+    }
+  }
+
+  &:hover .tb-hscroll-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &.at-start .tb-hscroll-btn.prev, &.at-end .tb-hscroll-btn.next {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .tb-hscroll-bar {
+    position: relative;
+    height: 12px;
+    margin: 2px 20px -4px;
+    cursor: pointer;
+    touch-action: none;
+    opacity: 0;
+    transition: opacity .15s ease;
+
+    > i {
+      position: absolute;
+      top: 4px;
+      left: 0;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--tb-ink-12, rgba(0, 0, 0, 0.12));
+      transition: background-color .15s ease;
+    }
+
+    &:hover > i {
+      background: var(--tb-ink-38, rgba(0, 0, 0, 0.38));
+    }
+  }
+
+  &:hover .tb-hscroll-bar, &.dragging .tb-hscroll-bar {
+    opacity: 1;
+  }
+
+  &.dragging .tb-hscroll-bar > i {
+    background: var(--tb-ink-38, rgba(0, 0, 0, 0.38));
+  }
+
+  &.fits .tb-hscroll-bar {
+    visibility: hidden;
+  }
+
+  @media (hover: none) {
+    .tb-hscroll-btn, .tb-hscroll-bar {
+      display: none;
+    }
+
+    .tb-hscroll-view::before, .tb-hscroll-view::after {
+      width: 24px;
+    }
+  }
+}

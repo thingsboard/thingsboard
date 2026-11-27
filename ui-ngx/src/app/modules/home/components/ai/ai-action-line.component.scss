@@ -1,0 +1,95 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  font-family: var(--tb-mono);
+  font-size: 15px;
+  letter-spacing: var(--chat-text-ls);
+}
+
+.out {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 2px;
+  font-family: var(--tb-font);
+  font-size: var(--chat-line);
+  line-height: var(--chat-line-lh);
+  color: var(--tb-ink);
+
+  .mark {
+    flex: none;
+    display: flex;
+    width: 20px;
+    height: 22px;
+    font-size: 22px;
+    line-height: 22px;
+    margin-top: 0;
+    color: var(--tb-ok);
+  }
+
+  .say {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .dur {
+    flex: none;
+    margin-left: auto;
+    font-family: var(--tb-mono);
+    font-size: 12px;
+    line-height: var(--chat-line-lh);
+    color: var(--k-faint);
+    white-space: nowrap;
+  }
+}
+
+:host(.fail) .out .mark {
+  color: var(--tb-crit);
+}
+
+.action-details {
+  display: block;
+  margin: 4px 0 0 28px;
+
+  ::ng-deep .tb-disc.tb-disc-details {
+    margin: 0;
+
+    > summary {
+      color: var(--tb-ink-76);
+    }
+  }
+
+  .records {
+    display: block;
+    margin: 8px 0 4px;
+  }
+}
+
+.k-arrived {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 4px 0 0 28px;
+  font-size: var(--chat-line, 14px);
+  line-height: 22px;
+
+  .k-reading {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  code {
+    padding: 0 6px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.06);
+    font: 13px/18px var(--tb-mono);
+    color: var(--tb-ink);
+  }
+
+  b {
+    font: 600 13px/18px var(--tb-mono);
+    color: var(--tb-ink);
+  }
+}

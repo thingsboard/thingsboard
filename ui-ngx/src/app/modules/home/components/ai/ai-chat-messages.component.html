@@ -5,44 +5,286 @@
 
 -->
 @for (msg of messages; track $index) {
-  @if (msg.from === 'USER') {
+  @if (dayLines[$index]; as day) {
+    <div class="k-day" role="separator"><span>{{ day }}</span></div>
+  }
+  @if (msg.from === 'USER' && (msg.answers?.length || answersAt[$index])) {
+    <tb-ai-question class="answers" [questions]="[]" [answered]="msg.answers ?? answersAt[$index]" [time]="msg.time"></tb-ai-question>
+  } @else if (msg.from === 'USER') {
+    @if (msg.startedFrom) {
+      <tb-ai-started-from [from]="msg.startedFrom"></tb-ai-started-from>
+    }
     <div class="user">
-      @if (msg.resources?.length) {
-        <tb-ai-attachments class="user-attachments" [resources]="msg.resources"
-                           (resourceError)="resourceError.emit($event)"></tb-ai-attachments>
-      }
-      @if (msg.content) {
-        <div class="msg">{{ msg.content }}</div>
-      }
+      <div class="turn">
+        @if (quotes[$index]; as quoted) {
+          <span class="k-quote-chip">
+            <mat-icon class="tb-mat-18" aria-hidden="true">{{ quoted.icon }}</mat-icon>
+            <span><b><span class="art-name">{{ fileName(quoted.name).base }}<span class="art-ext">{{ fileName(quoted.name).ext }}</span></span></b><small>{{ (quoted.from === quoted.to ? 'ai-assistant.file.line' : 'ai-assistant.file.lines-range') | translate: {from: quoted.from, to: quoted.to} }}</small></span>
+          </span>
+        }
+        @if (quotes[$index] ? quotes[$index].message : msg.content; as words) {
+          <div class="msg" [class.folded]="isFolded($index, words)"><span class="words">{{ words }}</span></div>
+          @if (isFolded($index, words)) {
+            <button type="button" class="tb-more show-all" (click)="unfold($index)">
+              <mat-icon aria-hidden="true">expand_more</mat-icon>{{ 'ai-assistant.show-all' | translate }}
+            </button>
+          }
+        }
+        @if (msg.resources?.length) {
+          <tb-ai-attachments [resources]="msg.resources" (resourceError)="resourceError.emit($event)"></tb-ai-attachments>
+        }
+      </div>
+      <div class="msg-foot user-foot">
+        @if (msg.content) {
+          <span class="foot-tools">
+            <button type="button" class="foot-tool" [class.done]="copiedIndex === $index"
+                    [matTooltip]="(copiedIndex === $index ? 'ai-assistant.copied' : 'ai-assistant.copy') | translate"
+                    matTooltipPosition="above" [attr.aria-label]="'ai-assistant.copy' | translate"
+                    (click)="copyText(msg.content, $index)">
+              <mat-icon class="tb-mat-16">{{ copiedIndex === $index ? 'check' : 'content_copy' }}</mat-icon>
+            </button>
+            <button type="button" class="foot-tool" [matTooltip]="'ai-assistant.edit-message' | translate" matTooltipPosition="above"
+                    [attr.aria-label]="'ai-assistant.edit-message' | translate" (click)="editMessage.emit(quotes[$index]?.message ?? msg.content)">
+              <mat-icon class="tb-mat-16">edit</mat-icon>
+            </button>
+          </span>
+        }
+        @if (msg.time) {
+          <time [matTooltip]="fullTime(msg.time)" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>
+        }
+      </div>
     </div>
+  } @else if (msg.from === 'ACTION' && files[$index] && inCard.has(files[$index].name)) {
+  } @else if (msg.from === 'ACTION' && files[$index]; as file) {
+    <div class="ai art-cards">
+      <button type="button" class="art-card" [class.on]="shownFile === file.executionId" [attr.aria-pressed]="shownFile === file.executionId"
+              (click)="openFile.emit(file)">
+        <span class="art-card-ic"><mat-icon class="tb-mat-20" aria-hidden="true">{{ fileMark(file) }}</mat-icon></span>
+        <span class="art-card-t"><b><span class="art-name">{{ fileName(file.name).base }}<span class="art-ext">{{ fileName(file.name).ext }}</span></span></b>
+          <small>{{ 'ai-assistant.file.lines' | translate: {count: file.lines} }} · {{ file.size }}@if (file.edited) {<span class="art-card-ed">{{ 'ai-assistant.file.edited' | translate }}</span>}</small></span>
+        <mat-icon class="tb-mat-18 art-card-chev" aria-hidden="true">chevron_right</mat-icon>
+      </button>
+    </div>
+  } @else if (msg.from === 'ACTION' && madeFiles[$index]; as made) {
+    <div class="ai art-cards">
+      <div class="art-card made">
+        <button type="button" class="art-card-open" (click)="openMadeFile(made)"
+                [attr.aria-label]="(made.preview ? 'ai-assistant.file.open' : 'ai-assistant.file.download') | translate">
+          <span class="art-card-ic"><mat-icon class="tb-mat-20" aria-hidden="true">{{ made.icon }}</mat-icon></span>
+          <span class="art-card-t"><b><span class="art-name">{{ fileName(made.resource.name).base }}<span class="art-ext">{{ fileName(made.resource.name).ext }}</span></span></b><small>{{ made.size }}</small></span>
+        </button>
+        <button type="button" class="art-card-dl" (click)="downloadMadeFile(made)"
+                [matTooltip]="'ai-assistant.file.download' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.file.download' | translate">
+          <mat-icon class="tb-mat-18" aria-hidden="true">download</mat-icon>
+        </button>
+      </div>
+    </div>
+  } @else if (msg.from === 'ACTION' && plans[$index]; as plan) {
+    <div class="ai plan">
+      <tb-ai-plan [steps]="plan.steps" [progress]="plan.progress" [gate]="plan.gate" [autoApprove]="autoApprove"
+                  (run)="runPlan.emit({run: $event, steps: plan.steps})" (change)="changePlan.emit()"></tb-ai-plan>
+    </div>
+  } @else if (msg.from === 'ACTION' && handOvers[$index]; as card) {
+    <div class="ai hand">
+      <tb-ai-hand-over [handOver]="card.handOver" [wait]="card.wait" [time]="msg.data.startedAt" (prompt)="prompt.emit($event)" (stop)="stopRun.emit()" (compose)="compose.emit($event)"
+                       [files]="latestFiles" (openFile)="openFile.emit($event)"></tb-ai-hand-over>
+    </div>
+    @if (waitAfterCard[$index] !== undefined && messages[waitAfterCard[$index]]; as moved) {
+      @if (moved.from === 'ACTION' && !waitsInCards.has(waitAfterCard[$index])) {
+        <div class="ai action">
+          <tb-ai-action-line [action]="moved.data" [names]="detailNames" [more]="0"></tb-ai-action-line>
+        </div>
+      }
+    }
+  } @else if (msg.from === 'ACTION' && asking?.index === $index) {
+    <div class="ai ask">
+      <tb-ai-question [questions]="asking.questions" [time]="msg.data.startedAt" (done)="answerQuestions($event)" (skip)="answerQuestions($event)"></tb-ai-question>
+    </div>
+  } @else if (msg.from === 'ACTION') {
+    @if (isListedAction(msg, $index) && (msg.data.status !== 'RUNNING' || $index === runningLead)) {
+      <div class="ai action">
+        <tb-ai-action-line [action]="msg.data" [names]="detailNames" [more]="$index === runningLead ? runningCount - 1 : 0"></tb-ai-action-line>
+        @if ($index === retryIndex) {
+          <div class="k-actions action-ways">
+            <button mat-stroked-button type="button" (click)="prompt.emit(retryPrompt)">
+              <mat-icon>replay</mat-icon>{{ 'ai-assistant.action.try-again' | translate }}
+            </button>
+          </div>
+        }
+      </div>
+    }
   } @else {
-    <div class="ai">
+    @if ($index === offerIndex) {
+      <div class="ai">
+        <div class="k-offer" role="group" [attr.aria-label]="'ai-assistant.offer.label' | translate">
+          <span class="k-offer-ic" aria-hidden="true"><mat-icon>bolt</mat-icon></span>
+          <span>{{ 'ai-assistant.offer.text' | translate }}</span>
+          <tb-ai-card-actions [actions]="offerActions()" (act)="offerAct($event)"></tb-ai-card-actions>
+        </div>
+      </div>
+    }
+    <div class="ai" [class.action]="msg.from === 'APPROVAL' && getCompletedExecution(msg)?.approvalStatus === 'APPROVED'">
       @if (msg.from === 'APPROVAL') {
         <tb-ai-approval-card
           [data]="getApprovalData(msg)"
           [completedExecution]="getCompletedExecution(msg)"
           [autoApprove]="autoApprove"
-          (approvalAction)="approval($event)">
+          [answered]="!!denyReasons[getApprovalData(msg).executionId]"
+          (approvalAction)="approval($event)"
+          (askAgain)="askAgain.emit()">
         </tb-ai-approval-card>
-      } @else if (msg.status === 'INCOMPLETE') {
-        <div class="incomplete flex items-start gap-2">
+      } @else if (msg.status === 'INCOMPLETE' || msg.status === 'STOPPED') {
+        <div class="incomplete flex" role="status">
           <mat-icon class="incomplete-icon">warning_amber</mat-icon>
-          <span>{{ msg.content }}</span>
+          <span>{{ msg.status === 'STOPPED' ? stoppedText($index, msg.content) : msg.content }}</span>
         </div>
+        @if (summaries[$index]; as entities) {
+          <tb-ai-run-summary class="summary" [entities]="entities"></tb-ai-run-summary>
+        }
+        @if (msg.status === 'STOPPED' && $last && !loading) {
+          <tb-ai-card-actions [actions]="resumeActions()" (act)="resume.emit()"></tb-ai-card-actions>
+        }
       } @else {
-        <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.content)"></tb-markdown>
+        <div class="agent" [class.done]="msg.done" [class.streaming]="msg.streaming" #answer>
+          @if (msg.done) {
+            <mat-icon class="done-mark" aria-hidden="true">check</mat-icon>
+          }
+          <div class="agent-body">
+            @if (msg.lead) {
+              <p class="lead">{{ msg.lead }}</p>
+            }
+            @for (key of [decorationKey(msg)]; track key) {
+              <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.done !== undefined ? withoutDoneMark(msg.content) : msg.content)" (ready)="decorateCode(answer, msg)"></tb-markdown>
+            }
+            @let madeHere = made[$index] ?? [];
+            @for (shown of records[$index] ?? []; track $index) {
+              <tb-ai-records class="agent-records" [shown]="shown" [made]="madeHere" (compose)="compose.emit($event)"></tb-ai-records>
+            }
+            @if (summaries[$index]; as entities) {
+              <tb-ai-run-summary [entities]="entities"></tb-ai-run-summary>
+            }
+            @if (msg.entities?.length) {
+              <tb-ai-run-summary class="agent-card" [entities]="msg.entities" [leadMeta]="msg.entitiesMeta ?? null"></tb-ai-run-summary>
+            }
+            @if (msg.hint; as hint) {
+              <div class="k-hint note agent-hint">
+                <mat-icon aria-hidden="true">info_outline</mat-icon>
+                <span><b>{{ hint.lead }}</b> {{ hint.text }}</span>
+              </div>
+            }
+          </div>
+        </div>
+        @if (msg.note) {
+          <p class="agent-note">{{ msg.note }}</p>
+        }
+        @if (sources[$index]; as cited) {
+          <div class="k-docs agent-docs">
+          @for (source of cited; track source.url) {
+            <div class="tb-rec card source" [class.ext]="source.external">
+              <div class="tb-rec-row">
+                <span class="tb-rec-tile"><mat-icon aria-hidden="true">{{ source.icon }}</mat-icon></span>
+                <div class="tb-rec-body">
+                  <a class="tb-rec-title" [href]="source.url" target="_blank" rel="noopener noreferrer">{{ source.title }}<span class="tb-ai-sr-only"> {{ 'ai-assistant.opens-new-tab' | translate }}</span></a>
+                  <span class="tb-rec-meta">{{ source.from }}</span>
+                </div>
+                <span class="tb-rec-side"><span class="tb-open" aria-hidden="true"><mat-icon class="tb-mat-18">open_in_new</mat-icon></span></span>
+              </div>
+              @if (source.quote) {
+                <div class="tb-rec-det"><q class="tb-rec-note">{{ source.quote }}</q></div>
+              }
+            </div>
+          }
+          </div>
+        }
+        @if (!msg.streaming) {
+        <div class="msg-foot agent-foot">
+          @if (msg.time) {
+            <time [matTooltip]="fullTime(msg.time)" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>
+          }
+          <span class="foot-tools" [class.show]="$index === lastAnswerIndex">
+            <button type="button" class="foot-tool" [class.done]="copiedIndex === $index"
+                    [matTooltip]="(copiedIndex === $index ? 'ai-assistant.copied' : 'ai-assistant.copy-answer') | translate"
+                    matTooltipPosition="above"
+                    [attr.aria-label]="'ai-assistant.copy-answer' | translate"
+                    (click)="copyAnswer(answer, $index)">
+              <mat-icon class="tb-mat-16">{{ copiedIndex === $index ? 'check' : 'content_copy' }}</mat-icon>
+            </button>
+            @if (feedback) {
+              <button type="button" class="foot-tool" [attr.aria-pressed]="msg.rating === 'UP'" [class.muted]="!!msg.rating && msg.rating !== 'UP'"
+                      [matTooltip]="'ai-assistant.feedback.helpful' | translate" matTooltipPosition="above"
+                      [attr.aria-label]="'ai-assistant.feedback.helpful' | translate" (click)="toggleRating($index, msg.rating, 'UP')">
+                <mat-icon class="tb-mat-16">{{ msg.rating === 'UP' ? 'thumb_up' : 'thumb_up_off_alt' }}</mat-icon>
+              </button>
+              <button type="button" class="foot-tool" [attr.aria-pressed]="msg.rating === 'DOWN'" [class.muted]="!!msg.rating && msg.rating !== 'DOWN'"
+                      [matTooltip]="'ai-assistant.feedback.not-helpful' | translate" matTooltipPosition="above"
+                      [attr.aria-label]="'ai-assistant.feedback.not-helpful' | translate" (click)="toggleRating($index, msg.rating, 'DOWN')">
+                <mat-icon class="tb-mat-16">{{ msg.rating === 'DOWN' ? 'thumb_down' : 'thumb_down_off_alt' }}</mat-icon>
+              </button>
+              <button type="button" class="foot-tool" [class.done]="msg.reported" [disabled]="msg.reported"
+                      [matTooltip]="(msg.reported ? 'ai-assistant.feedback.reported' : 'ai-assistant.feedback.report') | translate" matTooltipPosition="above"
+                      [attr.aria-label]="(msg.reported ? 'ai-assistant.feedback.reported' : 'ai-assistant.feedback.report') | translate"
+                      [attr.aria-expanded]="reportingIndex === $index" (click)="openReport($index)">
+                <mat-icon class="tb-mat-16">{{ msg.reported ? 'flag' : 'outlined_flag' }}</mat-icon>
+              </button>
+            }
+          </span>
+        </div>
+        }
+        @if (prompts?.index === $index) {
+          <div class="k-chips agent-chips">
+            @for (option of prompts.items; track $index) {
+              <button type="button" class="ob-chip" (click)="prompt.emit(option.text)">
+                @if (option.icon) {
+                  <mat-icon aria-hidden="true">{{ option.icon }}</mat-icon>
+                }
+                {{ option.text }}
+              </button>
+            }
+          </div>
+        }
+        @if (msg.chips?.length) {
+          <tb-ai-card-actions class="agent-chips" [actions]="chipActions(msg.chips)" (act)="chip.emit($event)"></tb-ai-card-actions>
+        }
+        @if (reportingIndex === $index) {
+          <div class="k-report" role="group" [attr.aria-label]="'ai-assistant.feedback.report' | translate">
+            <div class="k-report-t">{{ 'ai-assistant.feedback.what-went-wrong' | translate }}</div>
+            <div class="k-chips">
+              @for (problem of problems; track problem) {
+                <button type="button" class="ob-chip" [attr.aria-pressed]="reportProblem === problem" (click)="reportProblem = problem">
+                  {{ 'ai-assistant.feedback.problem.' + problem | translate }}
+                </button>
+              }
+            </div>
+            <input #reportComment class="k-deny-in" type="text" maxlength="2000" spellcheck="false"
+                   [placeholder]="'ai-assistant.feedback.comment' | translate" [attr.aria-label]="'ai-assistant.feedback.comment' | translate"
+                   (keydown.enter)="$event.preventDefault(); sendReport($index, reportComment.value)"
+                   (keydown.escape)="$event.stopPropagation(); closeReport()">
+            <p class="k-report-note">{{ 'ai-assistant.feedback.sent-with' | translate }}</p>
+            <div class="k-actions">
+              <button mat-flat-button type="button" [disabled]="!reportProblem" (click)="sendReport($index, reportComment.value)">
+                <mat-icon>send</mat-icon>{{ 'ai-assistant.feedback.send' | translate }}
+              </button>
+              <button mat-button type="button" (click)="closeReport()">{{ 'action.cancel' | translate }}</button>
+            </div>
+          </div>
+        }
       }
     </div>
+    @if (msg.from === 'APPROVAL' && denyReasonOf(msg); as reason) {
+      <div class="user">
+        <div class="msg">{{ reason }}</div>
+      </div>
+    }
   }
 }
-@if (loading && !waitApproval) {
-  <div class="generating flex items-center gap-4">
+@if (loading && !waitApproval && !actionRunning && !streaming) {
+  <div class="generating flex items-center">
     @if (loadingLongTime) {
       <ng-content select="[loadingLongTime]"></ng-content>
+    } @else if (work) {
+      <tb-ai-work-line class="work" [words]="work.headline || ('ai-assistant.work.' + work.moment | translate)" [since]="work.since"></tb-ai-work-line>
     } @else {
-      <svg class="image-main-color w-6" preserveAspectRatio="xMidYMid meet" viewBox="0 0 42 48">
-        <use [attr.xlink:href]="'/assets/solution-creator/iot-assistant.svg#iot-assistant'"></use>
-      </svg>
+      <tb-ai-mark></tb-ai-mark>
       <div class="glow-container">
         {{ 'ai-assistant.thinking' | translate }}
       </div>
