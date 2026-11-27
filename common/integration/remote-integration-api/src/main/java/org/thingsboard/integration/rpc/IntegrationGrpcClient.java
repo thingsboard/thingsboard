@@ -99,8 +99,9 @@ public class IntegrationGrpcClient implements IntegrationRpcClient {
                 if (responseMsg.hasConnectResponseMsg()) {
                     ConnectResponseMsg connectResponseMsg = responseMsg.getConnectResponseMsg();
                     if (connectResponseMsg.getResponseCode().equals(ConnectResponseCode.ACCEPTED)) {
-                        log.info("[{}] Configuration received: {}", integrationKey, connectResponseMsg.getConfiguration());
-                        onIntegrationUpdate.accept(connectResponseMsg.getConfiguration());
+                        IntegrationConfigurationProto configuration = connectResponseMsg.getConfiguration();
+                        log.info("[{}] Configuration received for integration [{}] of type [{}]", integrationKey, configuration.getName(), configuration.getType());
+                        onIntegrationUpdate.accept(configuration);
                     } else {
                         log.error("[{}] Failed to establish the connection! Code: {}. Error message: {}.", integrationKey, connectResponseMsg.getResponseCode(), connectResponseMsg.getErrorMsg());
                         try {
@@ -119,10 +120,11 @@ public class IntegrationGrpcClient implements IntegrationRpcClient {
                     }
                     latch.countDown();
                 } else if (responseMsg.hasIntegrationUpdateMsg()) {
-                    log.info("[{}] Configuration updated: {}", integrationKey, responseMsg.getIntegrationUpdateMsg().getConfiguration());
-                    onIntegrationUpdate.accept(responseMsg.getIntegrationUpdateMsg().getConfiguration());
+                    IntegrationConfigurationProto configuration = responseMsg.getIntegrationUpdateMsg().getConfiguration();
+                    log.info("[{}] Configuration updated for integration [{}] of type [{}]", integrationKey, configuration.getName(), configuration.getType());
+                    onIntegrationUpdate.accept(configuration);
                 } else if (responseMsg.hasConverterUpdateMsg()) {
-                    log.info("[{}] Converter configuration updated: {}", integrationKey, responseMsg.getConverterUpdateMsg().getConfiguration());
+                    log.info("[{}] Converter configuration updated for converter [{}]", integrationKey, responseMsg.getConverterUpdateMsg().getConfiguration().getName());
                     onConverterUpdate.accept(responseMsg.getConverterUpdateMsg().getConfiguration());
                 } else if (responseMsg.hasDownlinkMsg()) {
                     log.debug("[{}] Downlink message received for device {}", integrationKey, responseMsg.getDownlinkMsg().getDeviceData().getDeviceName());
