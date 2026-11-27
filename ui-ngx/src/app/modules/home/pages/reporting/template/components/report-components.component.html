@@ -26,7 +26,6 @@
   }
   @for (item of reportComponents; track item) {
     <div cdkDrag class="tb-draggable tb-report-component-draggable"
-      #reportComponentDrag
       [cdkDragDisabled]="readonly"
       [cdkDragData]="item"
       (cdkDragMoved)="dragMoved($event)"
@@ -42,7 +41,6 @@
         [scale]="scale"
         [pageMarginLeft]="marginLeft"
         [pageMarginRight]="marginRight"
-        [width]="reportComponentDrag.offsetWidth"
         (edit)="onComponentEdit($event)"
         (childEdit)="onComponentEdit($event)"
         (makeCopy)="duplicateComponent(item)"

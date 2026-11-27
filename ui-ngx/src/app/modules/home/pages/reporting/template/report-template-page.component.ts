@@ -94,6 +94,8 @@ import { VersionControlComponent } from '@home/components/vc/version-control.com
 import { TbPopoverService } from '@shared/components/popover.service';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
 import { HomeService } from '@core/services/home.service';
+import { PanelsAnimator, PanelsAnimatorElements } from '@home/pages/reporting/template/report-panels-animator';
+import { ReportComponentLayoutService } from '@home/pages/reporting/template/components/report-component-layout.service';
 
 @Component({
     selector: 'tb-report-template-page',
@@ -152,6 +154,18 @@ export class ReportTemplatePageComponent extends PageComponent
     read: ElementRef<HTMLElement>,
   });
 
+  reportTemplateSectionsEl = viewChild('reportTemplateSections', {
+    read: ElementRef<HTMLElement>,
+  });
+
+  reportComponentsLibraryEl = viewChild('reportComponentsLibrary', {
+    read: ElementRef<HTMLElement>,
+  });
+
+  reportSettingsEl = viewChild('reportSettings', {
+    read: ElementRef<HTMLElement>,
+  });
+
   readonly = false;
 
   format: TbReportFormat;
@@ -203,6 +217,8 @@ export class ReportTemplatePageComponent extends PageComponent
 
   private scrolling = false;
 
+  private readonly panelsAnimator: PanelsAnimator;
+
   private layoutResize$: ResizeObserver;
 
   private timeDataPatternSubject = new Subject<string>();
@@ -233,8 +249,17 @@ export class ReportTemplatePageComponent extends PageComponent
               private popoverService: TbPopoverService,
               private viewContainerRef: ViewContainerRef,
               private breadcrumbService: BreadcrumbService,
+              private reportComponentLayoutService: ReportComponentLayoutService,
               public homeService: HomeService) {
     super();
+    this.panelsAnimator = new PanelsAnimator(
+      () => this.cd.detectChanges(),
+      () => {
+        this.layoutResize();
+        this.cd.detectChanges();
+        this.reportComponentLayoutService.flush();
+      }
+    );
   }
 
   ngOnInit() {
@@ -282,6 +307,7 @@ export class ReportTemplatePageComponent extends PageComponent
   ngAfterViewInit() {
     this.layoutResize$ = new ResizeObserver(() => {
       this.layoutResize();
+      this.cd.detectChanges();
     });
     setTimeout(() => {
       this.layoutResize$.observe(this.reportTemplateLayoutEl().nativeElement);
@@ -309,6 +335,7 @@ export class ReportTemplatePageComponent extends PageComponent
   }
 
   ngOnDestroy() {
+    this.panelsAnimator.finish();
     if (this.layoutResize$) {
       this.layoutResize$.disconnect();
     }
@@ -369,10 +396,11 @@ export class ReportTemplatePageComponent extends PageComponent
 
   public editReportComponent(reportComponent: ReportComponentConfig): void {
     if (this.editingReportComponent !== reportComponent) {
-      this.editingReportComponent = reportComponent;
-      this.prevReportComponent = editReportComponent(reportComponent);
-      this.selectEditingComponent();
-      this.renderer.addClass(this.reportTemplateContainerEl().nativeElement, 'tb-close-library');
+      this.animatePanels(() => {
+        this.editingReportComponent = reportComponent;
+        this.prevReportComponent = editReportComponent(reportComponent);
+        this.selectEditingComponent();
+      });
     }
   }
 
@@ -391,27 +419,51 @@ export class ReportTemplatePageComponent extends PageComponent
   }
 
   public saveReportComponent(): void {
+    this.closeEditor();
+  }
+
+  public cancelReportComponentEdit(): void {
+    if (this.editingReportComponent) {
+      this.revertEditingComponent();
+      this.closeEditor();
+    }
+  }
+
+  private revertEditingComponent() {
+    assignReportComponent(this.editingReportComponent, this.prevReportComponent);
+    this.reportComponentUpdated(false);
+  }
+
+  private closeEditor() {
+    this.animatePanels(() => this.resetEditor());
+  }
+
+  private resetEditor() {
     this.prevReportComponent = null;
     this.editingReportComponent = null;
     const reportComponentsComponents = this.allReportComponentsComponents();
     for (const component of reportComponentsComponents) {
       component.componentSelected(null);
     }
-    this.renderer.removeClass(this.reportTemplateContainerEl().nativeElement, 'tb-close-library');
   }
 
-  public cancelReportComponentEdit(): void {
-    if (this.editingReportComponent) {
-      assignReportComponent(this.editingReportComponent, this.prevReportComponent);
-      this.reportComponentUpdated(false);
-      this.prevReportComponent = null;
-      this.editingReportComponent = null;
-      const reportComponentsComponents = this.allReportComponentsComponents();
-      for (const component of reportComponentsComponents) {
-        component.componentSelected(null);
-      }
-      this.renderer.removeClass(this.reportTemplateContainerEl().nativeElement, 'tb-close-library');
+  private animatePanels(change: () => void) {
+    this.panelsAnimator.run(this.panelsAnimatorElements(), change);
+  }
+
+  private panelsAnimatorElements(): PanelsAnimatorElements | null {
+    if (!this.viewInited) {
+      return null;
     }
+    const container = this.reportTemplateContainerEl()?.nativeElement;
+    const content = this.reportTemplateContentEl()?.getElementRef().nativeElement;
+    const layout = this.reportTemplateLayoutEl()?.nativeElement;
+    const sections = this.reportTemplateSectionsEl()?.nativeElement;
+    const settings = this.reportSettingsEl()?.nativeElement;
+    if (!container || !content || !layout || !sections || !settings) {
+      return null;
+    }
+    return {container, content, layout, sections, settings, library: this.reportComponentsLibraryEl()?.nativeElement};
   }
 
   public openFilters($event: Event) {
@@ -738,7 +790,11 @@ export class ReportTemplatePageComponent extends PageComponent
   }
 
   private init(reportTemplate: ReportTemplate) {
-    this.cancelReportComponentEdit();
+    this.panelsAnimator.finish();
+    if (this.editingReportComponent) {
+      this.revertEditingComponent();
+      this.resetEditor();
+    }
     this.headerToggleValue = 'header';
     this.footerToggleValue = 'header';
     this.reportTemplate = validateAndUpdateReportTemplate(reportTemplate);

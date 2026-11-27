@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 @import "constants";
 
+$tb-report-components-library-width: 250px;
+$tb-report-components-library-border-width: 1px;
+
 .tb-report-template {
   width: 100%;
   height: 100%;
@@ -50,26 +53,22 @@
     display: flex;
     flex-direction: row;
     overflow: hidden;
-    &.tb-close-library {
-      .tb-report-components-library {
-        transform: translate3d(-100%, 0, 0);
-        margin-right: -251px;
-      }
-    }
-  }
-  .tb-dynamic-panel {
-    transition-duration: 400ms;
-    transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
   .tb-report-components-library {
     box-sizing: content-box;
     z-index: 1;
-    width: 250px;
+    width: $tb-report-components-library-width;
     display: flex;
     flex-direction: column;
     background: #fff;
-    border-right: var(--mat-sidenav-container-divider-color) 1px solid;
-    transition-property: transform, margin-right;
+    border-right: var(--mat-sidenav-container-divider-color) $tb-report-components-library-border-width solid;
+    &.tb-close-library {
+      transform: translate3d(-100%, 0, 0);
+    }
+  }
+  .tb-report-components-library.tb-close-library,
+  .tb-report-template-container.tb-panels-animating > .tb-report-components-library {
+    margin-right: -($tb-report-components-library-width + $tb-report-components-library-border-width);
   }
   .tb-report-template-content {
     position: relative;
@@ -122,11 +121,25 @@
       }
     }
   }
+  .tb-report-template-container.tb-panels-animating > * {
+    flex-shrink: 0;
+  }
   .tb-report-settings {
+    --tb-report-settings-extend: 0px;
+    position: relative;
     z-index: 2;
     width: 500px;
+    background: #fff;
     border-left: var(--mat-sidenav-container-divider-color) 1px solid;
-    transition-property: width;
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 100%;
+      width: var(--tb-report-settings-extend);
+      background: #fff;
+    }
     &.tb-report-component-settings {
       width: 700px;
     }

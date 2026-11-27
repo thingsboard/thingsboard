@@ -116,7 +116,7 @@
   }
   <div #reportTemplateContainer class="tb-report-template-container size-full" cdkDropListGroup>
     @if (!readonly) {
-      <div class="tb-report-components-library tb-dynamic-panel">
+      <div #reportComponentsLibrary class="tb-report-components-library" [class.tb-close-library]="!!editingReportComponent">
         <mat-toolbar class="flex h-auto flex-col items-start gap-4 p-4">
           <div translate>report-template.report-components</div>
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field bg-white">
@@ -167,7 +167,7 @@
         </button>
       </div>
       <div #reportTemplateLayout class="tb-report-template-layout">
-        <div class="tb-report-template-sections">
+        <div #reportTemplateSections class="tb-report-template-sections">
           @if (showHeaderFooter) {
             <tb-report-template-header-footer
               header
@@ -192,8 +192,8 @@
             </tb-report-template-header-footer>
           }
           <div class="tb-report-components-container">
-            <div class="tb-report-components-container-title" translate>report-template.content</div>
-            <tb-report-components
+            <div class="tb-report-components-container-title" data-flip="move" translate>report-template.content</div>
+            <tb-report-components data-flip="page"
               [context]="reportComponentContext"
               [format]="format"
               [readonly]="readonly"
@@ -236,7 +236,7 @@
         </div>
       </div>
     </div>
-    <div class="tb-report-settings tb-dynamic-panel"
+    <div #reportSettings class="tb-report-settings"
                 [class.tb-report-component-settings]="!!editingReportComponent"
                 [style.width.px]="editingReportComponent ?
                             reportComponentTypesData.getReportComponentTypeData(editingReportComponent.type, editingReportComponent.subType).preferredSettingsWidthPx : null">
