@@ -59,6 +59,14 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
 
   @Input() isStrokedButton = false;
 
+  /** Renders values with tb-secret-key-input (Use secret picker) and shows the secret placeholder hint.
+   *  Use for maps whose values the backend resolves ${secret:...} placeholders in. */
+  @Input() @coerceBoolean() secretValues = false;
+
+  /** Shows only the secret placeholder hint, keeping plain value inputs.
+   *  Use for maps that may hold secrets among non-secret values (e.g. Kafka properties). */
+  @Input() @coerceBoolean() secretHint = false;
+
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 

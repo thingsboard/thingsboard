@@ -59,6 +59,9 @@ export class SecretKeyInputComponent extends PageComponent implements OnInit, Co
   @Input()
   hint: string;
 
+  @Input()
+  placeholder: string;
+
   @Input({transform: booleanAttribute})
   required: boolean = false;
 
