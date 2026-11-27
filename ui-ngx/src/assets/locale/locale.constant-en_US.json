@@ -6669,7 +6669,9 @@
     },
     "key-val": {
         "key": "Key",
+        "key-required": "Key is required.",
         "value": "Value",
+        "value-required": "Value is required.",
         "remove-entry": "Remove entry",
         "add-entry": "Add entry",
         "no-data": "No entries"

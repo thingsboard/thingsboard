@@ -47,6 +47,8 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
 
   @Input() @coerceBoolean() isValueRequired = true;
 
+  @Input() @coerceBoolean() showRequiredErrors = false;
+
   @Input() titleText: string;
 
   @Input() keyPlaceholderText: string;
