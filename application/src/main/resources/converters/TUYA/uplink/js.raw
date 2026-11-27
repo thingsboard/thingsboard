@@ -1,0 +1,75 @@
+/** Decoder **/
+
+// Tuya Message Service pushes each device report as JSON.
+// This example handles status reports (statusReport) and online/offline messages
+// of a Tuya smart plug. Other messages are skipped.
+
+// Parse the incoming payload (byte array) into a JSON object.
+var data = decodeToJson(payload);
+
+// Use the Tuya device ID as the device name.
+// Keep it unchanged: the downlink sends commands to the Tuya device with this ID.
+var deviceName = data.devId;
+if (typeof deviceName !== "string" || !deviceName.trim()) {
+    throw new Error("Tuya message has no devId");
+}
+
+// Fixed device type, used as the device profile name.
+var deviceType = "Tuya device";
+
+if (data.status != null) {
+    // Status report: each status entry is a data point with code, value and time t (ms).
+    var telemetry = [];
+    for (var i = 0; i < data.status.length; i++) {
+        var code = data.status[i].code;
+        var value = data.status[i].value;
+
+        // The smart plug reports integers: voltage (V) and power (W) multiplied by 10,
+        // current in mA. Convert them to V, W and A.
+        if (code === "cur_voltage" || code === "cur_power") {
+            value = value / 10;
+        } else if (code === "cur_current") {
+            value = value / 1000;
+        }
+
+        var values = {};
+        values[code] = value;
+        // Store the value with the device time, or with the server time if t is missing.
+        if (data.status[i].t != null) {
+            telemetry.push({ts: data.status[i].t, values: values});
+        } else {
+            telemetry.push(values);
+        }
+    }
+    return {
+        deviceName: deviceName,
+        deviceType: deviceType,
+        attributes: {},
+        telemetry: telemetry
+    };
+}
+
+if (data.bizCode === "online" || data.bizCode === "offline") {
+    // Online/offline message: store the connection state as an attribute.
+    return {
+        deviceName: deviceName,
+        deviceType: deviceType,
+        attributes: {online: data.bizCode === "online"},
+        telemetry: []
+    };
+}
+
+// Skip other messages, for example nameUpdate or delete: an empty result creates or updates no device.
+return [];
+
+/** Helper functions **/
+
+function decodeToString(payload) {
+    return String.fromCharCode.apply(String, payload);
+}
+
+function decodeToJson(payload) {
+    var str = decodeToString(payload);
+    var data = JSON.parse(str);
+    return data;
+}
