@@ -133,6 +133,14 @@ export abstract class StateControllerComponent implements IStateControllerCompon
     return result;
   }
 
+  protected normalizeIncomingStateObject(stateObject: StateControllerState): StateControllerState {
+    const result = Array.isArray(stateObject) ? [...stateObject] : [];
+    if (result.length && (!result[0]?.id || !this.states[result[0].id])) {
+      result[0] = { ...result[0], id: this.dashboardUtils.getRootStateId(this.states) };
+    }
+    return this.normalizeStateObject(result);
+  }
+
   protected updateStateParam(newState: string, replaceCurrentHistoryUrl = false) {
     this.currentState = newState;
     if (this.syncStateWithQueryParam) {

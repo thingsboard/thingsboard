@@ -258,7 +258,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
         result = [];
       }
     }
-    return this.normalizeStateObject(result);
+    return this.normalizeIncomingStateObject(result);
   }
 
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean, replaceCurrentHistoryUrl?: boolean) {
