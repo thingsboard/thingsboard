@@ -81,6 +81,22 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     private int maxBlackListDurationSec;
 
     @Getter
+    @Value("${tbel.timeout_storm.enabled:false}")
+    private boolean timeoutStormEnabled;
+
+    @Getter
+    @Value("${tbel.timeout_storm.window_ms:10000}")
+    private long timeoutStormWindowMs;
+
+    @Getter
+    @Value("${tbel.timeout_storm.min_scripts:3}")
+    private int timeoutStormMinScripts;
+
+    @Getter
+    @Value("${tbel.timeout_storm.max_duration_ms:60000}")
+    private long timeoutStormMaxDurationMs;
+
+    @Getter
     @Value("${tbel.max_requests_timeout:0}")
     private long maxInvokeRequestsTimeout;
 

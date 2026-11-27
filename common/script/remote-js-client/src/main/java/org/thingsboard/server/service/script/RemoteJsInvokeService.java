@@ -68,6 +68,22 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private int maxBlackListDurationSec;
 
     @Getter
+    @Value("${js.remote.timeout_storm.enabled:false}")
+    private boolean timeoutStormEnabled;
+
+    @Getter
+    @Value("${js.remote.timeout_storm.window_ms:10000}")
+    private long timeoutStormWindowMs;
+
+    @Getter
+    @Value("${js.remote.timeout_storm.min_scripts:3}")
+    private int timeoutStormMinScripts;
+
+    @Getter
+    @Value("${js.remote.timeout_storm.max_duration_ms:60000}")
+    private long timeoutStormMaxDurationMs;
+
+    @Getter
     @Value("${js.remote.stats.enabled:false}")
     private boolean statsEnabled;
 

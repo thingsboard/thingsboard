@@ -9,6 +9,7 @@ public class BlockedScriptInfo {
     private final long maxScriptBlockDurationMs;
     private final AtomicInteger counter;
     private long expirationTime;
+    private volatile boolean timeoutsOnly = true;
 
     BlockedScriptInfo(int maxScriptBlockDuration) {
         this.maxScriptBlockDurationMs = TimeUnit.SECONDS.toMillis(maxScriptBlockDuration);
@@ -19,7 +20,10 @@ public class BlockedScriptInfo {
         return counter.get();
     }
 
-    public int incrementAndGet() {
+    public int incrementAndGet(boolean timeout) {
+        if (!timeout) {
+            timeoutsOnly = false;
+        }
         int result = counter.incrementAndGet();
         expirationTime = System.currentTimeMillis() + maxScriptBlockDurationMs;
         return result;
@@ -27,5 +31,9 @@ public class BlockedScriptInfo {
 
     public long getExpirationTime() {
         return expirationTime;
+    }
+
+    public boolean isTimeoutsOnly() {
+        return timeoutsOnly;
     }
 }
