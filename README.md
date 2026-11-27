@@ -9,7 +9,7 @@
 <br>
 <div align="center">
  
-💡 [Get started](https://thingsboard.io/docs/pe/getting-started/)&ensp;•&ensp;🌐 [Website](https://thingsboard.io/)&ensp;•&ensp;📚 [Documentation](https://thingsboard.io/docs/pe/)&ensp;•&ensp;📔 [Blog](https://thingsboard.io/blog/)&ensp;•&ensp;🔗 [LinkedIn](https://www.linkedin.com/company/thingsboard/posts/?feedView=all)
+💡 [Get started](https://thingsboard.io/docs/pe/getting-started/)&ensp;•&ensp;🌐 [Website](https://thingsboard.io/)&ensp;•&ensp;📚 [Documentation](https://thingsboard.io/docs/pe/)&ensp;•&ensp;📔 [Blog](https://thingsboard.io/blog/)&ensp;•&ensp;🔗 [LinkedIn](https://www.linkedin.com/company/thingsboard/posts/?feedView=all)&ensp;•&ensp;📖 <a href="README.zh-CN.md">简体中文</a>
 
 </div>
 
