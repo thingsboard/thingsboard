@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AggKey, IndexedSubscriptionData, } from '@app/shared/models/telemetry/telemetry.models';
 import {
   AggregationType,
@@ -7,6 +8,7 @@ import {
   calculateIntervalComparisonEndTime,
   calculateIntervalEndTime,
   calculateIntervalStartEndTime,
+  calculateTsOffset,
   getCurrentTime,
   getTime,
   IntervalMath,
@@ -268,15 +270,17 @@ export class DataAggregator {
   }
 
   private calculateStartEndTs() {
-    this.startTs = this.subsTw.startTs + this.subsTw.tsOffset;
+    this.startTs = this.subsTw.startTs + calculateTsOffset(this.subsTw.timezone, this.subsTw.startTs);
     if (this.subsTw.quickInterval) {
       if (this.subsTw.timeForComparison === 'previousInterval') {
         const startDate = getTime(this.subsTw.startTs, this.subsTw.timezone);
         const currentDate = getCurrentTime(this.subsTw.timezone);
-        this.endTs = calculateIntervalComparisonEndTime(this.subsTw.quickInterval, startDate, currentDate) + this.subsTw.tsOffset;
+        const endTs = calculateIntervalComparisonEndTime(this.subsTw.quickInterval, startDate, currentDate);
+        this.endTs = endTs + calculateTsOffset(this.subsTw.timezone, endTs);
       } else {
         const startDate = getTime(this.subsTw.startTs, this.subsTw.timezone);
-        this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, startDate, this.subsTw.timezone) + this.subsTw.tsOffset;
+        const endTs = calculateIntervalEndTime(this.subsTw.quickInterval, startDate, this.subsTw.timezone);
+        this.endTs = endTs + calculateTsOffset(this.subsTw.timezone, endTs);
       }
     } else {
       this.endTs = this.startTs + this.subsTw.aggregation.timeWindow;
@@ -298,8 +302,8 @@ export class DataAggregator {
         const tickTs = delta * this.aggregationTimeout;
         if (this.subsTw.quickInterval) {
           const startEndTime = calculateIntervalStartEndTime(this.subsTw.quickInterval, this.subsTw.timezone);
-          this.startTs = startEndTime[0] + this.subsTw.tsOffset;
-          this.endTs = startEndTime[1] + this.subsTw.tsOffset;
+          this.startTs = startEndTime[0] + calculateTsOffset(this.subsTw.timezone, startEndTime[0]);
+          this.endTs = startEndTime[1] + calculateTsOffset(this.subsTw.timezone, startEndTime[1]);
         } else {
           this.startTs += tickTs;
           this.endTs += tickTs;

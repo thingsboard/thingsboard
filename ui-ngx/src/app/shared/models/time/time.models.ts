@@ -668,16 +668,23 @@ export const historyDefaultAggInterval = (timewindow: Timewindow,
   return null;
 };
 
-export const getTimezone = (tz: string): moment_.Moment => moment.tz(tz);
-
-export const calculateTsOffset = (timezone?: string): number => {
+export const calculateTsOffset = (timezone: string, ts: number): number => {
   if (timezone) {
-    const tz = getTimezone(timezone);
-    const localOffset = moment().utcOffset();
-    return (tz.utcOffset() - localOffset) * 60 * 1000;
+    const zone = moment.tz.zone(timezone);
+    if (!zone) {
+      return 0;
+    }
+    return (new Date(ts).getTimezoneOffset() - zone.utcOffset(ts)) * 60 * 1000;
   } else {
     return 0;
   }
+};
+
+const resolveRealTsFromDisplayTs = (displayTs: number, timezone: string): number => {
+  if (!timezone) {
+    return displayTs;
+  }
+  return moment.tz(moment(displayTs).format('YYYY-MM-DDTHH:mm:ss.SSS'), timezone).valueOf();
 };
 
 export const toUtcDate = (ts: number | string): Date => moment(ts).utcOffset(0, true).toDate();
@@ -848,7 +855,7 @@ export const createSubscriptionTimewindow = (timewindow: Timewindow, stDiff: num
       type: AggregationType.AVG
     },
     timezone: timewindow.timezone || getDefaultTimezone(),
-    tsOffset: calculateTsOffset(timewindow.timezone)
+    tsOffset: calculateTsOffset(timewindow.timezone, Date.now())
   };
   let aggTimewindow: number;
   if (stateData) {
@@ -918,9 +925,10 @@ export const createSubscriptionTimewindow = (timewindow: Timewindow, stDiff: num
       aggTimewindow = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
       subscriptionTimewindow.quickInterval = timewindow.history.quickInterval;
     } else {
+      const fixedTimewindow = timewindow.history.fixedTimewindow;
       subscriptionTimewindow.fixedWindow = {
-        startTimeMs: timewindow.history.fixedTimewindow.startTimeMs - subscriptionTimewindow.tsOffset,
-        endTimeMs: timewindow.history.fixedTimewindow.endTimeMs - subscriptionTimewindow.tsOffset
+        startTimeMs: resolveRealTsFromDisplayTs(fixedTimewindow.startTimeMs, timewindow.timezone),
+        endTimeMs: resolveRealTsFromDisplayTs(fixedTimewindow.endTimeMs, timewindow.timezone)
       };
       aggTimewindow = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
     }
@@ -1479,21 +1487,21 @@ export const calculateAggIntervalWithSubscriptionTimeWindow
   if ((aggType || subsTw.aggregation.type) === AggregationType.NONE) {
     return [timestamp, timestamp];
   } else {
-    return calculateInterval(subsTw.startTs, endTs, subsTw.aggregation.interval, subsTw.tsOffset, subsTw.timezone, timestamp);
+    return calculateInterval(subsTw.startTs, endTs, subsTw.aggregation.interval, subsTw.timezone, timestamp);
   }
 };
 
 export const calculateAggIntervalWithWidgetTimeWindow
   = (widgetTimeWindow: WidgetTimewindow, timestamp: number): [number, number] =>
   calculateInterval(widgetTimeWindow.minTime - widgetTimeWindow.tsOffset,
-    widgetTimeWindow.maxTime, widgetTimeWindow.interval, widgetTimeWindow.tsOffset, widgetTimeWindow.timezone, timestamp);
+    widgetTimeWindow.maxTime, widgetTimeWindow.interval, widgetTimeWindow.timezone, timestamp);
 
 export const calculateInterval = (startTime: number, endTime: number,
-                                  interval: Interval, tsOffset: number, timezone: string, timestamp: number): [number, number] => {
+                                  interval: Interval, timezone: string, timestamp: number): [number, number] => {
   let startIntervalTs: number;
   let endIntervalTs: number;
   if (typeof interval === 'number') {
-    const startTs = startTime + tsOffset;
+    const startTs = startTime + calculateTsOffset(timezone, startTime);
     startIntervalTs = startTs + Math.floor((timestamp - startTs) / interval) * interval;
     endIntervalTs = startIntervalTs + interval;
   } else {
@@ -1504,8 +1512,8 @@ export const calculateInterval = (startTime: number, endTime: number,
       startInterval = start;
     }
     const endInterval = endIntervalDate(time, interval).add(1, 'milliseconds');
-    startIntervalTs = startInterval.valueOf() + tsOffset;
-    endIntervalTs = endInterval.valueOf() + tsOffset;
+    startIntervalTs = startInterval.valueOf() + calculateTsOffset(timezone, startInterval.valueOf());
+    endIntervalTs = endInterval.valueOf() + calculateTsOffset(timezone, endInterval.valueOf());
   }
   endIntervalTs = Math.min(endIntervalTs, endTime);
   return [startIntervalTs, endIntervalTs];

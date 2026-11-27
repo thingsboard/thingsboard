@@ -12,6 +12,7 @@ import {
 } from '@shared/models/widget.models';
 import {
   AggregationType,
+  calculateTsOffset,
   ComparisonDuration,
   createTimewindowForComparison,
   getCurrentTime,
@@ -141,6 +142,7 @@ export class EntityDataSubscription {
   private subsTw: SubscriptionTimewindow;
   private latestTsOffset: number;
   private dataAggregators: Array<DataAggregator>;
+  private readonly tsOffsetFn = (ts: number) => calculateTsOffset(this.subsTw.timezone, ts);
   private tsLatestDataAggregators: Array<DataAggregator>;
   private dataKeys: {[key: string]: Array<SubscriptionDataKey> | SubscriptionDataKey} = {};
   private dataKeysList: SubscriptionDataKey[] = [];
@@ -372,7 +374,7 @@ export class EntityDataSubscription {
           if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
             this.prepareSubscriptionCommands(this.dataCommand);
             if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
-              this.subscriber.setTsOffset(this.subsTw.tsOffset);
+              this.subscriber.setTsOffsetFn(this.tsOffsetFn);
             } else {
               this.subscriber.setTsOffset(this.latestTsOffset);
             }
@@ -436,7 +438,7 @@ export class EntityDataSubscription {
                 }
               }
               if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
-                this.subscriber.setTsOffset(this.subsTw.tsOffset);
+                this.subscriber.setTsOffsetFn(this.tsOffsetFn);
               } else {
                 this.subscriber.setTsOffset(this.latestTsOffset);
               }
@@ -657,7 +659,7 @@ export class EntityDataSubscription {
       this.prepareSubscriptionCommands(this.subsCommand);
       let latestTsOffsetChanged = false;
       if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
-        this.subscriber.setTsOffset(this.subsTw.tsOffset);
+        this.subscriber.setTsOffsetFn(this.tsOffsetFn);
       } else {
         latestTsOffsetChanged = this.subscriber.setTsOffset(this.latestTsOffset);
       }
@@ -1308,27 +1310,26 @@ export class EntityDataSubscription {
     for (let index = 0; index < tsDataKeys.length && (this.timeseriesTimer || this.history); index ++) {
       const dataKey = tsDataKeys[index];
       if (!startTime) {
+        const subsTw = this.entityDataSubscriptionOptions.subscriptionTimewindow;
         if (this.realtime) {
           if (dataKey.lastUpdateTime) {
             startTime = dataKey.lastUpdateTime + this.frequency;
             endTime = dataKey.lastUpdateTime + deltaElapsed;
           } else {
-            startTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.startTs +
-              this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
-            endTime = startTime + this.entityDataSubscriptionOptions.subscriptionTimewindow.realtimeWindowMs + this.frequency;
-            if (this.entityDataSubscriptionOptions.subscriptionTimewindow.aggregation.type === AggregationType.NONE) {
-              const time = endTime - this.frequency * this.entityDataSubscriptionOptions.subscriptionTimewindow.aggregation.limit;
+            startTime = subsTw.startTs + calculateTsOffset(subsTw.timezone, subsTw.startTs);
+            endTime = startTime + subsTw.realtimeWindowMs + this.frequency;
+            if (subsTw.aggregation.type === AggregationType.NONE) {
+              const time = endTime - this.frequency * subsTw.aggregation.limit;
               startTime = Math.max(time, startTime);
             }
           }
         } else {
-          startTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow.startTimeMs +
-            this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
-          endTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow.endTimeMs +
-            this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
+          startTime = subsTw.fixedWindow.startTimeMs + calculateTsOffset(subsTw.timezone, subsTw.fixedWindow.startTimeMs);
+          endTime = subsTw.fixedWindow.endTimeMs + calculateTsOffset(subsTw.timezone, subsTw.fixedWindow.endTimeMs);
         }
-        if (this.entityDataSubscriptionOptions.subscriptionTimewindow.quickInterval) {
-          const currentTime = getCurrentTime().valueOf() + this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
+        if (subsTw.quickInterval) {
+          const now = getCurrentTime().valueOf();
+          const currentTime = now + calculateTsOffset(subsTw.timezone, now);
           endTime = Math.min(currentTime, endTime);
         }
       }

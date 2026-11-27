@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AlarmDataCmd,
   DataKeyType,
@@ -15,7 +16,7 @@ import {
   EntityKeyType,
   KeyFilter
 } from '@shared/models/query/query.models';
-import { SubscriptionTimewindow } from '@shared/models/time/time.models';
+import { calculateTsOffset, SubscriptionTimewindow } from '@shared/models/time/time.models';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
 import { PageData } from '@shared/models/page/page-data';
 import { deepClone, isDefined, isDefinedAndNotNull, isObject } from '@core/utils';
@@ -54,6 +55,7 @@ export class AlarmDataSubscription {
   private alarmIdToDataIndex: {[id: string]: number};
 
   private subsTw: SubscriptionTimewindow;
+  private readonly tsOffsetFn = (ts: number) => calculateTsOffset(this.subsTw.timezone, ts);
 
   constructor(private listener: AlarmDataListener,
               private telemetryService: TelemetryWebsocketService) {
@@ -120,7 +122,7 @@ export class AlarmDataSubscription {
         this.alarmDataCommand.query.pageLink.timeWindow = this.subsTw.realtimeWindowMs;
       }
 
-      this.subscriber.setTsOffset(this.subsTw.tsOffset);
+      this.subscriber.setTsOffsetFn(this.tsOffsetFn);
       this.subscriber.subscriptionCommands.push(this.alarmDataCommand);
 
       this.subscriber.alarmData$.subscribe((alarmDataUpdate) => {
@@ -148,8 +150,8 @@ export class AlarmDataSubscription {
 
     } else if (this.datasourceType === DatasourceType.function) {
       const alarm = deepClone(simulatedAlarm);
-      alarm.createdTime += this.subsTw.tsOffset;
-      alarm.startTs += this.subsTw.tsOffset;
+      alarm.createdTime += calculateTsOffset(this.subsTw.timezone, alarm.createdTime);
+      alarm.startTs += calculateTsOffset(this.subsTw.timezone, alarm.startTs);
       const pageData: PageData<AlarmData> = {
         data: [{...alarm, entityId: '1', latest: {}}],
         hasNext: false,
