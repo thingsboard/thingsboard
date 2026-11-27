@@ -181,22 +181,22 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     @Override
     protected ListenableFuture<UUID> doEvalScript(TenantId tenantId, ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames) {
         return executor.submit(() -> {
+            String scriptHash = hash(scriptBody, argNames);
             try {
-                String scriptHash = hash(scriptBody, argNames);
                 compiledScriptsCache.get(scriptHash, k -> compileScript(scriptBody));
-                lock.lock();
-                try {
-                    scriptIdToHash.put(scriptId, scriptHash);
-                    scriptMap.computeIfAbsent(scriptHash, k -> new TbelScript(scriptBody, argNames));
-                } finally {
-                    lock.unlock();
-                }
-                return scriptId;
-            } catch (CompileException e) {
-                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
             } catch (Exception e) {
-                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, scriptBody, e);
+                // The compiler can fail with exceptions other than CompileException, e.g. ClassCastException for Number(...).
+                // Either way the script itself is invalid, so retrying won't help.
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
             }
+            lock.lock();
+            try {
+                scriptIdToHash.put(scriptId, scriptHash);
+                scriptMap.computeIfAbsent(scriptHash, k -> new TbelScript(scriptBody, argNames));
+            } finally {
+                lock.unlock();
+            }
+            return scriptId;
         });
     }
 

@@ -60,6 +60,26 @@ class TbelInvokeServiceTest extends AbstractTbelInvokeTest {
     }
 
     @Test
+    void givenScriptFailingInsideCompiler_whenEvaluating_thenThrowsUnrecoverableErrorWithCompilationErrorCode() {
+        // GIVEN: Number() is not a TBEL function; the compiler fails with ClassCastException instead of CompileException
+        var script = "return Number(msg.temperature) > 20;";
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> evalScript(script))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getScriptId()).isNotNull();
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.COMPILATION);
+                    assertThat(ex.isUnrecoverable()).isTrue();
+                    assertThat(ex.getBody()).isEqualTo(script);
+                    assertThat(ex.getCause()).isInstanceOf(ClassCastException.class);
+                });
+    }
+
+    @Test
     void givenSimpleScriptTestPerformance() throws ExecutionException, InterruptedException {
         int iterations = 100000;
         UUID scriptId = evalScript("return msg.temperature > 20");
