@@ -1,0 +1,76 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="patternsFormGroup" class="tb-form-panel stroked">
+  <div class="tb-form-row no-padding no-border space-between">
+    <div class="tb-form-panel-title" translate>rule-node-config.entity-groups</div>
+    @if (required && !patternsFormArray.length) {
+      <div class="tb-form-panel-hint tb-error" translate>
+        rule-node-config.entity-groups-required
+      </div>
+    } @else if (patternsFormArray.invalid) {
+      <div class="tb-form-panel-hint tb-error" translate>
+        rule-node-config.entity-groups-invalid
+      </div>
+    }
+  </div>
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-table">
+      <div class="tb-form-table-header">
+        <div class="tb-form-table-header-cell field-space">{{ 'rule-node-config.entity-group-type' | translate }}</div>
+        <div class="tb-form-table-header-cell field-space">{{ 'rule-node-config.entity-group-name' | translate }}</div>
+        <div class="tb-form-table-header-cell actions-header"></div>
+      </div>
+      <div class="tb-form-table-body">
+        @for (row of patternsFormArray.controls; track row; let i = $index) {
+          <div class="tb-form-table-row">
+            <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
+              <input matInput required
+                     [formControl]="row.get('groupType')"
+                     [matAutocomplete]="groupTypeAuto"
+                     [placeholder]="'rule-node-config.entity-group-type' | translate"/>
+              <mat-autocomplete #groupTypeAuto="matAutocomplete" [displayWith]="displayGroupType">
+                @for (option of groupTypeOptionsFor(row) | async; track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
+            <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
+              <input matInput required
+                     [formControl]="row.get('groupName')"
+                     [matAutocomplete]="groupNameAuto"
+                     [placeholder]="'rule-node-config.entity-group-name' | translate"/>
+              <mat-autocomplete #groupNameAuto="matAutocomplete">
+                @for (groupName of suggestionsFor(row) | async; track groupName) {
+                  <mat-option [value]="groupName">{{ groupName }}</mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
+            <div class="tb-form-table-row-cell-buttons">
+              <button type="button"
+                      mat-icon-button
+                      (click)="removePattern(i)"
+                      [disabled]="disabled"
+                      matTooltip="{{ 'action.remove' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+  <div>
+    <button [disabled]="disabled"
+            type="button" mat-stroked-button color="primary" (click)="addPattern()">
+      {{ 'rule-node-config.add-entity-group' | translate }}
+    </button>
+  </div>
+  <tb-example-hint [hintText]="'rule-node-config.entity-group-patterns-hint' | translate"
+                   popupHelpLink="rulenode/common_node_fields_templatization">
+  </tb-example-hint>
+</section>

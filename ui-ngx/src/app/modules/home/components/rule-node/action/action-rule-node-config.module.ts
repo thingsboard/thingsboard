@@ -30,6 +30,12 @@ import { MathFunctionConfigComponent } from './math-function-config.component';
 import { DeviceStateConfigComponent } from './device-state-config.component';
 import { SendRestApiCallReplyConfigComponent } from './send-rest-api-call-reply-config.component';
 import { AddToGroupConfigComponent } from '@home/components/rule-node/action/add-to-group-config.component';
+import {
+  AssignEntityGroupToEdgeConfigComponent
+} from '@home/components/rule-node/action/assign-entity-group-to-edge-config.component';
+import {
+  UnassignEntityGroupFromEdgeConfigComponent
+} from '@home/components/rule-node/action/unassign-entity-group-from-edge-config.component';
 import { ChangeOwnerConfigComponent } from '@home/components/rule-node/action/change-owner-config.component';
 import { GenerateDashboardReportConfigComponent } from '@home/components/rule-node/action/generate-dashboard-report-config.component';
 import {
@@ -72,6 +78,8 @@ import { GenerateReportConfigComponent } from '@home/components/rule-node/action
     AdvancedProcessingSettingComponent,
     AdvancedProcessingSettingRowComponent,
     AddToGroupConfigComponent,
+    AssignEntityGroupToEdgeConfigComponent,
+    UnassignEntityGroupFromEdgeConfigComponent,
     ChangeOwnerConfigComponent,
     GenerateDashboardReportConfigComponent,
     GenerateReportConfigComponent,
@@ -109,6 +117,8 @@ import { GenerateReportConfigComponent } from '@home/components/rule-node/action
     MathFunctionConfigComponent,
     DeviceStateConfigComponent,
     AddToGroupConfigComponent,
+    AssignEntityGroupToEdgeConfigComponent,
+    UnassignEntityGroupFromEdgeConfigComponent,
     ChangeOwnerConfigComponent,
     GenerateDashboardReportConfigComponent,
     GenerateReportConfigComponent,
