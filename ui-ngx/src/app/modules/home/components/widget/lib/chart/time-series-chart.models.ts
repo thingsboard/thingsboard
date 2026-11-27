@@ -70,6 +70,7 @@ import {
   chartBarDefaultSettings,
   ChartBarSettings,
   chartColorScheme,
+  ChartFillAreaBaseline,
   ChartFillSettings,
   ChartFillType,
   ChartLabelPosition,
@@ -785,6 +786,8 @@ export interface LineSeriesSettings {
   pointShape: ChartShape;
   pointSize: number;
   fillAreaSettings: ChartFillSettings;
+  fillAreaBaseline: ChartFillAreaBaseline;
+  fillAreaBaselineValue: number;
 }
 
 export interface TimeSeriesChartKeySettings extends DataKeySettingsWithComparison {
@@ -832,7 +835,9 @@ export const timeSeriesChartKeyDefaultSettings: TimeSeriesChartKeySettings = {
         start: 100,
         end: 0
       }
-    }
+    },
+    fillAreaBaseline: ChartFillAreaBaseline.auto,
+    fillAreaBaselineValue: 0
   },
   barSettings: mergeDeep({} as ChartBarSettings, chartBarDefaultSettings),
   comparisonSettings: {
@@ -1349,6 +1354,19 @@ export const updateDarkMode = (options: EChartsOption,
   return options;
 };
 
+const fillAreaOrigin = (lineSettings: LineSeriesSettings): 'auto' | 'start' | 'end' | number => {
+  switch (lineSettings.fillAreaBaseline) {
+    case ChartFillAreaBaseline.axisMin:
+      return 'start';
+    case ChartFillAreaBaseline.axisMax:
+      return 'end';
+    case ChartFillAreaBaseline.value:
+      return isNumber(lineSettings.fillAreaBaselineValue) ? lineSettings.fillAreaBaselineValue : 'auto';
+    default:
+      return 'auto';
+  }
+};
+
 const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
                                      stack: boolean,
                                      darkMode: boolean): LineSeriesOption | CustomSeriesOption => {
@@ -1400,7 +1418,9 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
         type: lineSettings.lineType
       };
       if (lineSettings.fillAreaSettings.type !== ChartFillType.none) {
-        lineSeriesOption.areaStyle = {};
+        lineSeriesOption.areaStyle = {
+          origin: fillAreaOrigin(lineSettings)
+        };
         if (lineSettings.fillAreaSettings.type === ChartFillType.opacity) {
           lineSeriesOption.areaStyle.opacity = lineSettings.fillAreaSettings.opacity;
         } else if (lineSettings.fillAreaSettings.type === ChartFillType.gradient) {

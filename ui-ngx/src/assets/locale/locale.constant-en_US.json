@@ -11915,6 +11915,10 @@
             "fill-type-solid": "Solid",
             "fill-type-opacity": "Opacity",
             "fill-type-gradient": "Gradient",
+            "fill-area-baseline-auto": "Auto",
+            "fill-area-baseline-axis-min": "Axis minimum",
+            "fill-area-baseline-axis-max": "Axis maximum",
+            "fill-area-baseline-value": "Custom value",
             "background": "Background",
             "opacity": "Opacity",
             "gradient-stops": "Gradient stops",
@@ -12589,7 +12593,11 @@
             "show-range-thresholds": "Show range thresholds",
             "range-thresholds-settings": "Range thresholds settings",
             "fill-area": "Fill area",
+            "show-fill-area": "Show fill area",
             "fill-area-opacity": "Fill area opacity",
+            "fill-area-baseline": "Fill area baseline",
+            "fill-area-baseline-value": "Baseline value",
+            "fill-area-baseline-hint": "The level the filled area is measured from. Values above the baseline are filled down to it, values below the baseline are filled up to it.",
             "range-chart-style": "Range chart style"
         },
         "knob": {

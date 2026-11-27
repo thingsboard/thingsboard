@@ -19,6 +19,9 @@ import {
   lineSeriesStepTypeTranslations, updateLatestDataKeys
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import {
+  ChartFillAreaBaseline,
+  chartFillAreaBaselines,
+  chartFillAreaBaselineTranslations,
   chartLabelPositions,
   chartLabelPositionTranslations,
   chartLineTypes,
@@ -61,6 +64,12 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
 
   chartShapeTranslations = chartShapeTranslations;
 
+  ChartFillAreaBaseline = ChartFillAreaBaseline;
+
+  chartFillAreaBaselines = chartFillAreaBaselines;
+
+  chartFillAreaBaselineTranslations = chartFillAreaBaselineTranslations;
+
   legendPositions = legendPositions;
 
   legendPositionTranslationMap = legendPositionTranslationMap;
@@ -96,6 +105,8 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
       rangeThreshold: [settings.rangeThreshold, []],
       fillArea: [settings.fillArea, []],
       fillAreaOpacity: [settings.fillAreaOpacity, [Validators.min(0), Validators.max(1)]],
+      fillAreaBaseline: [settings.fillAreaBaseline, []],
+      fillAreaBaselineValue: [settings.fillAreaBaselineValue, []],
 
       showLine: [settings.showLine, []],
       step: [settings.step, []],
@@ -148,13 +159,14 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected validatorTriggers(): string[] {
-    return ['showRangeThresholds', 'fillArea', 'showLine', 'step', 'showPointLabel', 'enablePointLabelBackground',
-      'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['showRangeThresholds', 'fillArea', 'fillAreaBaseline', 'showLine', 'step', 'showPointLabel',
+      'enablePointLabelBackground', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators() {
     const showRangeThresholds: boolean = this.rangeChartWidgetSettingsForm.get('showRangeThresholds').value;
     const fillArea: boolean = this.rangeChartWidgetSettingsForm.get('fillArea').value;
+    const fillAreaBaseline: ChartFillAreaBaseline = this.rangeChartWidgetSettingsForm.get('fillAreaBaseline').value;
     const showLine: boolean = this.rangeChartWidgetSettingsForm.get('showLine').value;
     const step: boolean = this.rangeChartWidgetSettingsForm.get('step').value;
     const showPointLabel: boolean = this.rangeChartWidgetSettingsForm.get('showPointLabel').value;
@@ -171,8 +183,16 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
 
     if (fillArea) {
       this.rangeChartWidgetSettingsForm.get('fillAreaOpacity').enable();
+      this.rangeChartWidgetSettingsForm.get('fillAreaBaseline').enable({emitEvent: false});
+      if (fillAreaBaseline === ChartFillAreaBaseline.value) {
+        this.rangeChartWidgetSettingsForm.get('fillAreaBaselineValue').enable();
+      } else {
+        this.rangeChartWidgetSettingsForm.get('fillAreaBaselineValue').disable();
+      }
     } else {
       this.rangeChartWidgetSettingsForm.get('fillAreaOpacity').disable();
+      this.rangeChartWidgetSettingsForm.get('fillAreaBaseline').disable({emitEvent: false});
+      this.rangeChartWidgetSettingsForm.get('fillAreaBaselineValue').disable();
     }
 
     if (showLine) {

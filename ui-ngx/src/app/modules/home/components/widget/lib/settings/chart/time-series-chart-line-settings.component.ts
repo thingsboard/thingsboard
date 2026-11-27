@@ -115,7 +115,9 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
       enablePointLabelBackground: [null, []],
       pointLabelBackground: [null, []],
       pointShape: [null, []],
-      pointSize: [null, [Validators.min(0)]]
+      pointSize: [null, [Validators.min(0)]],
+      fillAreaBaseline: [null, []],
+      fillAreaBaselineValue: [null, []]
     });
     if (!this.hideFillSettings) {
       this.lineSettingsFormGroup.addControl('fillAreaSettings', this.fb.control([null, []]));

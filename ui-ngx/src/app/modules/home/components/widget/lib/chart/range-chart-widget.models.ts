@@ -36,6 +36,7 @@ import {
   chartAnimationDefaultSettings,
   ChartAnimationSettings,
   chartColorScheme,
+  ChartFillAreaBaseline,
   ChartFillType,
   ChartLabelPosition,
   ChartLineType,
@@ -65,6 +66,8 @@ export interface RangeChartWidgetSettings extends TimeSeriesChartTooltipWidgetSe
   rangeThreshold: Partial<TimeSeriesChartThreshold>;
   fillArea: boolean;
   fillAreaOpacity: number;
+  fillAreaBaseline: ChartFillAreaBaseline;
+  fillAreaBaselineValue: number;
   showLine: boolean;
   step: boolean;
   stepType: LineSeriesStepType;
@@ -119,6 +122,8 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
       enableLabelBackground: true}),
   fillArea: true,
   fillAreaOpacity: 0.7,
+  fillAreaBaseline: ChartFillAreaBaseline.auto,
+  fillAreaBaselineValue: 0,
   showLine: true,
   step: false,
   stepType: LineSeriesStepType.start,
@@ -274,7 +279,9 @@ export const rangeChartTimeSeriesKeySettings = (settings: RangeChartWidgetSettin
       fillAreaSettings: {
         type: settings.fillArea ? ChartFillType.opacity : ChartFillType.none,
         opacity: settings.fillAreaOpacity
-      }
+      },
+      fillAreaBaseline: settings.fillAreaBaseline,
+      fillAreaBaselineValue: settings.fillAreaBaselineValue
     }
   });
 
