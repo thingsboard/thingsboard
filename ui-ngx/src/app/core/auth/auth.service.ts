@@ -9,7 +9,7 @@ import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { setEdqsEnabled, setNullsOrderStrategy } from '@shared/models/page/page-link';
 
 import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
-import { Router, UrlTree } from '@angular/router';
+import { PRIMARY_OUTLET, Router, UrlTree } from '@angular/router';
 import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from '../http/http-utils';
 import { UserService } from '../http/user.service';
 import { Store } from '@ngrx/store';
@@ -175,9 +175,7 @@ export class AuthService {
   }
 
   public logout(captureLastUrl: boolean = false, ignoreRequest = false) {
-    if (captureLastUrl) {
-      this.redirectUrl = this.router.url;
-    }
+    this.redirectUrl = captureLastUrl ? this.router.url : null;
     if (!ignoreRequest) {
       this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
         .subscribe(() => {
@@ -254,30 +252,35 @@ export class AuthService {
       if (authState.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
         result = this.router.parseUrl('login/mfa');
       } else if (!path || path === 'login' || this.forceDefaultPlace(authState, path, params)) {
-        if (this.redirectUrl) {
-          const redirectUrl = this.redirectUrl;
-          this.redirectUrl = null;
+        const redirectUrl = this.redirectUrl;
+        this.redirectUrl = null;
+        if (redirectUrl && !authState.authUser.isPublic && this.isDeepLink(redirectUrl)) {
           result = this.router.parseUrl(redirectUrl);
         } else {
-          result = this.router.parseUrl('home');
-        }
-        if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
-          if (this.userHasDefaultDashboard(authState)) {
-            const dashboardId = authState.userDetails.additionalInfo.defaultDashboardId;
-            if (authState.forceFullscreen) {
-              result = this.router.parseUrl(`dashboard/${dashboardId}`);
-            } else {
-              result = this.router.parseUrl(`dashboards/${dashboardId}`);
-            }
-          } else if (authState.authUser.isPublic) {
-            result = this.router.parseUrl(`dashboard/${authState.lastPublicDashboardId}`);
-          }
+          result = this.defaultPlaceUrl(authState);
         }
       }
     } else {
       result = this.router.parseUrl('login');
     }
     return result;
+  }
+
+  private defaultPlaceUrl(authState: AuthState): UrlTree {
+    if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
+      if (this.userHasDefaultDashboard(authState)) {
+        const dashboardId = authState.userDetails.additionalInfo.defaultDashboardId;
+        return this.router.parseUrl(authState.forceFullscreen ? `dashboard/${dashboardId}` : `dashboards/${dashboardId}`);
+      } else if (authState.authUser.isPublic) {
+        return this.router.parseUrl(`dashboard/${authState.lastPublicDashboardId}`);
+      }
+    }
+    return this.router.parseUrl('home');
+  }
+
+  private isDeepLink(url: string): boolean {
+    const segments = this.router.parseUrl(url).root.children[PRIMARY_OUTLET]?.segments.map(segment => segment.path) ?? [];
+    return segments.length > 0 && !(segments.length === 1 && (segments[0] === 'home' || segments[0] === 'login'));
   }
 
   private loadUser(doTokenRefresh): Observable<AuthPayload> {
