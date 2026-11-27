@@ -8,6 +8,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.ComputeOn;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
@@ -17,6 +18,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
+import org.thingsboard.server.dao.edge.BaseRelatedEdgesService;
+import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -41,6 +45,12 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
     private ApiLimitService apiLimitService;
 
     @Autowired
+    private EdgeService edgeService;
+
+    @Autowired
+    private EdgeSynchronizationManager edgeSynchronizationManager;
+
+    @Autowired
     private EntityDaoRegistry entityDaoRegistry;
 
     @Override
@@ -58,6 +68,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         for (EntityId referencedEntityId : calculatedField.getConfiguration().getReferencedEntities()) {
             validateReferencedEntityTenant(calculatedField.getTenantId(), referencedEntityId);
         }
+        validateComputeOn(tenantId, calculatedField);
     }
 
     @Override
@@ -150,6 +161,23 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (aggConfiguration.getInterval().getCurrentIntervalDurationMillis() < TimeUnit.SECONDS.toMillis(minAggregationIntervalInSec)) {
             throw new IllegalArgumentException("Aggregation interval duration is less than configured " +
                     "minimum allowed aggregation interval in tenant profile: " + minAggregationIntervalInSec + " sec.");
+        }
+    }
+
+    private void validateComputeOn(TenantId tenantId, CalculatedField calculatedField) {
+        if (ComputeOn.EDGE != calculatedField.getComputeOn()) {
+            return;
+        }
+        if (edgeSynchronizationManager.getEdgeId().get() != null) {
+            return;
+        }
+        EntityId entityId = calculatedField.getEntityId();
+        if (EntityType.DEVICE != entityId.getEntityType() && EntityType.ASSET != entityId.getEntityType()) {
+            return;
+        }
+        if (edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, BaseRelatedEdgesService.FIRST_PAGE).getData().isEmpty()) {
+            throw new DataValidationException("Calculated field computed on the edge requires "
+                    + entityId.getEntityType().name().toLowerCase() + " to be assigned to an edge!");
         }
     }
 
